@@ -1,6 +1,6 @@
+use std::fmt;
 use std::fs::File;
 use std::io::prelude::*;
-use std::fmt;
 
 const COLUMNS: usize = 500;
 const ROWS: usize = 500;
@@ -14,17 +14,28 @@ struct Pixel {
 
 impl Pixel {
     fn new(r: u8, g: u8, b: u8) -> Pixel {
-        Pixel {red: r, green: g, blue: b}
+        Pixel {
+            red: r,
+            green: g,
+            blue: b,
+        }
     }
 
     fn black() -> Pixel {
-        Pixel {red: 0, green: 0, blue: 0}
+        Pixel {
+            red: 0,
+            green: 0,
+            blue: 0,
+        }
     }
 
     fn white() -> Pixel {
-        Pixel {red: 255, green: 255, blue: 255}
+        Pixel {
+            red: 255,
+            green: 255,
+            blue: 255,
+        }
     }
-
 
     fn color(&mut self, r: u8, g: u8, b: u8) {
         self.red = r;
@@ -45,9 +56,9 @@ struct Screen {
 
 impl Screen {
     fn new() -> Screen {
-        Screen {pixels: vec![
-            vec![Pixel::black(); COLUMNS]; ROWS
-        ]}
+        Screen {
+            pixels: vec![vec![Pixel::black(); COLUMNS]; ROWS],
+        }
     }
 
     fn write(&self, f: &str) -> std::io::Result<()> {
@@ -85,8 +96,5 @@ fn main() {
         }
     }
 
-
-
-    screen.write("out.ppm")
-        .expect("Failed to write to file!");
+    screen.write("out.ppm").expect("Failed to write to file!");
 }
