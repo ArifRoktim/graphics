@@ -16,8 +16,20 @@ impl Pixel {
     fn new(r: u8, g: u8, b: u8) -> Pixel {
         Pixel {red: r, green: g, blue: b}
     }
+
     fn black() -> Pixel {
         Pixel {red: 0, green: 0, blue: 0}
+    }
+
+    fn white() -> Pixel {
+        Pixel {red: 255, green: 255, blue: 255}
+    }
+
+
+    fn color(&mut self, r: u8, g: u8, b: u8) {
+        self.red = r;
+        self.green = g;
+        self.blue = b;
     }
 }
 
@@ -65,7 +77,16 @@ impl fmt::Display for Screen {
 }
 
 fn main() {
-    let screen = Screen::new();
+    let mut screen = Screen::new();
+
+    for (i, row) in screen.pixels.iter_mut().enumerate() {
+        for (j, pixel) in row.iter_mut().enumerate() {
+            pixel.color(j as u8, i as u8, i as u8);
+        }
+    }
+
+
+
     screen.write("out.ppm")
         .expect("Failed to write to file!");
 }
