@@ -53,6 +53,20 @@ impl fmt::Display for Color {
 // Point(x, y)
 struct Point(usize, usize);
 
+impl Point {
+    // If undefined, return None, otherwise return Some(i32)
+    fn slope(&self, other: Point) -> Option<i32> {
+        let me = (self.0 as i32, self.1 as i32);
+        let other = (other.0 as i32, other.1 as i32);
+        if me.0 - other.0 == 0 {
+            None
+        } else {
+            Some((me.1 - other.1) / (me.0 - other.0))
+        }
+    }
+
+}
+
 struct Screen {
     pixels: Vec<Vec<Color>>,
 }
@@ -80,7 +94,11 @@ impl Screen {
         &self.pixels[p.1][p.0].color(c);
     }
 
-    fn draw_line(&mut self, p1: Point, p2: Point, c: Color) {}
+    //fn draw_line(&mut self, p0: Point, p1: Point, c: Color) {
+    //    //
+    //}
+
+    //fn _octant1(&mut self, p0: Point, p1: Point, c: Color) {}
 }
 
 impl fmt::Display for Screen {
@@ -104,9 +122,17 @@ impl fmt::Display for Screen {
 }
 
 fn main() {
+    //let p1 = Point(0, 10);
+    //let p2 = Point(10, 10);
+    //match p1.slope(p2) {
+    //    Some(x) => println!("{}", x),
+    //    None    => println!("undefined"),
+    //}
+
     let mut screen = Screen::new();
 
     screen.draw_point(Point(25, 25), Color::new(255, 255, 255));
 
     screen.write("out.ppm").expect("Failed to write to file!");
+
 }
