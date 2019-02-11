@@ -12,6 +12,7 @@ struct Color {
     blue: u8,
 }
 
+#[allow(dead_code)]
 impl Color {
     fn new(r: u8, g: u8, b: u8) -> Color {
         Color {
@@ -32,6 +33,54 @@ impl Color {
     fn white() -> Color {
         Color {
             red: 255,
+            green: 255,
+            blue: 255,
+        }
+    }
+
+    fn red() -> Color {
+        Color {
+            red: 255,
+            green: 0,
+            blue: 0,
+        }
+    }
+
+    fn green() -> Color {
+        Color {
+            red: 0,
+            green: 255,
+            blue: 0,
+        }
+    }
+
+    fn blue() -> Color {
+        Color {
+            red: 0,
+            green: 0,
+            blue: 255,
+        }
+    }
+
+    fn yellow() -> Color {
+        Color {
+            red: 255,
+            green: 255,
+            blue: 0,
+        }
+    }
+
+    fn purple() -> Color {
+        Color {
+            red: 255,
+            green: 0,
+            blue: 255,
+        }
+    }
+
+    fn cyan() -> Color {
+        Color {
+            red: 0,
             green: 255,
             blue: 255,
         }
