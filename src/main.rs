@@ -104,7 +104,7 @@ struct Point(usize, usize);
 
 impl Point {
     // If undefined, return None, otherwise return Some(i32)
-    fn slope(&self, other: Point) -> Option<i32> {
+    fn slope(&self, other: &Point) -> Option<i32> {
         let me = (self.0 as i32, self.1 as i32);
         let other = (other.0 as i32, other.1 as i32);
         if me.0 - other.0 == 0 {
@@ -143,10 +143,26 @@ impl Screen {
         &self.pixels[p.1][p.0].color(c);
     }
 
-    //fn draw_line(&mut self, p0: Point, p1: Point, c: Color) {
-    //    //
-    //}
+    fn draw_line(&mut self, p0: Point, p1: Point, c: Color) {
+        match p0.slope(&p1) {
+            None => self._vertical_line(p0, p1, c),
+            Some(m) if m == 0 => self._horizontal_line(p0, p1, c),
+            //Some(m) if m > 0 && m < 1 => self._octant1(p0, p1, c),
+            _ => panic!("This case not yet covered!")
+        }
+    }
 
+    //fn _octant1(&mut self, p0: Point, p1: Point, c: Color) {}
+    fn _vertical_line(&mut self, p0: Point, p1: Point, c: Color) {
+        for i in p0.1..p1.1 {
+            self.draw_point(Point(p0.0, i), c);
+        }
+    }
+    fn _horizontal_line(&mut self, p0: Point, p1: Point, c: Color) {
+        for i in p0.0..p1.0 {
+            self.draw_point(Point(i, p0.1), c);
+        }
+    }
     //fn _octant1(&mut self, p0: Point, p1: Point, c: Color) {}
 }
 
@@ -181,6 +197,8 @@ fn main() {
     let mut screen = Screen::new();
 
     screen.draw_point(Point(25, 25), Color::new(255, 255, 255));
+    screen.draw_line(Point(250, 250), Point(250, 400), Color::cyan());
+    screen.draw_line(Point(250, 250), Point(400, 250), Color::purple());
 
     screen.write("out.ppm").expect("Failed to write to file!");
 
