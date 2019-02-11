@@ -74,10 +74,10 @@ impl Screen {
     fn draw_point(&mut self, p: Point, c: Color) {
         // Make (0, 0) the bottom left corner instead of
         // the top left corner
-        let new_y = ROWS - 1 - p.1;
+        let p = Point(p.0, ROWS - 1 - p.1);
         // Get the pixel ay point p and set its color
         // Man this looks ugly :(
-        &self.pixels[p.0][p.1].color(c);
+        &self.pixels[p.1][p.0].color(c);
     }
 
     fn draw_line(&mut self, p1: Point, p2: Point, c: Color) {}
