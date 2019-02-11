@@ -100,14 +100,15 @@ impl fmt::Display for Color {
 }
 
 // Point(x, y)
+#[derive(Debug)]
 struct Point(usize, usize);
 
 impl Point {
-    // If undefined, return None, otherwise return Some(i32)
-    fn slope(&self, other: &Point) -> Option<i32> {
-        let me = (self.0 as i32, self.1 as i32);
-        let other = (other.0 as i32, other.1 as i32);
-        if me.0 - other.0 == 0 {
+    // If undefined, return None, otherwise return Some(f64)
+    fn slope(&self, other: &Point) -> Option<f64> {
+        let me = (self.0 as f64, self.1 as f64);
+        let other = (other.0 as f64, other.1 as f64);
+        if me.0 - other.0 == 0.0 {
             None
         } else {
             Some((me.1 - other.1) / (me.0 - other.0))
@@ -134,7 +135,7 @@ impl Screen {
 
     // TODO: These should probably return a Result.
     // Maybe make an OutofBounds error?
-    fn draw_point(&mut self, p: Point, c: Color) {
+    fn draw_point(&mut self, p: &Point, c: Color) {
         // Make (0, 0) the bottom left corner instead of
         // the top left corner
         let p = Point(p.0, ROWS - 1 - p.1);
@@ -143,27 +144,58 @@ impl Screen {
         &self.pixels[p.1][p.0].color(c);
     }
 
-    fn draw_line(&mut self, p0: Point, p1: Point, c: Color) {
+    fn draw_line(&mut self, p0: &Point, p1: &Point, c: Color) {
+        // this draws from left to right, from p0 to p1
+        // if p0 is to the right of p1, swap them
+        if p0.0 > p1.0 {
+            self.draw_line(p1, p0, c);
+            return;
+        }
         match p0.slope(&p1) {
+            None => println!("{:?}, {:?} has slope=undefined", p0, p1),
+            Some(m) => println!("{:?}, {:?} has slope={}", p0, p1, m),
+        }
+        match p0.slope(&p1) {
+            // slope is undefined
             None => self._vertical_line(p0, p1, c),
-            Some(m) if m == 0 => self._horizontal_line(p0, p1, c),
-            //Some(m) if m > 0 && m < 1 => self._octant1(p0, p1, c),
-            _ => panic!("This case not yet covered!")
+            Some(m) if m == 0.0 => self._horizontal_line(p0, p1, c),
+            Some(m) if m > 0.0 && m <= 1.0 => self._octant1(p0, p1, c),
+            Some(m) => panic!("Slope={}, not yet covered!", m),
         }
     }
 
-    //fn _octant1(&mut self, p0: Point, p1: Point, c: Color) {}
-    fn _vertical_line(&mut self, p0: Point, p1: Point, c: Color) {
+    //fn _octant1(&mut self, p0: &Point, p1: &Point, c: Color) {}
+    fn _vertical_line(&mut self, p0: &Point, p1: &Point, c: Color) {
         for i in p0.1..p1.1 {
-            self.draw_point(Point(p0.0, i), c);
+            self.draw_point(&Point(p0.0, i), c);
         }
     }
-    fn _horizontal_line(&mut self, p0: Point, p1: Point, c: Color) {
+    fn _horizontal_line(&mut self, p0: &Point, p1: &Point, c: Color) {
         for i in p0.0..p1.0 {
-            self.draw_point(Point(i, p0.1), c);
+            self.draw_point(&Point(i, p0.1), c);
         }
     }
-    //fn _octant1(&mut self, p0: Point, p1: Point, c: Color) {}
+    fn _octant1(&mut self, p0: &Point, p1: &Point, c: Color) {
+        // First cast the points to i32 from usize
+        let p0 = (p0.0 as i32, p0.1 as i32);
+        let p1 = (p1.0 as i32, p1.1 as i32);
+        // x and y points to plot
+        let mut x = p0.0;
+        let mut y = p0.1;
+        // TODO: explain meaning of A, B, and d
+        let A = p1.1 - p0.1;
+        let B = -(p1.0 - p0.0);
+        let mut d = 2 * A + B;
+        while x <= p1.0 {
+            self.draw_point(&Point(x as usize, y as usize), c);
+            if d > 0 {
+                y += 1;
+                d += 2 * B;
+            }
+            x += 1;
+            d += 2 * A;
+        }
+    }
 }
 
 impl fmt::Display for Screen {
@@ -187,18 +219,20 @@ impl fmt::Display for Screen {
 }
 
 fn main() {
-    //let p1 = Point(0, 10);
-    //let p2 = Point(10, 10);
-    //match p1.slope(p2) {
-    //    Some(x) => println!("{}", x),
-    //    None    => println!("undefined"),
-    //}
-
     let mut screen = Screen::new();
 
-    screen.draw_point(Point(25, 25), Color::new(255, 255, 255));
-    screen.draw_line(Point(250, 250), Point(250, 400), Color::cyan());
-    screen.draw_line(Point(250, 250), Point(400, 250), Color::purple());
+    screen.draw_point(&Point(25, 25), Color::white());
+    let origin = Point(250, 250);
+
+    // === Test different line types ===
+    // vertical line
+    screen.draw_line(&origin, &Point(250, 400), Color::cyan());
+    // horizontal line
+    screen.draw_line(&origin, &Point(400, 250), Color::purple());
+    screen.draw_line(&Point(400, 150), &Point(250,150), Color::purple());
+    // octant 1
+    screen.draw_line(&Point(300, 300), &Point(400, 350), Color::green());
+    screen.draw_line(&origin, &Point(500, 500), Color::green());
 
     screen.write("out.ppm").expect("Failed to write to file!");
 
