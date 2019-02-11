@@ -6,58 +6,61 @@ const COLUMNS: usize = 500;
 const ROWS: usize = 500;
 
 #[derive(Debug, Copy, Clone)]
-struct Pixel {
+struct Color {
     red: u8,
     green: u8,
     blue: u8,
 }
 
-impl Pixel {
-    fn new(r: u8, g: u8, b: u8) -> Pixel {
-        Pixel {
+impl Color {
+    fn new(r: u8, g: u8, b: u8) -> Color {
+        Color {
             red: r,
             green: g,
             blue: b,
         }
     }
 
-    fn black() -> Pixel {
-        Pixel {
+    fn black() -> Color {
+        Color {
             red: 0,
             green: 0,
             blue: 0,
         }
     }
 
-    fn white() -> Pixel {
-        Pixel {
+    fn white() -> Color {
+        Color {
             red: 255,
             green: 255,
             blue: 255,
         }
     }
 
-    fn color(&mut self, r: u8, g: u8, b: u8) {
-        self.red = r;
-        self.green = g;
-        self.blue = b;
+    fn color(&mut self, c: Color) {
+        self.red = c.red;
+        self.green = c.green;
+        self.blue = c.blue;
     }
 }
 
-impl fmt::Display for Pixel {
+impl fmt::Display for Color {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{} {} {} ", self.red, self.green, self.blue)
     }
 }
 
+// Point(x, y)
+struct Point(usize, usize);
+
 struct Screen {
-    pixels: Vec<Vec<Pixel>>,
+    pixels: Vec<Vec<Color>>,
 }
 
 impl Screen {
     fn new() -> Screen {
         Screen {
-            pixels: vec![vec![Pixel::black(); COLUMNS]; ROWS],
+            pixels: vec![vec![Color::black(); COLUMNS]; ROWS],
         }
     }
 
@@ -65,6 +68,19 @@ impl Screen {
         let mut file = File::create(f)?;
         file.write_all(self.to_string().as_bytes())
     }
+
+    // TODO: These should probably return a Result.
+    // Maybe make an OutofBounds error?
+    fn draw_point(&mut self, p: Point, c: Color) {
+        // Make (0, 0) the bottom left corner instead of
+        // the top left corner
+        let new_y = ROWS - 1 - p.1;
+        // Get the pixel ay point p and set its color
+        // Man this looks ugly :(
+        &self.pixels[p.0][p.1].color(c);
+    }
+
+    fn draw_line(&mut self, p1: Point, p2: Point, c: Color) {}
 }
 
 impl fmt::Display for Screen {
@@ -90,11 +106,7 @@ impl fmt::Display for Screen {
 fn main() {
     let mut screen = Screen::new();
 
-    for (i, row) in screen.pixels.iter_mut().enumerate() {
-        for (j, pixel) in row.iter_mut().enumerate() {
-            pixel.color(j as u8, i as u8, i as u8);
-        }
-    }
+    screen.draw_point(Point(25, 25), Color::new(255, 255, 255));
 
     screen.write("out.ppm").expect("Failed to write to file!");
 }

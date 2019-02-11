@@ -1,5 +1,5 @@
 [package]
-name = "w00_picmaker"
+name = "w01_line"
 version = "0.1.0"
 authors = ["Arif Roktim <aroktim@stuy.edu>"]
 edition = "2018"
