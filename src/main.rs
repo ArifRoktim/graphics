@@ -192,8 +192,13 @@ impl Screen {
             Some(m) => println!("{:?}, {:?} has slope={}", p0, p1, m),
         }
         match p0.slope(&p1) {
-            // if slope is undefined/none, line is vertical
-            None => self._vertical_line(p0, p1, c)?,
+            // if slope is undefined/none, the line is vertical
+            // self._vertical_line(p0, p1, ...) assumes that
+            // p0's y value is less than that of p1.
+            // This accounts for that case.
+            None if p0.1 <= p1.1 => self._vertical_line(p0, p1, c)?,
+            // This accounts for case where p1's y value > p0's y value
+            None => self._vertical_line(p1, p0, c)?,
             Some(m) if m == 0.0 => self._horizontal_line(p0, p1, c)?,
             Some(m) if m > 0.0 && m <= 1.0 => self._octant1(p0, p1, c)?,
             Some(m) if m > 1.0 => self._octant2(p0, p1, c)?,
@@ -304,6 +309,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     // === Test different line types ===
     // vertical line
     screen.draw_line(&somepoint, &Point(250, 400), Color::cyan())?;
+    screen.draw_line(&Point(150, 500), &Point(150, 400), Color::cyan())?;
     // horizontal line
     screen.draw_line(&somepoint, &Point(400, 250), Color::purple())?;
     screen.draw_line(&Point(400, 150), &Point(250, 150), Color::purple())?;
