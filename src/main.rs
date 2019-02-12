@@ -146,9 +146,15 @@ struct Screen {
 }
 
 impl Screen {
-    fn new() -> Screen {
+    fn blank() -> Screen {
         Screen {
             pixels: vec![vec![Color::black(); COLUMNS]; ROWS],
+        }
+    }
+
+    fn new(c: Color) -> Screen {
+        Screen {
+            pixels: vec![vec![c; COLUMNS]; ROWS],
         }
     }
 
@@ -278,7 +284,8 @@ impl fmt::Display for Screen {
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
-    let mut screen = Screen::new();
+    let mut screen = Screen::blank();
+    //let mut screen = Screen::new(Color::white());
 
     screen.draw_point(&Point(25, 25), Color::white())?;
     screen.draw_point(&Point(0, 0), Color::white())?;
