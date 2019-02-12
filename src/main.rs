@@ -4,8 +4,8 @@ use std::fmt;
 use std::fs::File;
 use std::io::prelude::*;
 
-const COLUMNS: usize = 500;
-const ROWS: usize = 500;
+const COLUMNS: usize = 750;
+const ROWS: usize = 750;
 
 #[derive(Debug, Copy, Clone)]
 struct Color {
@@ -169,7 +169,7 @@ impl Screen {
     fn draw_point(&mut self, p: &Point, c: Color) -> Result<(), OutOfBounds> {
         // Make (0, 0) the bottom left corner instead of
         // the top left corner
-        if p.0 == 500 || p.1 == 500 {
+        if p.0 >= COLUMNS || p.1 >= ROWS {
             let point = Point(p.0, p.1);
             return Err(OutOfBounds(point));
         }
@@ -296,17 +296,20 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     screen.draw_point(&Point(25, 25), Color::white())?;
     screen.draw_point(&Point(0, 0), Color::white())?;
-    let origin = Point(250, 250);
+    // Out of bounds
+    // Error: OutOfBounds(Point(100, 2000))
+    //screen.draw_point(&Point(100, 2000), Color::white())?;
+    let somepoint = Point(250, 250);
 
     // === Test different line types ===
     // vertical line
-    screen.draw_line(&origin, &Point(250, 400), Color::cyan())?;
+    screen.draw_line(&somepoint, &Point(250, 400), Color::cyan())?;
     // horizontal line
-    screen.draw_line(&origin, &Point(400, 250), Color::purple())?;
+    screen.draw_line(&somepoint, &Point(400, 250), Color::purple())?;
     screen.draw_line(&Point(400, 150), &Point(250, 150), Color::purple())?;
     // octant 1
     screen.draw_line(&Point(300, 300), &Point(400, 350), Color::green())?;
-    screen.draw_line(&origin, &Point(499, 499), Color::green())?;
+    screen.draw_line(&somepoint, &Point(499, 499), Color::green())?;
     // octant 2
     screen.draw_line(&Point(300, 300), &Point(350, 400), Color::yellow())?;
 
