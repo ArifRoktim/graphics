@@ -222,10 +222,11 @@ impl Screen {
         // x and y points to plot
         let mut x = p0.0;
         let mut y = p0.1;
-        // TODO: explain meaning of A, B, and d
         let delta_x = p1.0 - p0.0;
         let delta_y = p1.1 - p0.1;
         // d = f(x0 + 1, y0 + 1/2) - f(x0, y0)
+        // f(x0, y0) = 0
+        // d = f(x0 + 1, y0 + 1/2) 
         // ... <Algebra goes here> ...
         // d = delta_y - 1/2 * delta_x
         // To get rid of floating point arithmetic, multiply by 2
@@ -242,7 +243,6 @@ impl Screen {
         }
         Ok(())
     }
-    #[allow(non_snake_case)]
     fn _octant2(&mut self, p0: &Point, p1: &Point, c: Color) -> Result<(), OutOfBounds> {
         // First cast the points to i32 from usize
         let p0 = (p0.0 as i32, p0.1 as i32);
@@ -250,18 +250,21 @@ impl Screen {
         // x and y points to plot
         let mut x = p0.0;
         let mut y = p0.1;
-        // TODO: explain meaning of A, B, and d
-        let A = p1.1 - p0.1;
-        let B = -(p1.0 - p0.0);
-        let mut d = 2 * A + B;
-        while x <= p1.0 {
+        let delta_x = p1.0 - p0.0;
+        let delta_y = p1.1 - p0.1;
+        // d = f(x0 + 1/2, y0 + 1)
+        // ... <Algebra goes here> ...
+        // d = 1/2 * delta_y - delta_x
+        // 2d = delta_y - 2 * delta_x
+        let mut diff = delta_y - 2 * delta_x;
+        while y <= p1.1 {
             self.draw_point(&Point(x as usize, y as usize), c)?;
-            if d > 0 {
-                y += 1;
-                d += 2 * B;
+            if diff < 0 {
+                x += 1;
+                diff += 2 * delta_y;
             }
-            x += 1;
-            d += 2 * A;
+            y += 1;
+            diff -= 2 * delta_x;
         }
         Ok(())
     }
@@ -305,7 +308,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     screen.draw_line(&Point(300, 300), &Point(400, 350), Color::green())?;
     screen.draw_line(&origin, &Point(499, 499), Color::green())?;
     // octant 2
-    screen.draw_line(&Point(300, 300), &Point(350, 400), Color::blue())?;
+    screen.draw_line(&Point(300, 300), &Point(350, 400), Color::yellow())?;
 
     screen.write("out.ppm").expect("Failed to write to file!");
 
