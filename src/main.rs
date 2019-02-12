@@ -318,6 +318,12 @@ fn main() -> Result<(), Box<dyn Error>> {
     screen.draw_line(&somepoint, &Point(499, 499), Color::green())?;
     // octant 2
     screen.draw_line(&Point(300, 300), &Point(350, 400), Color::yellow())?;
+    screen.draw_line(&Point(700, 650), &Point(500, 400), Color::yellow())?;
+    // octant 8
+    //screen.draw_line(&Point(350, 400), &Point(400, 350), Color::red())?;
+    //screen.draw_line(&Point(350, 400), &Point(400, 375), Color::red())?;
+    // octant 7
+    //screen.draw_line(&somepoint, &Point(300, 150), Color::white())?;
 
     screen.write("out.ppm").expect("Failed to write to file!");
 
