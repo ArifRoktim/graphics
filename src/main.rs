@@ -188,8 +188,8 @@ impl Screen {
             return Ok(());
         }
         match p0.slope(&p1) {
-            None => println!("{:?}, {:?} has slope=undefined", p0, p1),
-            Some(m) => println!("{:?}, {:?} has slope={}", p0, p1, m),
+            None => println!("{:?}, {:?} has slope = undefined", p0, p1),
+            Some(m) => println!("{:?}, {:?} has slope = {}", p0, p1, m),
         }
         match p0.slope(&p1) {
             // if slope is undefined/none, the line is vertical
@@ -202,6 +202,7 @@ impl Screen {
             Some(m) if m == 0.0 => self._horizontal_line(p0, p1, c)?,
             Some(m) if m > 0.0 && m <= 1.0 => self._octant1(p0, p1, c)?,
             Some(m) if m > 1.0 => self._octant2(p0, p1, c)?,
+            Some(m) if m < 0.0 && m >= -1.0 => self._octant8(p0, p1, c)?,
             Some(m) => panic!("Slope={}, not yet covered!", m),
         }
         Ok(())
@@ -227,7 +228,9 @@ impl Screen {
         // x and y points to plot
         let mut x = p0.0;
         let mut y = p0.1;
+        // B = - delta_x
         let delta_x = p1.0 - p0.0;
+        // A = delta_y
         let delta_y = p1.1 - p0.1;
         // d = f(x0 + 1, y0 + 1/2) - f(x0, y0)
         // f(x0, y0) = 0
@@ -255,7 +258,9 @@ impl Screen {
         // x and y points to plot
         let mut x = p0.0;
         let mut y = p0.1;
+        // B = - delta_x
         let delta_x = p1.0 - p0.0;
+        // A = delta_y
         let delta_y = p1.1 - p0.1;
         // d = f(x0 + 1/2, y0 + 1)
         // ... <Algebra goes here> ...
@@ -270,6 +275,35 @@ impl Screen {
             }
             y += 1;
             diff -= 2 * delta_x;
+        }
+        Ok(())
+    }
+    fn _octant8(&mut self, p0: &Point, p1: &Point, c: Color) -> Result<(), OutOfBounds> {
+        // First cast the points to i32 from usize
+        let p0 = (p0.0 as i32, p0.1 as i32);
+        let p1 = (p1.0 as i32, p1.1 as i32);
+        // x and y points to plot
+        let mut x = p0.0;
+        let mut y = p0.1;
+        // B = - delta_x
+        let delta_x = p1.0 - p0.0;
+        // A = delta_y
+        let delta_y = p1.1 - p0.1;
+        // d = f(x0 + 1, y0 - 1/2)
+        // d = A(x0 + 1) + B(y0 - 1/2) + C
+        // d = (Ax0 + By0 + C) + A - 1/2 * B
+        // d = A - 1/2 * B
+        // d = delta_y + 1/2 * delta_x
+        // 2d = 2 * delta_y + delta_x
+        let mut diff = 2 * delta_y + delta_x;
+        while x <= p1.0 {
+            self.draw_point(&Point(x as usize, y as usize), c)?;
+            if diff > 0 {
+                y -= 1;
+                diff -= 2 * delta_x;
+            }
+            x += 1;
+            diff -= 2 * delta_y;
         }
         Ok(())
     }
@@ -315,13 +349,13 @@ fn main() -> Result<(), Box<dyn Error>> {
     screen.draw_line(&Point(400, 150), &Point(250, 150), Color::purple())?;
     // octant 1
     screen.draw_line(&Point(300, 300), &Point(400, 350), Color::green())?;
-    screen.draw_line(&somepoint, &Point(499, 499), Color::green())?;
+    screen.draw_line(&somepoint, &Point(500, 500), Color::green())?;
     // octant 2
     screen.draw_line(&Point(300, 300), &Point(350, 400), Color::yellow())?;
     screen.draw_line(&Point(700, 650), &Point(500, 400), Color::yellow())?;
     // octant 8
-    //screen.draw_line(&Point(350, 400), &Point(400, 350), Color::red())?;
-    //screen.draw_line(&Point(350, 400), &Point(400, 375), Color::red())?;
+    screen.draw_line(&Point(350, 400), &Point(400, 350), Color::red())?;
+    screen.draw_line(&Point(350, 400), &Point(500, 375), Color::red())?;
     // octant 7
     //screen.draw_line(&somepoint, &Point(300, 150), Color::white())?;
 
