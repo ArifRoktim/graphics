@@ -215,7 +215,6 @@ impl Screen {
         }
         Ok(())
     }
-    #[allow(non_snake_case)]
     fn _octant1(&mut self, p0: &Point, p1: &Point, c: Color) -> Result<(), OutOfBounds> {
         // First cast the points to i32 from usize
         let p0 = (p0.0 as i32, p0.1 as i32);
@@ -224,17 +223,22 @@ impl Screen {
         let mut x = p0.0;
         let mut y = p0.1;
         // TODO: explain meaning of A, B, and d
-        let A = p1.1 - p0.1;
-        let B = -(p1.0 - p0.0);
-        let mut d = 2 * A + B;
+        let delta_x = p1.0 - p0.0;
+        let delta_y = p1.1 - p0.1;
+        // d = f(x0 + 1, y0 + 1/2) - f(x0, y0)
+        // ... <Algebra goes here> ...
+        // d = delta_y - 1/2 * delta_x
+        // To get rid of floating point arithmetic, multiply by 2
+        // 2d = 2 * delta_y - delta_x
+        let mut diff = 2 * delta_y - delta_x;
         while x <= p1.0 {
             self.draw_point(&Point(x as usize, y as usize), c)?;
-            if d > 0 {
+            if diff > 0 {
                 y += 1;
-                d += 2 * B;
+                diff -= 2 * delta_x;
             }
             x += 1;
-            d += 2 * A;
+            diff += 2 * delta_y;
         }
         Ok(())
     }
