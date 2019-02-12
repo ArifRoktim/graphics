@@ -1,4 +1,5 @@
 use std::error;
+use std::error::Error;
 use std::fmt;
 use std::fs::File;
 use std::io::prelude::*;
@@ -185,10 +186,11 @@ impl Screen {
             Some(m) => println!("{:?}, {:?} has slope={}", p0, p1, m),
         }
         match p0.slope(&p1) {
-            // slope is undefined
+            // if slope is undefined/none, line is vertical
             None => self._vertical_line(p0, p1, c)?,
             Some(m) if m == 0.0 => self._horizontal_line(p0, p1, c)?,
             Some(m) if m > 0.0 && m <= 1.0 => self._octant1(p0, p1, c)?,
+            Some(m) if m > 1.0 => self._octant2(p0, p1, c)?,
             Some(m) => panic!("Slope={}, not yet covered!", m),
         }
         Ok(())
@@ -207,7 +209,31 @@ impl Screen {
         }
         Ok(())
     }
+    #[allow(non_snake_case)]
     fn _octant1(&mut self, p0: &Point, p1: &Point, c: Color) -> Result<(), OutOfBounds> {
+        // First cast the points to i32 from usize
+        let p0 = (p0.0 as i32, p0.1 as i32);
+        let p1 = (p1.0 as i32, p1.1 as i32);
+        // x and y points to plot
+        let mut x = p0.0;
+        let mut y = p0.1;
+        // TODO: explain meaning of A, B, and d
+        let A = p1.1 - p0.1;
+        let B = -(p1.0 - p0.0);
+        let mut d = 2 * A + B;
+        while x <= p1.0 {
+            self.draw_point(&Point(x as usize, y as usize), c)?;
+            if d > 0 {
+                y += 1;
+                d += 2 * B;
+            }
+            x += 1;
+            d += 2 * A;
+        }
+        Ok(())
+    }
+    #[allow(non_snake_case)]
+    fn _octant2(&mut self, p0: &Point, p1: &Point, c: Color) -> Result<(), OutOfBounds> {
         // First cast the points to i32 from usize
         let p0 = (p0.0 as i32, p0.1 as i32);
         let p1 = (p1.0 as i32, p1.1 as i32);
@@ -251,22 +277,26 @@ impl fmt::Display for Screen {
     }
 }
 
-#[allow(unused_must_use)]
-fn main() {
+fn main() -> Result<(), Box<dyn Error>> {
     let mut screen = Screen::new();
 
-    screen.draw_point(&Point(25, 25), Color::white());
+    screen.draw_point(&Point(25, 25), Color::white())?;
+    screen.draw_point(&Point(0, 0), Color::white())?;
     let origin = Point(250, 250);
 
     // === Test different line types ===
     // vertical line
-    screen.draw_line(&origin, &Point(250, 400), Color::cyan());
+    screen.draw_line(&origin, &Point(250, 400), Color::cyan())?;
     // horizontal line
-    screen.draw_line(&origin, &Point(400, 250), Color::purple());
-    screen.draw_line(&Point(400, 150), &Point(250, 150), Color::purple());
+    screen.draw_line(&origin, &Point(400, 250), Color::purple())?;
+    screen.draw_line(&Point(400, 150), &Point(250, 150), Color::purple())?;
     // octant 1
-    screen.draw_line(&Point(300, 300), &Point(400, 350), Color::green());
-    screen.draw_line(&origin, &Point(500, 500), Color::green());
+    screen.draw_line(&Point(300, 300), &Point(400, 350), Color::green())?;
+    screen.draw_line(&origin, &Point(499, 499), Color::green())?;
+    // octant 2
+    screen.draw_line(&Point(300, 300), &Point(350, 400), Color::blue())?;
 
     screen.write("out.ppm").expect("Failed to write to file!");
+
+    Ok(())
 }
