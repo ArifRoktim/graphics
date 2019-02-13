@@ -188,10 +188,6 @@ impl Screen {
             return Ok(());
         }
         match p0.slope(&p1) {
-            None => println!("{:?}, {:?} has slope = undefined", p0, p1),
-            Some(m) => println!("{:?}, {:?} has slope = {}", p0, p1, m),
-        }
-        match p0.slope(&p1) {
             // if slope is undefined/none, the line is vertical
             // self._vertical_line(p0, p1, ...) assumes that
             // p0's y value is less than that of p1.
@@ -428,8 +424,15 @@ fn main() -> Result<(), Box<dyn Error>> {
         //screen.draw_line(&center, &Point(x, y), Color::green())?;
     }
 
-
     screen.write("out.ppm").expect("Failed to write to file!");
+
+    let info = "Vertical lines are cyan.\n\
+        Horizontal lines are purple.\n\
+        Octant 1 lines are green.\n\
+        Octant 2 lines are yellow.\n\
+        Octant 8 lines are red.\n\
+        Octant 7 lines are white.";
+    println!("{}", info);
 
     Ok(())
 }
