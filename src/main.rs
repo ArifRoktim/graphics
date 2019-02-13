@@ -203,6 +203,7 @@ impl Screen {
             Some(m) if m > 0.0 && m <= 1.0 => self._octant1(p0, p1, c)?,
             Some(m) if m > 1.0 => self._octant2(p0, p1, c)?,
             Some(m) if m < 0.0 && m >= -1.0 => self._octant8(p0, p1, c)?,
+            Some(m) if m < -1.0 => self._octant7(p0, p1, c)?,
             Some(m) => panic!("Slope={}, not yet covered!", m),
         }
         Ok(())
@@ -307,6 +308,36 @@ impl Screen {
         }
         Ok(())
     }
+    fn _octant7(&mut self, p0: &Point, p1: &Point, c: Color) -> Result<(), OutOfBounds> {
+        // First cast the points to i32 from usize
+        let p0 = (p0.0 as i32, p0.1 as i32);
+        let p1 = (p1.0 as i32, p1.1 as i32);
+        // x and y points to plot
+        let mut x = p0.0;
+        let mut y = p0.1;
+        // B = - delta_x
+        let delta_x = p1.0 - p0.0;
+        // A = delta_y
+        let delta_y = p1.1 - p0.1;
+        // d = f(x0 + 1/2, y0 - 1)
+        // d = A(x0 + 1/2) + B(y0 - 1) + C
+        // d = (Ax0 + By0 + C) + 1/2 * A - B
+        // d = 1/2 * A - B
+        // d = 1/2 * delta_y - (- delta_x) = 1/2 * delta_y + delta_x
+        // 2d = delta_y + 2 * delta_x
+        let mut diff = delta_y + 2 * delta_x;
+        //let mut diff = -2 * delta_x - delta_y;
+        while y >= p1.1 {
+            self.draw_point(&Point(x as usize, y as usize), c)?;
+            if diff < 0 {
+                x += 1;
+                diff -= 2 * delta_y;
+            }
+            y -= 1;
+            diff -= 2 * delta_x;
+        }
+        Ok(())
+    }
 }
 
 impl fmt::Display for Screen {
@@ -357,7 +388,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     screen.draw_line(&Point(350, 400), &Point(400, 350), Color::red())?;
     screen.draw_line(&Point(350, 400), &Point(500, 375), Color::red())?;
     // octant 7
-    //screen.draw_line(&somepoint, &Point(300, 150), Color::white())?;
+    screen.draw_line(&somepoint, &Point(300, 150), Color::white())?;
+    screen.draw_line(&Point(275, 100), &somepoint, Color::white())?;
 
     screen.write("out.ppm").expect("Failed to write to file!");
 
