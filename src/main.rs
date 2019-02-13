@@ -209,7 +209,7 @@ impl Screen {
         Ok(())
     }
 
-    //fn _octant1(&mut self, p0: &Point, p1: &Point, c: Color) {}
+    // ========== HELPER FUNCTIONS START ==========
     fn _vertical_line(&mut self, p0: &Point, p1: &Point, c: Color) -> Result<(), OutOfBounds> {
         for i in p0.1..p1.1 {
             self.draw_point(&Point(p0.0, i), c)?;
@@ -338,6 +338,7 @@ impl Screen {
         }
         Ok(())
     }
+    // ========== HELPER FUNCTIONS END ==========
 }
 
 impl fmt::Display for Screen {
@@ -357,6 +358,18 @@ impl fmt::Display for Screen {
             contents.push_str("\n");
         }
         write!(f, "P3 {} {} 255\n{}", COLUMNS, ROWS, contents)
+    }
+}
+
+fn color_the_slope(p0: &Point, p1: &Point) -> Color {
+    match p0.slope(&p1) {
+        None => Color::cyan(),
+        Some(m) if m == 0.0 => Color::purple(),
+        Some(m) if m > 0.0 && m <= 1.0 => Color::green(),
+        Some(m) if m > 1.0 => Color::yellow(),
+        Some(m) if m < 0.0 && m >= -1.0 => Color::red(),
+        Some(m) if m < -1.0 => Color::white(),
+        Some(m) => panic!("Slope={}, not yet covered!", m),
     }
 }
 
@@ -390,6 +403,31 @@ fn main() -> Result<(), Box<dyn Error>> {
     // octant 7
     screen.draw_line(&somepoint, &Point(300, 150), Color::white())?;
     screen.draw_line(&Point(275, 100), &somepoint, Color::white())?;
+
+    // do a frick ton of tests by drawing a circle
+    let center = Point(550, 200);
+    let radius: f64 = 150.0;
+    for x in (center.0 - radius as usize)..(center.0 + radius as usize + 1) {
+        // (x-h)^2 + (y-k)^2 = r^2
+        // ... algebra here ...
+        // y = k +- sqrt(r^2 - (x-h)^2 )
+        // This is a crap way to draw a circle. Since I only increment x by 1,
+        //   the circle has very few lines at 0 and pi radians.
+        // But it's good enough for showing the different octants
+        let inside = radius.powf(2.0)  - (x as f64 - center.0 as f64).powf(2.0);
+
+        let other = Point(x, (center.1 as f64 + inside.sqrt()) as usize);
+        screen.draw_line(&center, &other, color_the_slope(&center, &other))?;
+        // self.draw_line(p0, p1) is the same as self.draw_line(p1, p0)
+        //screen.draw_line(&other, &center, color_the_slope(&center, &other))?;
+
+        let other = Point(x, (center.1 as f64 - inside.sqrt()) as usize);
+        screen.draw_line(&center, &other, color_the_slope(&center, &other))?;
+
+        //let y = (center.1 as f64 - inside.sqrt()) as usize;
+        //screen.draw_line(&center, &Point(x, y), Color::green())?;
+    }
+
 
     screen.write("out.ppm").expect("Failed to write to file!");
 
