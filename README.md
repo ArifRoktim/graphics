@@ -1,6 +1,6 @@
-# w00\_picmaker
+# w01\_line
 
-Makes the `ppm`s
+Makes the line `ppm`s
 
 ## Install rust-lang on Ubuntu
 
