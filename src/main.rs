@@ -1,8 +1,6 @@
-use std::error;
-use std::error::Error;
+use std::error::{self, Error};
 use std::fmt;
-use std::fs::File;
-use std::io::prelude::*;
+use std::{fs::File, io::prelude::*};
 
 const COLUMNS: usize = 750;
 const ROWS: usize = 750;
