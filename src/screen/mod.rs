@@ -9,6 +9,8 @@ pub use point::Point;
 use crate::COLUMNS;
 use crate::ROWS;
 
+use crate::Matrix;
+
 pub struct Screen {
     pub pixels: Vec<Vec<Color>>,
 }
@@ -31,9 +33,6 @@ impl Screen {
         file.write_all(self.to_string().as_bytes())
     }
 
-    // TODO: These should probably return a Result.
-    // Maybe make an OutofBounds error?
-    //fn draw_point(&mut self, p: &Point, c: Color) {
     pub fn draw_point(&mut self, p: &Point, c: Color) -> Result<(), OutOfBounds> {
         // Make (0, 0) the bottom left corner instead of
         // the top left corner
@@ -72,6 +71,16 @@ impl Screen {
             Some(m) if m < 0.0 && m >= -1.0 => self._octant8(p0, p1, c)?,
             Some(m) if m < -1.0 => self._octant7(p0, p1, c)?,
             Some(m) => panic!("Slope={}, not yet covered!", m),
+        }
+        Ok(())
+    }
+
+    pub fn draw_lines(&mut self, m: Matrix, c: Color) -> Result<(), OutOfBounds>{
+        // Iterate over the edge list 2 points at a time
+        for edge in m.m.chunks_exact(2) {
+            let p0 = Point{ x: edge[0][0] as usize, y: edge[0][1] as usize};
+            let p1 = Point{ x: edge[1][0] as usize, y: edge[1][1] as usize};
+            self.draw_line(&p0, &p1, c)?
         }
         Ok(())
     }

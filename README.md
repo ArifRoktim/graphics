@@ -1,4 +1,4 @@
-# w02\_line
+# w02\_matrix
 
 Assignment:
 
