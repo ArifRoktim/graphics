@@ -75,7 +75,7 @@ impl Screen {
         Ok(())
     }
 
-    pub fn draw_lines(&mut self, m: Matrix, c: Color) -> Result<(), OutOfBounds>{
+    pub fn draw_lines(&mut self, m: &Matrix, c: Color) -> Result<(), OutOfBounds>{
         // Iterate over the edge list 2 points at a time
         for edge in m.m.chunks_exact(2) {
             let p0 = Point{ x: edge[0][0] as usize, y: edge[0][1] as usize};
