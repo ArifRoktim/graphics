@@ -58,6 +58,30 @@ impl Matrix {
         Matrix::from(m)
     }
 
+    //pub fn new_rot_x(x: f64, y: f64, z: f64) -> Matrix {
+    //}
+
+    //pub fn new_rot_y(x: f64, y: f64, z: f64) -> Matrix {
+    //}
+
+    pub fn new_rot_z(theta: f64) -> Matrix {
+        // theta(θ) is in degrees
+        // rotation_z matrix:
+        // [cosθ, -sinθ, 0, 0]
+        // [sinθ, cosθ, 0, 0]
+        // [0, 0, 1, 0]
+        // [0, 0, 0, 1]
+        let radians = theta.to_radians();
+        let (sin, cos) = radians.sin_cos();
+        let m = &[
+            [cos, sin, 0., 0.,],
+            [-1. * sin, cos, 0., 0.,],
+            [0., 0., 1., 0.,],
+            [0., 0., 0., 1.,],
+        ][..];
+        Matrix::from(m)
+    }
+
     // Modifies matrix to become the identity matrix
     // Assumes matrix is a square matrix less than or equal to 4x4 in size
     pub fn ident(&mut self) {
@@ -105,7 +129,16 @@ impl Matrix {
         self.add_point(x0, y0, z0);
         self.add_point(x1, y1, z1);
     }
+}
 
+impl From<&[ [f64; 4] ]> for Matrix {
+    fn from(matrix: &[ [f64; 4] ]) -> Self {
+        let mut ret = Matrix::new(0);
+        for &row in matrix {
+            ret.m.push(row);
+        };
+        ret
+    }
 }
 
 impl fmt::Display for Matrix {

@@ -27,5 +27,14 @@ fn main() -> Result<(), Box<dyn Error>> {
     println!("Applying scale(2, 3, 4)\
              \nPrinting edge list:\n{}", edges);
 
+    let mut edges = Matrix::new(0);
+    edges.add_edge(0.0, 0.0, 0.0, 100.0, 0.0, 1000.0);
+    edges.add_edge(0.0, 0.0, 0.0, 100.0, 100.0, 100.0);
+    println!("Printing edge list:\n{}", edges);
+
+    let t0 = Matrix::new_rot_z(90.);
+    t0.mult(&mut edges);
+    println!("Applying rotate z(90)\
+             \nPrinting edge list:\n{}", edges);
     Ok(())
 }
