@@ -81,21 +81,28 @@ impl Matrix {
 impl fmt::Display for Matrix {
     // Print 2d array so that each point is a columns
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        // Allocate strings large enough to hold each row
-        // Each row has an f64 (assumed to be 4 digits before the point for now)
-        // formatted with 2 digits after the decimal and a space
-        let points = 2;
-        let size: usize = (4 + points + 2) * (self.cols() + 2);
+        // precision of the floating point
+        let prec: usize = 2;
+        // extra padding to make numbers line up
+        let width: usize = 8;
+        // Allocate strings large enough to hold each row.
+        // Each row has an f64 that has a min width of 9 chars (padding + space)
+        // but go above that just to make sure there aren't an reallocations
+        let size: usize = (width + prec + 2) * (self.cols() + 2);
         let mut x = String::with_capacity(size);
         let mut y = String::with_capacity(size);
         let mut z = String::with_capacity(size);
         let mut one = String::with_capacity(size);
 
         for row in &self.m {
-            x.push_str(&format!("{:.*} ", points, row[0]));
-            y.push_str(&format!("{:.*} ", points, row[1]));
-            z.push_str(&format!("{:.*} ", points, row[2]));
-            one.push_str(&format!("{:.*} ", points, row[3]));
+            x.push_str(&format!("{: <width$.prec$} ",
+                                row[0], prec = prec, width = width));
+            y.push_str(&format!("{: <width$.prec$} ",
+                                row[1], prec = prec, width = width));
+            z.push_str(&format!("{: <width$.prec$} ",
+                                row[2], prec = prec, width = width));
+            one.push_str(&format!("{: <width$.prec$} ",
+                                row[3], prec = prec, width = width));
         }
         write!(f, "{}\n{}\n{}\n{}", x, y, z, one)
     }
