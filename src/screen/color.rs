@@ -7,7 +7,6 @@ pub struct Color {
     pub blue: u8,
 }
 
-#[allow(dead_code)]
 impl Color {
     pub fn new(r: u8, g: u8, b: u8) -> Color {
         Color {

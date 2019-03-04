@@ -1,11 +1,12 @@
 use std::error::Error;
 
-//mod screen;
-//mod matrix;
+pub mod matrix;
+// needed by screen module
+use matrix::Matrix;
+pub mod screen;
 
 //use screen::Screen;
 //use screen::Color;
-//use matrix::Matrix;
 
 const COLUMNS: usize = 500;
 const ROWS: usize = 500;
