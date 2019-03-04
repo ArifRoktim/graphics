@@ -85,14 +85,24 @@ impl Matrix {
     // Modifies matrix to become the identity matrix
     // Assumes matrix is a square matrix less than or equal to 4x4 in size
     pub fn ident(&mut self) {
+        if self.rows() != 4 {
+            panic!("Can't call method ident() on non 4x4 matrix!");
+        }
         for (row_n, row) in self.m.iter_mut().enumerate() {
-            match row_n {
-                0 => row[0] = 1.0,
-                1 => row[1] = 1.0,
-                2 => row[2] = 1.0,
-                3 => row[3] = 1.0,
-                _ => panic!("Array isn't square or is larger than 4x4!"),
+            for (col_n, col) in row.iter_mut().enumerate() {
+                if row_n == col_n {
+                    *col = 1.;
+                } else {
+                    *col = 0.;
+                }
             }
+            //match row_n {
+            //    0 => row[0] = 1.0,
+            //    1 => row[1] = 1.0,
+            //    2 => row[2] = 1.0,
+            //    3 => row[3] = 1.0,
+            //    _ => panic!("Array isn't square or is larger than 4x4!"),
+            //}
         }
     }
 
