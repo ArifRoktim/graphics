@@ -28,6 +28,36 @@ impl Matrix {
         Matrix { m }
     }
 
+    pub fn new_translate(x: f64, y: f64, z: f64) -> Matrix {
+        // Translation matrix:
+        // [1, 0, 0, x]
+        // [0, 1, 0, y]
+        // [0, 0, 1, z]
+        // [0, 0, 0, 1]
+        let m = &[
+            [1., 0., 0., 0.,],
+            [0., 1., 0., 0.,],
+            [0., 0., 1., 0.,],
+            [x, y, z, 1.],
+        ][..];
+        Matrix::from(m)
+    }
+
+    pub fn new_scale(x: f64, y: f64, z: f64) -> Matrix {
+        // scale matrix:
+        // [a, 0, 0, 0]
+        // [0, b, 0, 0]
+        // [0, 0, c, 0]
+        // [0, 0, 0, 1]
+        let m = &[
+            [x, 0., 0., 0.,],
+            [0., y, 0., 0.,],
+            [0., 0., z, 0.,],
+            [0., 0., 0., 1.,],
+        ][..];
+        Matrix::from(m)
+    }
+
     // Modifies matrix to become the identity matrix
     // Assumes matrix is a square matrix less than or equal to 4x4 in size
     pub fn ident(&mut self) {
