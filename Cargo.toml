@@ -1,5 +1,5 @@
 [package]
-name = "w02_matrix"
+name = "w03_transform"
 version = "0.1.0"
 authors = ["Arif Roktim <aroktim@stuy.edu>"]
 edition = "2018"
