@@ -58,11 +58,41 @@ impl Matrix {
         Matrix::from(m)
     }
 
-    //pub fn new_rot_x(x: f64, y: f64, z: f64) -> Matrix {
-    //}
+    pub fn new_rot_x(theta: f64) -> Matrix {
+        // theta(θ) is in degrees
+        // rotation_x matrix:
+        // [1, 0, 0, 0]
+        // [0, cosθ, -sinθ, 0]
+        // [0, sinθ, cosθ, 0]
+        // [0, 0, 0, 1]
+        let radians = theta.to_radians();
+        let (sin, cos) = radians.sin_cos();
+        let m = &[
+            [1., 0., 0., 0.,],
+            [0., cos, sin, 0.,],
+            [0., -1. * sin, cos, 0.,],
+            [0., 0., 0., 1.,],
+        ][..];
+        Matrix::from(m)
+    }
 
-    //pub fn new_rot_y(x: f64, y: f64, z: f64) -> Matrix {
-    //}
+    pub fn new_rot_y(theta: f64) -> Matrix {
+        // theta(θ) is in degrees
+        // rotation_y matrix:
+        // [cosθ, 0, sinθ, 0]
+        // [0, 1, 0, 0]
+        // [-sinθ, 0, cosθ, 0]
+        // [0, 0, 0, 1]
+        let radians = theta.to_radians();
+        let (sin, cos) = radians.sin_cos();
+        let m = &[
+            [cos, 0., -1. * sin, 0.,],
+            [0., 1., 0., 0.,],
+            [sin, 0., cos, 0.,],
+            [0., 0., 0., 1.,],
+        ][..];
+        Matrix::from(m)
+    }
 
     pub fn new_rot_z(theta: f64) -> Matrix {
         // theta(θ) is in degrees
