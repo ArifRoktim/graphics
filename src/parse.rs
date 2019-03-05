@@ -21,11 +21,12 @@ pub fn parse_file(filename: &str, screen: &mut Screen,
             "rotate" => rotate(transform, iter.next()),
             "save" => save(screen, iter.next()),
             "display" => {
-                draw_lines(screen, edges, Color::green());
+                draw_lines(screen, edges, Color::purple());
                 display(screen);
             }
             "ident" => transform.ident(),
             "apply" => transform.mult(edges),
+            "" => {},
             _ => panic!("\"{}\" not yet implemented!", line),
         }
     }
