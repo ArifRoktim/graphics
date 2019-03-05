@@ -1,6 +1,8 @@
 use std::error;
 use std::{fs::File, io::prelude::*};
 use std::fmt;
+use std::path::Path;
+use std::process::{Command,Stdio};
 
 mod color;
 mod point;
@@ -28,9 +30,28 @@ impl Screen {
         }
     }
 
-    pub fn write(&self, f: &str) -> std::io::Result<()> {
+    pub fn write_ppm(&self, f: &str) -> std::io::Result<()> {
         let mut file = File::create(f)?;
         file.write_all(self.to_string().as_bytes())
+    }
+
+    pub fn write(&self, f: &str) -> std::io::Result<()> {
+        let base = Path::new(f).file_stem();
+        match base {
+            Some(base) => {
+                let ppm = base.to_str().unwrap().to_owned() + ".ppm";
+                self.write_ppm(&ppm)?;
+                if let Ok(mut proc) = Command::new("convert")
+                    .arg(ppm).arg(f).spawn() {
+                        proc.wait().unwrap();
+                    } else {
+                        eprintln!("Error running `convert` command! \
+                                  Is Image Magick installed?");
+                    }
+            },
+            None => panic!("Please specify a file name!"),
+        }
+        Ok(())
     }
 
     pub fn fill(&mut self, c: Color) {
