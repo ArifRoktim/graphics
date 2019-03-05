@@ -2,7 +2,7 @@ use std::error;
 use std::{fs::File, io::prelude::*};
 use std::fmt;
 use std::path::Path;
-use std::process::{Command,Stdio};
+use std::process::Command;
 
 mod color;
 mod point;
