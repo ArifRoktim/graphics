@@ -1,8 +1,9 @@
-use crate::screen::Screen;
+use crate::screen::{Color,Screen};
 use crate::matrix::Matrix;
 
+use std::io::prelude::*;
 use std::fs;
-use std::process;
+use std::process::{Command,Stdio};
 
 enum Axis {
     X,
@@ -21,7 +22,10 @@ pub fn parse_file(filename: &str, screen: &mut Screen,
     while let Some(line) = iter.next() {
         match line {
             "line" => draw_line(edges, iter.next()),
-            //"display" => 
+            "display" => {
+                draw(screen, edges, Color::green());
+                display(screen);
+            }
             _ => panic!("\"{}\" not yet implemented!", line),
         }
     }
@@ -40,6 +44,22 @@ fn draw_line(edges: &mut Matrix, args: Option<&str>) {
             edges.add_edge(*x0, *y0, *z0, *x1, *y1, *z1);
         },
         _ => panic!("Line requires 6 arguments!"),
+    }
+}
+
+fn draw(screen: &mut Screen, edges: &mut Matrix, c: Color) {
+    // clear screen
+    screen.fill(Color::black());
+    // ignore possible error
+    let _ = screen.draw_lines(edges, c);
+}
+
+fn display(screen: &Screen) {
+    if let Ok(mut proc) = Command::new("display").stdin(Stdio::piped()).spawn() {
+        proc.stdin.as_mut().unwrap()
+            .write_all(screen.to_string().as_bytes())
+            .unwrap();
+        proc.wait().unwrap();
     }
 }
 
