@@ -5,12 +5,6 @@ use std::io::prelude::*;
 use std::fs;
 use std::process::{Command,Stdio};
 
-enum Axis {
-    X,
-    Y,
-    Z,
-}
-
 pub fn parse_file(filename: &str, screen: &mut Screen,
                   edges: &mut Matrix, transform: &mut Matrix) {
     let contents = match fs::read_to_string(filename) {
@@ -24,6 +18,8 @@ pub fn parse_file(filename: &str, screen: &mut Screen,
             "line" => draw_line(edges, iter.next()),
             "scale" => scale(transform, iter.next()),
             "move" => translate(transform, iter.next()),
+            "rotate" => rotate(transform, iter.next()),
+            "save" => save(screen, iter.next()),
             "display" => {
                 draw_lines(screen, edges, Color::green());
                 display(screen);
@@ -33,51 +29,73 @@ pub fn parse_file(filename: &str, screen: &mut Screen,
             _ => panic!("\"{}\" not yet implemented!", line),
         }
     }
+}
 
+fn save(screen: &Screen, args: Option<&str>) {
+    let err_msg = "Save requires a file name!";
+    let args = args.expect(err_msg);
+    screen.write(args).unwrap();
 }
 
 fn draw_line(edges: &mut Matrix, args: Option<&str>) {
-    let args = args.expect("No arguments provided for `line` command!");
+    let err_msg = "Line requires 6 f64 arguments!";
+    let args = args.expect(err_msg);
     // Split by whitespace, parse the `str`s into `f64`s, then collect into
     // a vector. Use &* on vector to get a slice
     let args = &* args.split_whitespace()
-        .map(|n| n.parse::<f64>().unwrap())
+        .map(|n| n.parse::<f64>().expect(err_msg))
         .collect::<Vec<f64>>();
     match args {
         [x0, y0, z0, x1, y1, z1] => {
             edges.add_edge(*x0, *y0, *z0, *x1, *y1, *z1);
         },
-        _ => panic!("Line requires 6 arguments!"),
+        _ => panic!(err_msg),
+    }
+}
+
+fn rotate(transform: &mut Matrix, args: Option<&str>) {
+    let err_msg = "Rotate requires an axis ('x', 'y', or 'z') and a f64!";
+    let args = args.expect(err_msg);
+    let args: Vec<&str> = args.split_whitespace().collect();
+    let theta: f64 = args.get(1).expect(err_msg)
+        .parse().expect(err_msg);
+    match args[0] {
+        "x" => Matrix::new_rot_x(theta).mult(transform),
+        "y" => Matrix::new_rot_y(theta).mult(transform),
+        "z" => Matrix::new_rot_z(theta).mult(transform),
+        _ => panic!(err_msg),
     }
 }
 
 fn scale(transform: &mut Matrix, args: Option<&str>) {
-    let args = args.expect("No arguments provided for `scale` command!");
+    let err_msg = "Scale requires 3 f64 arguments!";
+    let args = args.expect(err_msg);
     // Split by whitespace, parse the `str`s into `f64`s, then collect into
     // a vector. Use &* on vector to get a slice
     let args = &* args.split_whitespace()
-        .map(|n| n.parse::<f64>().unwrap())
+        .map(|n| n.parse::<f64>().expect(err_msg))
         .collect::<Vec<f64>>();
     match args {
         [sx, sy, sz] => {
             Matrix::new_scale(*sx, *sy, *sz).mult(transform);
         }
-        _ => panic!("Scale requires 3 arguments!"),
+        _ => panic!(err_msg),
     }
 }
 
 fn translate(transform: &mut Matrix, args: Option<&str>) {
-    let args = args.expect("No arguments provided for `move` command!");
+    let err_msg = "Move requires 3 f64 arguments!";
+    let args = args.expect(err_msg);
     // Split by whitespace, parse the `str`s into `f64`s, then collect into
     // a vector. Use &* on vector to get a slice
     let args = &* args.split_whitespace()
-        .map(|n| n.parse::<f64>().unwrap())
+        .map(|n| n.parse::<f64>().expect(err_msg))
         .collect::<Vec<f64>>();
     match args {
         [tx, ty, tz] => {
             Matrix::new_translate(*tx, *ty, *tz).mult(transform);
         }
-        _ => panic!("Move requires 3 arguments!"),
+        _ => panic!(err_msg),
     }
 }
 
