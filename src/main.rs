@@ -1,40 +1,27 @@
-use std::error::Error;
-
 pub mod matrix;
 // needed by screen module
 use matrix::Matrix;
 pub mod screen;
+pub mod parse;
 
-//use screen::Screen;
-//use screen::Color;
+use screen::{Screen,Color};
+use std::env;
+use std::process;
 
 const COLUMNS: usize = 500;
 const ROWS: usize = 500;
 
-fn main() -> Result<(), Box<dyn Error>> {
+fn main() {
+    let args: Vec<String> = env::args().collect();
+    if args.len() < 2 {
+        eprintln!("Not enough arguments! Provide a script file!");
+        process::exit(1);
+    }
+    let filename = &args[1];
+
+    let mut screen = Screen::new(Color::black());
     let mut edges = Matrix::new(0);
+    let mut transform = Matrix::new(4);
 
-    edges.add_edge(0.0, 0.0, 0.0, 100.0, 100.0, 100.0);
-    println!("Printing edge list:\n{}", edges);
-
-    let t0 = Matrix::new_translate(10.0, 20.0, 30.0);
-    t0.mult(&mut edges);
-    println!("Applying translation(10, 20, 30)\
-             \nPrinting edge list:\n{}", edges);
-
-    let t0 = Matrix::new_scale(2., 3., 4.);
-    t0.mult(&mut edges);
-    println!("Applying scale(2, 3, 4)\
-             \nPrinting edge list:\n{}", edges);
-
-    let mut edges = Matrix::new(0);
-    edges.add_edge(0.0, 0.0, 0.0, 100.0, 0.0, 1000.0);
-    edges.add_edge(0.0, 0.0, 0.0, 100.0, 100.0, 100.0);
-    println!("Printing edge list:\n{}", edges);
-
-    let t0 = Matrix::new_rot_z(90.);
-    t0.mult(&mut edges);
-    println!("Applying rotate z(90)\
-             \nPrinting edge list:\n{}", edges);
-    Ok(())
+    parse::parse_file(filename, &mut screen, &mut edges, &mut transform);
 }

@@ -33,6 +33,14 @@ impl Screen {
         file.write_all(self.to_string().as_bytes())
     }
 
+    pub fn fill(&mut self, c: Color) {
+        for row in self.pixels.iter_mut() {
+            for pixel in row.iter_mut() {
+                pixel.color(c)
+            }
+        }
+    }
+
     pub fn draw_point(&mut self, p: &Point, c: Color) -> Result<(), OutOfBounds> {
         // Make (0, 0) the bottom left corner instead of
         // the top left corner
@@ -44,7 +52,7 @@ impl Screen {
             x: p.x,
             y: ROWS - 1 - p.y,
         };
-        // Get the pixel ay point p and set its color
+        // Get the pixel at point p and set its color
         // Man this looks ugly :(
         &self.pixels[p.y][p.x].color(c);
         Ok(())
