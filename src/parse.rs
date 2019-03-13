@@ -1,10 +1,12 @@
 use crate::screen::{Color,Screen};
 use crate::matrix::Matrix;
-use crate::draw;
+use crate::draw::{self, Curve};
 
 use std::io::prelude::*;
 use std::fs;
 use std::process::{Command,Stdio};
+
+const STEP: f64 = 1.0;
 
 pub fn parse_file(filename: &str, screen: &mut Screen,
                   edges: &mut Matrix, transform: &mut Matrix) {
@@ -22,6 +24,7 @@ pub fn parse_file(filename: &str, screen: &mut Screen,
 
             "line"    => draw_line(edges, iter.next()),
             "circle"  =>    circle(edges, iter.next()),
+            "hermite" =>   hermite(edges, iter.next()),
             "scale"   =>     scale(transform, iter.next()),
             "move"    => translate(transform, iter.next()),
             "rotate"  =>    rotate(transform, iter.next()),
@@ -64,7 +67,24 @@ fn circle(edges: &mut Matrix, args: Option<&str>) {
         .collect::<Vec<f64>>();
     match *args {
         [cx, cy, cz, r] => {
-            draw::add_circle(edges, cx, cy, cz, r, 1.0);
+            draw::add_circle(edges, cx, cy, cz, r, STEP);
+        },
+        _ => panic!(err_msg),
+    }
+}
+
+fn hermite(edges: &mut Matrix, args: Option<&str>) {
+    let err_msg = "Hermite requires 8 f64 arguments!";
+    let args = args.expect(err_msg);
+    // Split by whitespace, parse the `str`s into `f64`s, then collect into
+    // a vector. Use &* on vector to get a slice
+    let args = &* args.split_whitespace()
+        .map(|n| n.parse::<f64>().expect(err_msg))
+        .collect::<Vec<f64>>();
+    match *args {
+        [p0x, p0y, p1x, p1y, r0x, r0y, r1x, r1y] => {
+            let curve = Curve::Hermite {p0x, p0y, p1x, p1y, r0x, r0y, r1x, r1y};
+            draw::add_curve(edges, &curve, STEP);
         },
         _ => panic!(err_msg),
     }

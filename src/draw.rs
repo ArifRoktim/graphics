@@ -2,6 +2,66 @@ use std::f64::consts::PI;
 use crate::matrix::Matrix;
 
 const TOTAL_STEPS: i32 = 100;
+
+pub enum Curve {
+    Hermite {p0x: f64, p0y: f64, p1x: f64, p1y: f64,
+             r0x: f64, r0y: f64, r1x: f64, r1y: f64},
+    Bezier  {p0x: f64, p0y: f64, p1x: f64, p1y: f64,
+             p2x: f64, p2y: f64, p3x: f64, p3y: f64},
+}
+
+impl Curve {
+    pub fn gen_coefs(&self) -> (Matrix, Matrix) {
+        let mult = self.gen_coef_helper();
+        match *self {
+            Curve::Hermite {p0x, p0y, p1x, p1y, r0x, r0y, r1x, r1y} => {
+                // [p0]
+                // [p1]
+                // [r0]
+                // [r1]
+                let mut coefs_x = Matrix::from(&[
+                    [p0x, p1x, r0x, r1x],
+                ][..]);
+                let mut coefs_y = Matrix::from(&[
+                    [p0y, p1y, r0y, r1y],
+                ][..]);
+                mult.mult(&mut coefs_x);
+                mult.mult(&mut coefs_y);
+                (coefs_x, coefs_y)
+            },
+            _ => panic!("hi")
+        }
+    }
+
+    fn gen_coef_helper(&self) -> Matrix {
+        match self {
+            Curve::Hermite {..} => {
+                // [2, -2, 1, 1]
+                // [-3, 3, -2, -1]
+                // [0, 0, 1, 0]
+                // [1, 0, 0, 0]
+                let m = &[
+                    [2., -3., 0., 1.,],
+                    [-2., 3., 0., 0.,],
+                    [1., -2., 1., 0.,],
+                    [1., -1., 0., 0.,],
+                ][..];
+                Matrix::from(m)
+            },
+            Curve::Bezier {..} => {
+                // [-1, 3, -3, 1]
+                // [3, -6, 3, 0]
+                // [-3, 3, 0, 0]
+                // [1, 0, 0, 0]
+                let m = &[
+                ][..];
+                Matrix::from(m)
+            },
+        }
+    }
+
+}
+
 fn add_point(edges: &mut Matrix, x: f64, y: f64, z: f64) {
     let point = [x, y, z, 1.0];
     edges.m.push(point);
@@ -35,3 +95,29 @@ pub fn add_circle(edges: &mut Matrix, cx: f64, cy: f64, cz: f64, r: f64, step: f
     }
 }
 
+pub fn add_curve(edges: &mut Matrix, curve: &Curve, step: f64) {
+    let (mut x_prev, mut y_prev) = match *curve {
+        Curve::Hermite {p0x, p0y, ..} => (p0x, p0y),
+        Curve::Bezier  {p0x, p0y, ..} => (p0x, p0y),
+    };
+    let (xs, ys) = curve.gen_coefs();
+
+    let mut t = 0.0f64;
+    while (t as i32) <= TOTAL_STEPS {
+        let x_next = xs.m[0][0] * (t / TOTAL_STEPS as f64).powi(3)
+            + xs.m[0][1] * (t / TOTAL_STEPS as f64).powi(2)
+            + xs.m[0][2] * (t / TOTAL_STEPS as f64)
+            + xs.m[0][3];
+        let y_next = ys.m[0][0] * (t / TOTAL_STEPS as f64).powi(3)
+            + ys.m[0][1] * (t / TOTAL_STEPS as f64).powi(2)
+            + ys.m[0][2] * (t / TOTAL_STEPS as f64)
+            + ys.m[0][3];
+
+        add_edge(edges, x_prev, y_prev, 0.0, x_next, y_next, 0.0);
+
+        x_prev = x_next;
+        y_prev = y_next;
+
+        t += step;
+    }
+}
