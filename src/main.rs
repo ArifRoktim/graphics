@@ -19,7 +19,8 @@ fn main() {
     }
     let filename = &args[1];
 
-    let mut screen = Screen::new(Color::black());
+    let mut screen = Screen::new(Color::new(234, 100, 89));
+
     let mut edges = Matrix::new(0);
     let mut transform = Matrix::new(4);
 

@@ -31,7 +31,7 @@ pub fn parse_file(filename: &str, screen: &mut Screen,
             "rotate"  =>    rotate(transform, iter.next()),
             "save"    => save(screen, iter.next()),
             "display" => {
-                draw_lines(screen, edges, Color::green());
+                draw_lines(screen, edges, Color::black());
                 display(screen);
             }
             "ident" => transform.ident(),
