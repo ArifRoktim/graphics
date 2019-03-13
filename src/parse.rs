@@ -25,6 +25,7 @@ pub fn parse_file(filename: &str, screen: &mut Screen,
             "line"    => draw_line(edges, iter.next()),
             "circle"  =>    circle(edges, iter.next()),
             "hermite" =>   hermite(edges, iter.next()),
+            "bezier"  =>    bezier(edges, iter.next()),
             "scale"   =>     scale(transform, iter.next()),
             "move"    => translate(transform, iter.next()),
             "rotate"  =>    rotate(transform, iter.next()),
@@ -84,6 +85,23 @@ fn hermite(edges: &mut Matrix, args: Option<&str>) {
     match *args {
         [p0x, p0y, p1x, p1y, r0x, r0y, r1x, r1y] => {
             let curve = Curve::Hermite {p0x, p0y, p1x, p1y, r0x, r0y, r1x, r1y};
+            draw::add_curve(edges, &curve, STEP);
+        },
+        _ => panic!(err_msg),
+    }
+}
+
+fn bezier(edges: &mut Matrix, args: Option<&str>) {
+    let err_msg = "Hermite requires 8 f64 arguments!";
+    let args = args.expect(err_msg);
+    // Split by whitespace, parse the `str`s into `f64`s, then collect into
+    // a vector. Use &* on vector to get a slice
+    let args = &* args.split_whitespace()
+        .map(|n| n.parse::<f64>().expect(err_msg))
+        .collect::<Vec<f64>>();
+    match *args {
+        [p0x, p0y, p1x, p1y, p2x, p2y, p3x, p3y] => {
+            let curve = Curve::Bezier {p0x, p0y, p1x, p1y, p2x, p2y, p3x, p3y};
             draw::add_curve(edges, &curve, STEP);
         },
         _ => panic!(err_msg),

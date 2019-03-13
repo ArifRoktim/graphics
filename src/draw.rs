@@ -13,24 +13,37 @@ pub enum Curve {
 impl Curve {
     pub fn gen_coefs(&self) -> (Matrix, Matrix) {
         let mult = self.gen_coef_helper();
+        let mut coefs_x;
+        let mut coefs_y;
         match *self {
             Curve::Hermite {p0x, p0y, p1x, p1y, r0x, r0y, r1x, r1y} => {
                 // [p0]
                 // [p1]
                 // [r0]
                 // [r1]
-                let mut coefs_x = Matrix::from(&[
+                coefs_x = Matrix::from(&[
                     [p0x, p1x, r0x, r1x],
                 ][..]);
-                let mut coefs_y = Matrix::from(&[
+                coefs_y = Matrix::from(&[
                     [p0y, p1y, r0y, r1y],
                 ][..]);
-                mult.mult(&mut coefs_x);
-                mult.mult(&mut coefs_y);
-                (coefs_x, coefs_y)
             },
-            _ => panic!("hi")
+            Curve::Bezier {p0x, p0y, p1x, p1y, p2x, p2y, p3x, p3y} => {
+                // [p0]
+                // [p1]
+                // [p2]
+                // [p3]
+                coefs_x = Matrix::from(&[
+                    [p0x, p1x, p2x, p3x],
+                ][..]);
+                coefs_y = Matrix::from(&[
+                    [p0y, p1y, p2y, p3y],
+                ][..]);
+            }
         }
+        mult.mult(&mut coefs_x);
+        mult.mult(&mut coefs_y);
+        (coefs_x, coefs_y)
     }
 
     fn gen_coef_helper(&self) -> Matrix {
@@ -54,6 +67,10 @@ impl Curve {
                 // [-3, 3, 0, 0]
                 // [1, 0, 0, 0]
                 let m = &[
+                    [-1., 3., -3., 1.,],
+                    [3., -6., 3., 0.,],
+                    [-3., 3., 0., 0.,],
+                    [1., 0., 0., 0.,],
                 ][..];
                 Matrix::from(m)
             },
