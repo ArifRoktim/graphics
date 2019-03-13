@@ -11,7 +11,7 @@ pub use point::Point;
 use crate::COLUMNS;
 use crate::ROWS;
 
-use crate::Matrix;
+use crate::matrix::Matrix;
 
 pub struct Screen {
     pub pixels: Vec<Vec<Color>>,

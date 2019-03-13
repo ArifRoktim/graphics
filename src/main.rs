@@ -1,9 +1,8 @@
 pub mod matrix;
-// needed by screen module
-use matrix::Matrix;
 pub mod screen;
 pub mod parse;
 
+use matrix::Matrix;
 use screen::{Screen,Color};
 use std::env;
 use std::process;
