@@ -1,5 +1,7 @@
+use std::f64::consts::PI;
 use std::fmt;
 
+const TOTAL_STEPS: i32 = 100;
 const COLS: usize = 4;
 // Each point in the matrix is a row that is 4 columns wide
 // For the purposes of display and multiplication, this is switched.
@@ -169,6 +171,29 @@ impl Matrix {
         self.add_point(x0, y0, z0);
         self.add_point(x1, y1, z1);
     }
+
+    pub fn add_circle(&mut self, cx: f64, cy: f64, cz: f64, r: f64, step: f64){
+        // Draw a circle using parametric equations
+        // x_prev, y_prec, cz, and the 1st point given to `add_edge`
+        let mut x_prev = cx + r;
+        let mut y_prev = cy;
+        // t goes from 0 -> TOTAL_STEPS in increments of `step`
+        let mut t = 0.0;
+        while (t as i32) <= TOTAL_STEPS {
+            let theta = t / TOTAL_STEPS as f64;
+            let (sin, cos) = (2.0 * PI * theta).sin_cos();
+            let x_next = r * cos + cx;
+            let y_next = r * sin + cy;
+
+            self.add_edge(x_prev, y_prev, cz, x_next, y_next, cz);
+
+            x_prev = x_next;
+            y_prev = y_next;
+
+            t += step;
+        }
+    }
+
 }
 
 impl From<&[ [f64; 4] ]> for Matrix {
