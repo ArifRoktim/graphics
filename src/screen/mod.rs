@@ -113,8 +113,10 @@ impl Screen {
         }
         Ok(())
     }
+}
 
-    // ========== PRIVATE FUNCTIONS START ==========
+// private functions
+impl Screen {
     fn _vertical_line(&mut self, p0: &Point, p1: &Point, c: Color) -> Result<(), OutOfBounds> {
         for i in p0.y..p1.y {
             self.draw_point(&Point { x: p0.x, y: i }, c)?;
@@ -267,7 +269,6 @@ impl Screen {
         }
         Ok(())
     }
-    // ========== PRIVATE FUNCTIONS END ==========
 }
 
 impl fmt::Display for Screen {
