@@ -15,18 +15,21 @@ use crate::matrix::Matrix;
 
 pub struct Screen {
     pub pixels: Vec<Vec<Color>>,
+    pub color: Color,
 }
 
 impl Screen {
     pub fn blank() -> Screen {
         Screen {
             pixels: vec![vec![Color::black(); COLUMNS]; ROWS],
+            color: Color::black(),
         }
     }
 
     pub fn new(c: Color) -> Screen {
         Screen {
             pixels: vec![vec![c; COLUMNS]; ROWS],
+            color: c,
         }
     }
 
@@ -52,6 +55,10 @@ impl Screen {
             None => panic!("Please specify a file name!"),
         }
         Ok(())
+    }
+
+    pub fn clear(&mut self) {
+        self.fill(self.color);
     }
 
     pub fn fill(&mut self, c: Color) {

@@ -162,7 +162,7 @@ fn save(screen: &Screen, args: Option<&str>) {
 
 fn draw_lines(screen: &mut Screen, edges: &mut Matrix, c: Color) {
     // clear screen
-    screen.fill(Color::black());
+    screen.clear();
     // ignore possible error
     let _ = screen.draw_lines(edges, c);
 }
