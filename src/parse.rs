@@ -45,9 +45,9 @@ fn draw_line(edges: &mut Matrix, args: Option<&str>) {
     let args = &* args.split_whitespace()
         .map(|n| n.parse::<f64>().expect(err_msg))
         .collect::<Vec<f64>>();
-    match args {
+    match *args {
         [x0, y0, z0, x1, y1, z1] => {
-            edges.add_edge(*x0, *y0, *z0, *x1, *y1, *z1);
+            edges.add_edge(x0, y0, z0, x1, y1, z1);
         },
         _ => panic!(err_msg),
     }
@@ -61,9 +61,9 @@ fn circle(edges: &mut Matrix, args: Option<&str>) {
     let args = &* args.split_whitespace()
         .map(|n| n.parse::<f64>().expect(err_msg))
         .collect::<Vec<f64>>();
-    match args {
+    match *args {
         [cx, cy, cz, r] => {
-            edges.add_circle(*cx, *cy, *cz, *r, 1.0);
+            edges.add_circle(cx, cy, cz, r, 1.0);
         },
         _ => panic!(err_msg),
     }
@@ -77,9 +77,9 @@ fn scale(transform: &mut Matrix, args: Option<&str>) {
     let args = &* args.split_whitespace()
         .map(|n| n.parse::<f64>().expect(err_msg))
         .collect::<Vec<f64>>();
-    match args {
+    match *args {
         [sx, sy, sz] => {
-            Matrix::new_scale(*sx, *sy, *sz).mult(transform);
+            Matrix::new_scale(sx, sy, sz).mult(transform);
         }
         _ => panic!(err_msg),
     }
@@ -93,9 +93,9 @@ fn translate(transform: &mut Matrix, args: Option<&str>) {
     let args = &* args.split_whitespace()
         .map(|n| n.parse::<f64>().expect(err_msg))
         .collect::<Vec<f64>>();
-    match args {
+    match *args {
         [tx, ty, tz] => {
-            Matrix::new_translate(*tx, *ty, *tz).mult(transform);
+            Matrix::new_translate(tx, ty, tz).mult(transform);
         }
         _ => panic!(err_msg),
     }
