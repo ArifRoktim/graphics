@@ -15,6 +15,10 @@ pub fn parse_file(filename: &str, screen: &mut Screen,
     let mut iter = contents.lines();
     while let Some(line) = iter.next() {
         match line {
+            // ignore empty lines and lines that start with #
+            "" => {},
+            comment if comment.starts_with('#') => {},
+
             "line" => draw_line(edges, iter.next()),
             "scale" => scale(transform, iter.next()),
             "move" => translate(transform, iter.next()),
@@ -26,7 +30,7 @@ pub fn parse_file(filename: &str, screen: &mut Screen,
             }
             "ident" => transform.ident(),
             "apply" => transform.mult(edges),
-            "" => {},
+            // some command that's not valid or yet implemented
             _ => panic!("\"{}\" not yet implemented!", line),
         }
     }
