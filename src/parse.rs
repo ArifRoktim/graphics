@@ -1,5 +1,6 @@
 use crate::screen::{Color,Screen};
 use crate::matrix::Matrix;
+use crate::draw;
 
 use std::io::prelude::*;
 use std::fs;
@@ -47,7 +48,7 @@ fn draw_line(edges: &mut Matrix, args: Option<&str>) {
         .collect::<Vec<f64>>();
     match *args {
         [x0, y0, z0, x1, y1, z1] => {
-            edges.add_edge(x0, y0, z0, x1, y1, z1);
+            draw::add_edge(edges, x0, y0, z0, x1, y1, z1);
         },
         _ => panic!(err_msg),
     }
@@ -63,7 +64,7 @@ fn circle(edges: &mut Matrix, args: Option<&str>) {
         .collect::<Vec<f64>>();
     match *args {
         [cx, cy, cz, r] => {
-            edges.add_circle(cx, cy, cz, r, 1.0);
+            draw::add_circle(edges, cx, cy, cz, r, 1.0);
         },
         _ => panic!(err_msg),
     }

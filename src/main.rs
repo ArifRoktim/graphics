@@ -1,6 +1,7 @@
 pub mod matrix;
 pub mod screen;
 pub mod parse;
+pub mod draw;
 
 use matrix::Matrix;
 use screen::{Screen,Color};
