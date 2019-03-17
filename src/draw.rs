@@ -76,7 +76,6 @@ impl Curve {
             },
         }
     }
-
 }
 
 fn add_point(edges: &mut Matrix, x: f64, y: f64, z: f64) {
@@ -90,15 +89,15 @@ pub fn add_edge(edges: &mut Matrix, x0: f64, y0: f64, z0:f64,
     add_point(edges, x1, y1, z1);
 }
 
-pub fn add_circle(edges: &mut Matrix, cx: f64, cy: f64, cz: f64, r: f64, step: f64){
+pub fn add_circle(edges: &mut Matrix, cx: f64, cy: f64, cz: f64, r: f64, step: i32){
     // Draw a circle using parametric equations
     // x_prev, y_prec, cz, and the 1st point given to `add_edge`
     let mut x_prev = cx + r;
     let mut y_prev = cy;
     // t goes from 0 -> TOTAL_STEPS in increments of `step`
-    let mut t = 0.0;
-    while (t as i32) <= TOTAL_STEPS {
-        let theta = t / TOTAL_STEPS as f64;
+    let mut t = 0;
+    while t <= TOTAL_STEPS {
+        let theta = t as f64 / TOTAL_STEPS as f64;
         let (sin, cos) = (2.0 * PI * theta).sin_cos();
         let x_next = r * cos + cx;
         let y_next = r * sin + cy;
@@ -112,22 +111,23 @@ pub fn add_circle(edges: &mut Matrix, cx: f64, cy: f64, cz: f64, r: f64, step: f
     }
 }
 
-pub fn add_curve(edges: &mut Matrix, curve: &Curve, step: f64) {
+pub fn add_curve(edges: &mut Matrix, curve: &Curve, step: i32) {
     let (mut x_prev, mut y_prev) = match *curve {
         Curve::Hermite {p0x, p0y, ..} => (p0x, p0y),
         Curve::Bezier  {p0x, p0y, ..} => (p0x, p0y),
     };
     let (xs, ys) = curve.gen_coefs();
 
-    let mut t = 0.0f64;
-    while (t as i32) <= TOTAL_STEPS {
-        let x_next = xs.m[0][0] * (t / TOTAL_STEPS as f64).powi(3)
-            + xs.m[0][1] * (t / TOTAL_STEPS as f64).powi(2)
-            + xs.m[0][2] * (t / TOTAL_STEPS as f64)
+    let mut t = 0;
+    while t <= TOTAL_STEPS {
+        let progress = t as f64 / TOTAL_STEPS as f64;
+        let x_next = xs.m[0][0] * progress.powi(3)
+            + xs.m[0][1] * progress.powi(2)
+            + xs.m[0][2] * progress
             + xs.m[0][3];
-        let y_next = ys.m[0][0] * (t / TOTAL_STEPS as f64).powi(3)
-            + ys.m[0][1] * (t / TOTAL_STEPS as f64).powi(2)
-            + ys.m[0][2] * (t / TOTAL_STEPS as f64)
+        let y_next = ys.m[0][0] * progress.powi(3)
+            + ys.m[0][1] * progress.powi(2)
+            + ys.m[0][2] * progress
             + ys.m[0][3];
 
         add_edge(edges, x_prev, y_prev, 0.0, x_next, y_next, 0.0);

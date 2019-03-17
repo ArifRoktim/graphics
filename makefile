@@ -5,3 +5,4 @@ all: src/main.rs
 .PHONY: clean
 clean:
 	-rm *.ppm *.png *.bak
+	cargo clean

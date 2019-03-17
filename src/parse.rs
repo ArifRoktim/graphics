@@ -68,7 +68,7 @@ fn circle(edges: &mut Matrix, args: Option<&str>) {
         .collect::<Vec<f64>>();
     match *args {
         [cx, cy, cz, r] => {
-            draw::add_circle(edges, cx, cy, cz, r, STEP);
+            draw::add_circle(edges, cx, cy, cz, r, STEP as i32);
         },
         _ => panic!(err_msg),
     }
@@ -85,7 +85,7 @@ fn hermite(edges: &mut Matrix, args: Option<&str>) {
     match *args {
         [p0x, p0y, p1x, p1y, r0x, r0y, r1x, r1y] => {
             let curve = Curve::Hermite {p0x, p0y, p1x, p1y, r0x, r0y, r1x, r1y};
-            draw::add_curve(edges, &curve, STEP);
+            draw::add_curve(edges, &curve, STEP as i32);
         },
         _ => panic!(err_msg),
     }
@@ -102,7 +102,7 @@ fn bezier(edges: &mut Matrix, args: Option<&str>) {
     match *args {
         [p0x, p0y, p1x, p1y, p2x, p2y, p3x, p3y] => {
             let curve = Curve::Bezier {p0x, p0y, p1x, p1y, p2x, p2y, p3x, p3y};
-            draw::add_curve(edges, &curve, STEP);
+            draw::add_curve(edges, &curve, STEP as i32);
         },
         _ => panic!(err_msg),
     }
