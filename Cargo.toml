@@ -1,5 +1,5 @@
 [package]
-name = "w04_curves"
+name = "w05_3d"
 version = "0.1.0"
 authors = ["Arif Roktim <aroktim@stuy.edu>"]
 edition = "2018"
