@@ -89,7 +89,8 @@ pub fn add_edge(edges: &mut Matrix, x0: f64, y0: f64, z0:f64,
     add_point(edges, x1, y1, z1);
 }
 
-pub fn add_circle(edges: &mut Matrix, cx: f64, cy: f64, cz: f64, r: f64, step: i32){
+pub fn add_circle(edges: &mut Matrix, cx: f64, cy: f64, cz: f64,
+                  r: f64, step: i32){
     // Draw a circle using parametric equations
     // x_prev, y_prec, cz, and the 1st point given to `add_edge`
     let mut x_prev = cx + r;
@@ -137,4 +138,27 @@ pub fn add_curve(edges: &mut Matrix, curve: &Curve, step: i32) {
 
         t += step;
     }
+}
+
+pub fn add_box(edges: &mut Matrix, x: f64, y: f64, z: f64,
+               width: f64, height: f64, depth: f64) {
+    // Edges starting from the front bottom left corner
+    add_edge(edges, x, y, z, x + width, y, z);
+    add_edge(edges, x, y, z, x, y + height, z);
+    add_edge(edges, x, y, z, x, y, z + depth);
+    // from front bottom right corner
+    add_edge(edges, x + width, y, z, x + width, y + height, z);
+    add_edge(edges, x + width, y, z, x + width, y, z + depth);
+    // from front top left corner
+    add_edge(edges, x, y + height, z, x + width, y + height, z);
+    add_edge(edges, x, y + height, z, x, y + height, z + depth);
+    // from front top right corner
+    add_edge(edges, x + width, y + height, z, x + width, y + height, z + depth);
+    // Edges for the back-most face
+    // from back bottom left corner
+    add_edge(edges, x, y, z + depth, x + width, y, z + depth);
+    add_edge(edges, x, y, z + depth, x, y + height, z + depth);
+    // from back top right corner
+    add_edge(edges, x + width, y + height, z + depth, x + width, y, z + depth);
+    add_edge(edges, x + width, y + height, z + depth, x, y + height, z + depth);
 }

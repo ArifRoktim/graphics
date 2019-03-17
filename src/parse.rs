@@ -26,12 +26,13 @@ pub fn parse_file(filename: &str, screen: &mut Screen,
             "circle"  =>    circle(edges, iter.next()),
             "hermite" =>   hermite(edges, iter.next()),
             "bezier"  =>    bezier(edges, iter.next()),
+            "box"     =>  draw_box(edges, iter.next()),
             "scale"   =>     scale(transform, iter.next()),
             "move"    => translate(transform, iter.next()),
             "rotate"  =>    rotate(transform, iter.next()),
             "save"    => save(screen, iter.next()),
             "display" => {
-                draw_lines(screen, edges, Color::black());
+                draw_lines(screen, edges, Color::green());
                 display(screen);
             }
             "ident" => transform.ident(),
@@ -103,6 +104,20 @@ fn bezier(edges: &mut Matrix, args: Option<&str>) {
         [p0x, p0y, p1x, p1y, p2x, p2y, p3x, p3y] => {
             let curve = Curve::Bezier {p0x, p0y, p1x, p1y, p2x, p2y, p3x, p3y};
             draw::add_curve(edges, &curve, STEP as i32);
+        },
+        _ => panic!(err_msg),
+    }
+}
+
+fn draw_box(edges: &mut Matrix, args: Option<&str>) {
+    let err_msg = "Box requires 6 f64 args!";
+    let args = args.expect(err_msg);
+    let args = &* args.split_whitespace()
+        .map(|n| n.parse::<f64>().expect(err_msg))
+        .collect::<Vec<f64>>();
+    match *args {
+        [x, y, z, width, height, depth] => {
+            draw::add_box(edges, x, y, z, width, height, depth);
         },
         _ => panic!(err_msg),
     }

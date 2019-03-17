@@ -1,6 +1,6 @@
 .PHONY: all
 all: src/main.rs
-	cargo run scripts/curves
+	cargo run scripts/3d
 
 .PHONY: clean
 clean:
