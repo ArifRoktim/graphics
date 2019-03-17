@@ -6,3 +6,8 @@ all: src/main.rs
 clean:
 	-rm *.ppm *.png *.bak
 	cargo clean
+
+.PHONY: clippy
+clippy:
+	touch src/main.rs
+	cargo clippy

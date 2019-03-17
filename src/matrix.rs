@@ -148,7 +148,7 @@ impl Matrix {
         // Graphical lens
         // for each column in other, for each row in self
         for row in other.m.iter_mut() {
-            let orig_other_row = row.clone();
+            let orig_other_row = *row;
             for self_col in 0..self.cols() {
                 let mut sum = 0.0;
                 for self_row in 0..self.rows() {

@@ -97,7 +97,7 @@ pub fn add_circle(edges: &mut Matrix, cx: f64, cy: f64, cz: f64, r: f64, step: i
     // t goes from 0 -> TOTAL_STEPS in increments of `step`
     let mut t = 0;
     while t <= TOTAL_STEPS {
-        let theta = t as f64 / TOTAL_STEPS as f64;
+        let theta = f64::from(t) / f64::from(TOTAL_STEPS);
         let (sin, cos) = (2.0 * PI * theta).sin_cos();
         let x_next = r * cos + cx;
         let y_next = r * sin + cy;
@@ -120,7 +120,7 @@ pub fn add_curve(edges: &mut Matrix, curve: &Curve, step: i32) {
 
     let mut t = 0;
     while t <= TOTAL_STEPS {
-        let progress = t as f64 / TOTAL_STEPS as f64;
+        let progress = f64::from(t) / f64::from(TOTAL_STEPS);
         let x_next = xs.m[0][0] * progress.powi(3)
             + xs.m[0][1] * progress.powi(2)
             + xs.m[0][2] * progress

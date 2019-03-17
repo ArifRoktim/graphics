@@ -82,7 +82,7 @@ impl Screen {
         };
         // Get the pixel at point p and set its color
         // Man this looks ugly :(
-        &self.pixels[p.y][p.x].color(c);
+        self.pixels[p.y][p.x].color(c);
         Ok(())
     }
 
