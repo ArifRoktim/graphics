@@ -34,9 +34,10 @@ pub fn parse_file(filename: &str, screen: &mut Screen,
             "display" => {
                 draw_lines(screen, edges, Color::green());
                 display(screen);
-            }
+            },
             "ident" => transform.ident(),
             "apply" => transform.mult(edges),
+            "clear" => edges.clear(),
             // some command that's not valid or yet implemented
             _ => panic!("\"{}\" not yet implemented!", line),
         }

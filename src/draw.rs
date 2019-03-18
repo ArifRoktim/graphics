@@ -80,7 +80,7 @@ impl Curve {
 
 fn add_point(edges: &mut Matrix, x: f64, y: f64, z: f64) {
     let point = [x, y, z, 1.0];
-    edges.m.push(point);
+    edges.push(point);
 }
 
 pub fn add_edge(edges: &mut Matrix, x0: f64, y0: f64, z0:f64,

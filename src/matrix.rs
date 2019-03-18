@@ -112,11 +112,18 @@ impl Matrix {
         Matrix::from(m)
     }
 
-    // Modifies matrix to become the identity matrix
-    // Assumes matrix is a square matrix less than or equal to 4x4 in size
+    pub fn clear(&mut self) {
+        self.m.clear();
+    }
+
+    pub fn push(&mut self, point: [f64; 4]) {
+        self.m.push(point);
+    }
+
+    // Modifies a square matrix to become the identity matrix
     pub fn ident(&mut self) {
-        if self.rows() != 4 {
-            panic!("Can't call method ident() on non 4x4 matrix!");
+        if self.rows() != self.cols() {
+            panic!("Can't call method ident() on a non-square matrix!");
         }
         for (row_n, row) in self.m.iter_mut().enumerate() {
             for (col_n, col) in row.iter_mut().enumerate() {
@@ -126,18 +133,10 @@ impl Matrix {
                     *col = 0.;
                 }
             }
-            //match row_n {
-            //    0 => row[0] = 1.0,
-            //    1 => row[1] = 1.0,
-            //    2 => row[2] = 1.0,
-            //    3 => row[3] = 1.0,
-            //    _ => panic!("Array isn't square or is larger than 4x4!"),
-            //}
         }
     }
 
     // Modifies other matrix to be = self * other
-    // Assumes self is a 4x4 matrix
     pub fn mult(&self, other: &mut Matrix) {
         // columns and rows are switched
         // First check that both matrices can be multiplied
@@ -158,11 +157,10 @@ impl Matrix {
             }
         }
     }
-
 }
 
-impl From<&[ [f64; 4] ]> for Matrix {
-    fn from(matrix: &[ [f64; 4] ]) -> Self {
+impl From<&[[f64; 4]]> for Matrix {
+    fn from(matrix: &[[f64; 4]]) -> Matrix {
         let mut ret = Matrix::new(0);
         for &row in matrix {
             ret.m.push(row);
@@ -172,7 +170,7 @@ impl From<&[ [f64; 4] ]> for Matrix {
 }
 
 impl fmt::Display for Matrix {
-    // Print 2d array so that each point is a columns
+    // Print 2d array so that each point is a column
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         // precision of the floating point
         let prec: usize = 2;
