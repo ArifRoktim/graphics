@@ -6,7 +6,7 @@ use std::io::prelude::*;
 use std::fs;
 use std::process::{Command,Stdio};
 
-const STEP: f64 = 1.0;
+const STEP: i32 = 2;
 
 pub fn parse_file(filename: &str, screen: &mut Screen,
                   edges: &mut Matrix, transform: &mut Matrix) {
@@ -27,6 +27,7 @@ pub fn parse_file(filename: &str, screen: &mut Screen,
             "hermite" =>   hermite(edges, iter.next()),
             "bezier"  =>    bezier(edges, iter.next()),
             "box"     =>  draw_box(edges, iter.next()),
+            "sphere"  =>    sphere(edges, iter.next()),
             "scale"   =>     scale(transform, iter.next()),
             "move"    => translate(transform, iter.next()),
             "rotate"  =>    rotate(transform, iter.next()),
@@ -70,7 +71,7 @@ fn circle(edges: &mut Matrix, args: Option<&str>) {
         .collect::<Vec<f64>>();
     match *args {
         [cx, cy, cz, r] => {
-            draw::add_circle(edges, cx, cy, cz, r, STEP as i32);
+            draw::add_circle(edges, cx, cy, cz, r, STEP);
         },
         _ => panic!(err_msg),
     }
@@ -87,7 +88,7 @@ fn hermite(edges: &mut Matrix, args: Option<&str>) {
     match *args {
         [p0x, p0y, p1x, p1y, r0x, r0y, r1x, r1y] => {
             let curve = Curve::Hermite {p0x, p0y, p1x, p1y, r0x, r0y, r1x, r1y};
-            draw::add_curve(edges, &curve, STEP as i32);
+            draw::add_curve(edges, &curve, STEP);
         },
         _ => panic!(err_msg),
     }
@@ -104,7 +105,7 @@ fn bezier(edges: &mut Matrix, args: Option<&str>) {
     match *args {
         [p0x, p0y, p1x, p1y, p2x, p2y, p3x, p3y] => {
             let curve = Curve::Bezier {p0x, p0y, p1x, p1y, p2x, p2y, p3x, p3y};
-            draw::add_curve(edges, &curve, STEP as i32);
+            draw::add_curve(edges, &curve, STEP);
         },
         _ => panic!(err_msg),
     }
@@ -119,6 +120,20 @@ fn draw_box(edges: &mut Matrix, args: Option<&str>) {
     match *args {
         [x, y, z, width, height, depth] => {
             draw::add_box(edges, x, y, z, width, height, depth);
+        },
+        _ => panic!(err_msg),
+    }
+}
+
+fn sphere(edges: &mut Matrix, args: Option<&str>) {
+    let err_msg = "Box requires 6 f64 args!";
+    let args = args.expect(err_msg);
+    let args = &* args.split_whitespace()
+        .map(|n| n.parse::<f64>().expect(err_msg))
+        .collect::<Vec<f64>>();
+    match *args {
+        [cx, cy, cz, r] => {
+            draw::add_sphere(edges, cx, cy, cz, r, STEP);
         },
         _ => panic!(err_msg),
     }

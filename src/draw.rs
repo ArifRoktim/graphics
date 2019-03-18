@@ -1,7 +1,7 @@
 use std::f64::consts::PI;
 use crate::matrix::Matrix;
 
-const TOTAL_STEPS: i32 = 100;
+pub const TOTAL_STEPS: i32 = 100;
 
 pub enum Curve {
     Hermite {p0x: f64, p0y: f64, p1x: f64, p1y: f64,
@@ -161,4 +161,46 @@ pub fn add_box(edges: &mut Matrix, x: f64, y: f64, z: f64,
     // from back top right corner
     add_edge(edges, x + width, y + height, z + depth, x + width, y, z + depth);
     add_edge(edges, x + width, y + height, z + depth, x, y + height, z + depth);
+}
+
+pub fn gen_sphere(cx: f64, cy: f64, cz: f64, r: f64, step: i32) -> Matrix {
+    // Matrix of the points of the surface of a sphere
+    let mut points = Matrix::new(0);
+
+    // For 0->2PI draw a semi circle that's rotated phi degrees along x axis
+    let mut t_phi = 0;
+    while t_phi <= TOTAL_STEPS {
+        let phi = f64::from(t_phi) / f64::from(TOTAL_STEPS);
+        let (sin_phi, cos_phi) = (2.0 * PI * phi).sin_cos();
+
+        // Draw a semicircle
+        let mut t_theta = 0;
+        while t_theta <= TOTAL_STEPS {
+            let theta = f64::from(t_theta) / f64::from(TOTAL_STEPS);
+            let (sin_theta, cos_theta) = (PI * theta).sin_cos();
+
+            let point = [r * cos_theta + cx,
+                r * sin_theta * cos_phi + cy,
+                r * sin_theta * sin_phi + cz,
+                1.0];
+            points.push(point);
+
+            t_theta += step;
+        }
+
+        t_phi += step;
+    }
+
+    points
+}
+
+pub fn add_sphere(edges: &mut Matrix, cx: f64, cy: f64, cz: f64,
+                  r: f64, step: i32) {
+    let points = gen_sphere(cx, cy, cz, r, step);
+    for point in points.m {
+        let (x, y, z) = match point {
+            [x, y, z, _] => (x, y, z),
+        };
+        add_edge(edges, x, y, z, x + 1.0, y + 1.0, z + 1.0);
+    }
 }
