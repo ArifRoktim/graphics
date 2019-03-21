@@ -8,8 +8,10 @@ use screen::{Screen,Color};
 use std::env;
 use std::process;
 
-const COLUMNS: usize = 500;
-const ROWS: usize = 500;
+const XRES: usize = 500;
+const YRES: usize = 500;
+const TOTAL_STEPS: i32 = 100;
+const STEP: i32 = 1;
 
 fn main() {
     let args: Vec<String> = env::args().collect();

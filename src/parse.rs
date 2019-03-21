@@ -1,12 +1,11 @@
 use crate::screen::{Color,Screen};
 use crate::matrix::Matrix;
 use crate::draw::{self, Curve};
+use crate::STEP;
 
 use std::io::prelude::*;
 use std::fs;
 use std::process::{Command,Stdio};
-
-const STEP: i32 = 1;
 
 pub fn parse_file(filename: &str, screen: &mut Screen,
                   edges: &mut Matrix, transform: &mut Matrix) {

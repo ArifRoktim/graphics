@@ -7,8 +7,8 @@ mod color;
 mod line;
 pub use color::Color;
 pub use line::Line;
-use crate::COLUMNS;
-use crate::ROWS;
+use crate::XRES;
+use crate::YRES;
 
 use crate::matrix::Matrix;
 
@@ -20,14 +20,14 @@ pub struct Screen {
 impl Screen {
     pub fn blank() -> Screen {
         Screen {
-            pixels: vec![vec![Color::black(); COLUMNS]; ROWS],
+            pixels: vec![vec![Color::black(); XRES]; YRES],
             color: Color::black(),
         }
     }
 
     pub fn new(c: Color) -> Screen {
         Screen {
-            pixels: vec![vec![c; COLUMNS]; ROWS],
+            pixels: vec![vec![c; XRES]; YRES],
             color: c,
         }
     }
@@ -69,12 +69,12 @@ impl Screen {
     }
 
     pub fn draw_point(&mut self, px: i32, py: i32, c: Color) {
-        if px < 0 || px >= (COLUMNS as i32) || py < 0 || py >= (ROWS as i32) {
+        if px < 0 || px >= (XRES as i32) || py < 0 || py >= (YRES as i32) {
             return;
         }
         // Cast the coordinates to `usize` and also
         // make (0, 0) the bottom left corner instead of the top left corner
-        let (px, py): (usize, usize) = (px as usize, ROWS - 1 - (py as usize));
+        let (px, py): (usize, usize) = (px as usize, YRES - 1 - (py as usize));
         // Get the pixel at point p and set its color
         self.pixels[py][px].color(c);
     }
@@ -230,12 +230,12 @@ impl Screen {
 impl fmt::Display for Screen {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         // Allocate a string with enough space to hold all the pixels
-        // COLUMNS * ROWS gives the number of pixels
+        // XRES * YRES gives the number of pixels
         // Each pixel has 3 rgb values, which each are at most 4 bytes
-        // Add in ROWS bytes because every row has a newline character
+        // Add in YRES bytes because every row has a newline character
         // and add in 50 bytes as padding to make sure we don't reallocate
-        // Total is `COLUMNS * ROWS * 3 * 4 + ROWS + 50`
-        let size: usize = COLUMNS * ROWS * 3 * 4 + ROWS + 50;
+        // Total is `XRES * YRES * 3 * 4 + YRES + 50`
+        let size: usize = XRES * YRES * 3 * 4 + YRES + 50;
         let mut contents = String::with_capacity(size);
         for row in &self.pixels {
             for pixel in row {
@@ -243,6 +243,6 @@ impl fmt::Display for Screen {
             }
             contents.push_str("\n");
         }
-        write!(f, "P3 {} {} 255\n{}", COLUMNS, ROWS, contents)
+        write!(f, "P3 {} {} 255\n{}", XRES, YRES, contents)
     }
 }

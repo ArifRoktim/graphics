@@ -1,7 +1,6 @@
 use std::f64::consts::PI;
 use crate::matrix::Matrix;
-
-pub const TOTAL_STEPS: i32 = 100;
+use crate::TOTAL_STEPS;
 
 pub enum Curve {
     Hermite {p0x: f64, p0y: f64, p1x: f64, p1y: f64,
