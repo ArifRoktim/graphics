@@ -27,6 +27,7 @@ pub fn parse_file(filename: &str, screen: &mut Screen,
             "bezier"  =>    bezier(edges, iter.next()),
             "box"     =>  draw_box(edges, iter.next()),
             "sphere"  =>    sphere(edges, iter.next()),
+            "torus"  =>    torus(edges, iter.next()),
             "scale"   =>     scale(transform, iter.next()),
             "move"    => translate(transform, iter.next()),
             "rotate"  =>    rotate(transform, iter.next()),
@@ -125,7 +126,7 @@ fn draw_box(edges: &mut Matrix, args: Option<&str>) {
 }
 
 fn sphere(edges: &mut Matrix, args: Option<&str>) {
-    let err_msg = "Box requires 6 f64 args!";
+    let err_msg = "Sphere requires 4 f64 args!";
     let args = args.expect(err_msg);
     let args = &* args.split_whitespace()
         .map(|n| n.parse::<f64>().expect(err_msg))
@@ -133,6 +134,20 @@ fn sphere(edges: &mut Matrix, args: Option<&str>) {
     match *args {
         [cx, cy, cz, r] => {
             draw::add_sphere(edges, cx, cy, cz, r, STEP);
+        },
+        _ => panic!(err_msg),
+    }
+}
+
+fn torus(edges: &mut Matrix, args: Option<&str>) {
+    let err_msg = "Torus requires 5 f64 args!";
+    let args = args.expect(err_msg);
+    let args = &* args.split_whitespace()
+        .map(|n| n.parse::<f64>().expect(err_msg))
+        .collect::<Vec<f64>>();
+    match *args {
+        [cx, cy, cz, minor_r, major_r] => {
+            draw::add_torus(edges, cx, cy, cz, minor_r, major_r, STEP);
         },
         _ => panic!(err_msg),
     }

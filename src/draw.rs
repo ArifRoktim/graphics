@@ -203,3 +203,48 @@ pub fn add_sphere(edges: &mut Matrix, cx: f64, cy: f64, cz: f64,
         add_edge(edges, x, y, z, x + 1.0, y + 1.0, z + 1.0);
     }
 }
+
+pub fn gen_torus(cx: f64, cy: f64, cz: f64, minor_r: f64, major_r: f64, step: i32) -> Matrix {
+    // Matrix of the points of the surface of a sphere
+    let mut points = Matrix::new(0);
+
+    // For phi: 0->2PI, draw a circle of radius `minor_r` that is translated by 
+    // `major_r` in the x axis and rotated phi degrees in the y axis
+    let mut t_phi = 0;
+    while t_phi <= TOTAL_STEPS {
+        let phi = f64::from(t_phi) / f64::from(TOTAL_STEPS);
+        let (sin_phi, cos_phi) = (2.0 * PI * phi).sin_cos();
+
+        // Draw a circle
+        let mut t_theta = 0;
+        while t_theta <= TOTAL_STEPS {
+            let theta = f64::from(t_theta) / f64::from(TOTAL_STEPS);
+            let (sin_theta, cos_theta) = (2.0 * PI * theta).sin_cos();
+
+            let point = [
+                cos_phi * (minor_r * cos_theta + major_r) + cx,
+                minor_r * sin_theta + cy,
+                -1.0 * sin_phi * (minor_r * cos_theta + major_r) + cz,
+                1.0
+            ];
+            points.push(point);
+
+            t_theta += step;
+        }
+
+        t_phi += step;
+    }
+
+    points
+}
+
+pub fn add_torus(edges: &mut Matrix, cx: f64, cy: f64, cz: f64,
+                  minor_r: f64, major_r: f64, step: i32) {
+    let points = gen_torus(cx, cy, cz, minor_r, major_r, step);
+    for point in points.m {
+        let (x, y, z) = match point {
+            [x, y, z, _] => (x, y, z),
+        };
+        add_edge(edges, x, y, z, x + 1.0, y + 1.0, z + 1.0);
+    }
+}

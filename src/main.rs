@@ -11,7 +11,7 @@ use std::process;
 const XRES: usize = 500;
 const YRES: usize = 500;
 const TOTAL_STEPS: i32 = 100;
-const STEP: i32 = 1;
+const STEP: i32 = 2;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
