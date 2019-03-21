@@ -1,13 +1,12 @@
-use std::error;
 use std::{fs::File, io::prelude::*};
 use std::fmt;
 use std::path::Path;
 use std::process::Command;
 
 mod color;
-mod point;
+mod line;
 pub use color::Color;
-pub use point::Point;
+pub use line::Line;
 use crate::COLUMNS;
 use crate::ROWS;
 
@@ -69,44 +68,25 @@ impl Screen {
         }
     }
 
-    pub fn draw_point(&mut self, p: &Point, c: Color) -> Result<(), OutOfBounds> {
-        // Make (0, 0) the bottom left corner instead of
-        // the top left corner
-        if p.x >= COLUMNS || p.y >= ROWS {
-            let point = Point { x: p.x, y: p.y };
-            return Err(OutOfBounds(point));
-        }
-        let p = Point {
-            x: p.x,
-            y: ROWS - 1 - p.y,
-        };
-        // Get the pixel at point p and set its color
-        // Man this looks ugly :(
-        self.pixels[p.y][p.x].color(c);
-        Ok(())
-    }
-
-    pub fn draw_line(&mut self, p0: &Point, p1: &Point, c: Color) {
-        // this draws from left to right, from p0 to p1
-        // if p0 is to the right of p1, swap them
-        if p0.x > p1.x {
-            self.draw_line(p1, p0, c);
+    pub fn draw_point(&mut self, px: i32, py: i32, c: Color) {
+        if px < 0 || px >= (COLUMNS as i32) || py < 0 || py >= (ROWS as i32) {
             return;
         }
-        match p0.slope(&p1) {
-            // if slope is undefined/none, the line is vertical
-            // self._vertical_line(p0, p1, ...) assumes that
-            // p0's y value is less than that of p1.
-            // This accounts for that case.
-            None if p0.y <= p1.y => self._vertical_line(p0, p1, c),
-            // This accounts for case where p1's y value > p0's y value
-            None => self._vertical_line(p1, p0, c),
-            Some(m) if m == 0.0 => self._horizontal_line(p0, p1, c),
-            Some(m) if m > 0.0 && m <= 1.0 => self._octant1(p0, p1, c),
-            Some(m) if m > 1.0 => self._octant2(p0, p1, c),
-            Some(m) if m < 0.0 && m >= -1.0 => self._octant8(p0, p1, c),
-            Some(m) if m < -1.0 => self._octant7(p0, p1, c),
-            Some(m) => panic!("Slope={}, not yet covered!", m),
+        // Cast the coordinates to `usize` and also
+        // make (0, 0) the bottom left corner instead of the top left corner
+        let (px, py): (usize, usize) = (px as usize, ROWS - 1 - (py as usize));
+        // Get the pixel at point p and set its color
+        self.pixels[py][px].color(c);
+    }
+
+    pub fn draw_line(&mut self, p0x: i32, p0y: i32, p1x: i32, p1y: i32, c: Color) {
+        match Line::get_octant(p0x, p0y, p1x, p1y) {
+            (Line::Horizontal, line) => self._horizontal_line(line, c),
+            (Line::Vertical, line) => self._vertical_line(line, c),
+            (Line::Octant1, line) => self._octant1(line, c),
+            (Line::Octant2, line) => self._octant2(line, c),
+            (Line::Octant7, line) => self._octant7(line, c),
+            (Line::Octant8, line) => self._octant8(line, c),
         }
     }
 
@@ -116,38 +96,37 @@ impl Screen {
             // If any of the points have negative coords, they can't be drawn
             if edge[0][0] < 0.0 || edge[0][1] < 0.0 ||
                 edge[1][0] < 0.0 || edge[1][1] < 0.0 {
-                    return;
+                    continue;
             }
-            let p0 = Point{ x: edge[0][0] as usize, y: edge[0][1] as usize};
-            let p1 = Point{ x: edge[1][0] as usize, y: edge[1][1] as usize};
-            self.draw_line(&p0, &p1, c);
+            self.draw_line(edge[0][0] as i32, edge[0][1] as i32,
+                           edge[1][0] as i32, edge[1][1] as i32, c);
         }
     }
 }
 
 // private functions
 impl Screen {
-    fn _vertical_line(&mut self, p0: &Point, p1: &Point, c: Color) {
-        for i in p0.y..=p1.y {
-            self.draw_point(&Point { x: p0.x, y: i }, c);
+    fn _vertical_line(&mut self, line: (i32, i32, i32, i32), c: Color) {
+        let (p0x, p0y, _, p1y) = line;
+        for y in p0y..=p1y {
+            self.draw_point(p0x, y, c);
         }
     }
-    fn _horizontal_line(&mut self, p0: &Point, p1: &Point, c: Color) {
-        for i in p0.x..=p1.x {
-            self.draw_point(&Point { x: i, y: p0.y }, c);
+    fn _horizontal_line(&mut self, line: (i32, i32, i32, i32), c: Color) {
+        let (p0x, p0y, p1x, _) = line;
+        for x in p0x..=p1x {
+            self.draw_point(x, p0y, c);
         }
     }
-    fn _octant1(&mut self, p0: &Point, p1: &Point, c: Color) {
-        // First cast the points to i32 from usize
-        let p0 = (p0.x as i32, p0.y as i32);
-        let p1 = (p1.x as i32, p1.y as i32);
+    fn _octant1(&mut self, line: (i32, i32, i32, i32), c: Color) {
+        let (p0x, p0y, p1x, p1y) = line;
         // x and y points to plot
-        let mut x = p0.0;
-        let mut y = p0.1;
+        let mut x = p0x;
+        let mut y = p0y;
         // B = - delta_x
-        let delta_x = p1.0 - p0.0;
+        let delta_x = p1x - p0x;
         // A = delta_y
-        let delta_y = p1.1 - p0.1;
+        let delta_y = p1y - p0y;
         // d = f(x0 + 1, y0 + 1/2) - f(x0, y0)
         // f(x0, y0) = 0
         // d = f(x0 + 1, y0 + 1/2)
@@ -156,14 +135,8 @@ impl Screen {
         // To get rid of floating point arithmetic, multiply by 2
         // 2d = 2 * delta_y - delta_x
         let mut diff = 2 * delta_y - delta_x;
-        while x <= p1.0 {
-            self.draw_point(
-                &Point {
-                    x: x as usize,
-                    y: y as usize,
-                },
-                c,
-            );
+        while x <= p1x {
+            self.draw_point(x, y, c);
             if diff > 0 {
                 y += 1;
                 diff -= 2 * delta_x;
@@ -172,30 +145,23 @@ impl Screen {
             diff += 2 * delta_y;
         }
     }
-    fn _octant2(&mut self, p0: &Point, p1: &Point, c: Color) {
+    fn _octant2(&mut self, line: (i32, i32, i32, i32), c: Color) {
+        let (p0x, p0y, p1x, p1y) = line;
         // First cast the points to i32 from usize
-        let p0 = (p0.x as i32, p0.y as i32);
-        let p1 = (p1.x as i32, p1.y as i32);
         // x and y points to plot
-        let mut x = p0.0;
-        let mut y = p0.1;
+        let mut x = p0x;
+        let mut y = p0y;
         // B = - delta_x
-        let delta_x = p1.0 - p0.0;
+        let delta_x = p1x - p0x;
         // A = delta_y
-        let delta_y = p1.1 - p0.1;
+        let delta_y = p1y - p0y;
         // d = f(x0 + 1/2, y0 + 1)
         // ... <Algebra goes here> ...
         // d = 1/2 * delta_y - delta_x
         // 2d = delta_y - 2 * delta_x
         let mut diff = delta_y - 2 * delta_x;
-        while y <= p1.1 {
-            self.draw_point(
-                &Point {
-                    x: x as usize,
-                    y: y as usize,
-                },
-                c,
-            );
+        while y <= p1y {
+            self.draw_point(x, y, c);
             if diff < 0 {
                 x += 1;
                 diff += 2 * delta_y;
@@ -204,17 +170,16 @@ impl Screen {
             diff -= 2 * delta_x;
         }
     }
-    fn _octant8(&mut self, p0: &Point, p1: &Point, c: Color) {
+    fn _octant8(&mut self, line: (i32, i32, i32, i32), c: Color) {
+        let (p0x, p0y, p1x, p1y) = line;
         // First cast the points to i32 from usize
-        let p0 = (p0.x as i32, p0.y as i32);
-        let p1 = (p1.x as i32, p1.y as i32);
         // x and y points to plot
-        let mut x = p0.0;
-        let mut y = p0.1;
+        let mut x = p0x;
+        let mut y = p0y;
         // B = - delta_x
-        let delta_x = p1.0 - p0.0;
+        let delta_x = p1x - p0x;
         // A = delta_y
-        let delta_y = p1.1 - p0.1;
+        let delta_y = p1y - p0y;
         // d = f(x0 + 1, y0 - 1/2)
         // d = A(x0 + 1) + B(y0 - 1/2) + C
         // d = (Ax0 + By0 + C) + A - 1/2 * B
@@ -222,14 +187,8 @@ impl Screen {
         // d = delta_y + 1/2 * delta_x
         // 2d = 2 * delta_y + delta_x
         let mut diff = 2 * delta_y + delta_x;
-        while x <= p1.0 {
-            self.draw_point(
-                &Point {
-                    x: x as usize,
-                    y: y as usize,
-                },
-                c,
-            );
+        while x <= p1x {
+            self.draw_point(x, y, c);
             if diff > 0 {
                 y -= 1;
                 diff -= 2 * delta_x;
@@ -238,17 +197,16 @@ impl Screen {
             diff -= 2 * delta_y;
         }
     }
-    fn _octant7(&mut self, p0: &Point, p1: &Point, c: Color) {
+    fn _octant7(&mut self, line: (i32, i32, i32, i32), c: Color) {
+        let (p0x, p0y, p1x, p1y) = line;
         // First cast the points to i32 from usize
-        let p0 = (p0.x as i32, p0.y as i32);
-        let p1 = (p1.x as i32, p1.y as i32);
         // x and y points to plot
-        let mut x = p0.0;
-        let mut y = p0.1;
+        let mut x = p0x;
+        let mut y = p0y;
         // B = - delta_x
-        let delta_x = p1.0 - p0.0;
+        let delta_x = p1x - p0x;
         // A = delta_y
-        let delta_y = p1.1 - p0.1;
+        let delta_y = p1y - p0y;
         // d = f(x0 + 1/2, y0 - 1)
         // d = A(x0 + 1/2) + B(y0 - 1) + C
         // d = (Ax0 + By0 + C) + 1/2 * A - B
@@ -257,14 +215,8 @@ impl Screen {
         // 2d = delta_y + 2 * delta_x
         let mut diff = delta_y + 2 * delta_x;
         //let mut diff = -2 * delta_x - delta_y;
-        while y >= p1.1 {
-            self.draw_point(
-                &Point {
-                    x: x as usize,
-                    y: y as usize,
-                },
-                c,
-            );
+        while y >= p1y {
+            self.draw_point(x, y, c);
             if diff < 0 {
                 x += 1;
                 diff -= 2 * delta_y;
@@ -292,22 +244,5 @@ impl fmt::Display for Screen {
             contents.push_str("\n");
         }
         write!(f, "P3 {} {} 255\n{}", COLUMNS, ROWS, contents)
-    }
-}
-
-#[derive(Debug)]
-pub struct OutOfBounds(pub Point);
-
-impl fmt::Display for OutOfBounds {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Point ({}) is out of bounds", self.0)
-    }
-}
-
-// This is important for other errors to wrap this one.
-impl error::Error for OutOfBounds {
-    fn cause(&self) -> Option<&error::Error> {
-        // Generic error, underlying cause isn't tracked.
-        None
     }
 }

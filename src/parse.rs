@@ -6,7 +6,7 @@ use std::io::prelude::*;
 use std::fs;
 use std::process::{Command,Stdio};
 
-const STEP: i32 = 2;
+const STEP: i32 = 1;
 
 pub fn parse_file(filename: &str, screen: &mut Screen,
                   edges: &mut Matrix, transform: &mut Matrix) {
