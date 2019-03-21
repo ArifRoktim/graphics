@@ -1,0 +1,123 @@
+# upper head {{{1
+
+# visor {{{2
+torus
+0 60 0 5 140
+torus
+0 65 0 5 140
+torus
+0 70 0 5 140
+torus
+0 75 0 5 140
+torus
+0 80 0 5 140
+torus
+0 85 0 5 140
+torus
+0 90 0 5 140
+torus
+0 95 0 5 140
+torus
+0 100 0 5 140
+torus
+0 105 0 5 140
+
+ident
+scale
+1 1 0.5
+move
+0 0 43
+apply
+
+# eyeballs {{{2
+sphere
+-47 60 40 45
+sphere
+47 60 40 45
+
+ident
+move
+0 0 55
+apply
+
+# upper head {{{2
+circle
+000 000 000 150
+circle
+000 000 020 150
+circle
+000 000 040 150
+circle
+000 000 060 150
+circle
+000 000 080 150
+circle
+000 000 100 150
+circle
+000 000 120 150
+circle
+000 000 140 150
+circle
+000 000 160 150
+circle
+000 000 180 150
+circle
+000 000 200 150
+
+# antennae
+sphere
+0 0 -142 25
+circle
+000 000 -165 10
+circle
+000 000 -175 9
+circle
+000 000 -185 8
+circle
+000 000 -195 7
+circle
+000 000 -205 6
+circle
+000 000 -215 5
+circle
+000 000 -225 4
+circle
+000 000 -235 3
+sphere
+0 0 -240 8
+#circle
+#000 000 -245 2
+#circle
+#000 000 -255 1
+#circle
+#000 000 -265 0
+
+ident
+rotate
+x 90
+apply
+
+# skull {{{2
+sphere
+0 0 0 150
+
+# }}}2
+
+# center it all {{{1
+ident
+move
+330 350 0
+apply
+display
+
+ident
+rotate
+x 10
+rotate
+y 20
+apply
+display
+
+save
+bender.png
+# vim:foldmethod=marker

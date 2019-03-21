@@ -8,8 +8,8 @@ use screen::{Screen,Color};
 use std::env;
 use std::process;
 
-const XRES: usize = 500;
-const YRES: usize = 500;
+const XRES: usize = 700;
+const YRES: usize = 700;
 const TOTAL_STEPS: i32 = 100;
 const STEP: i32 = 2;
 
