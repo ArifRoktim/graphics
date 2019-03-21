@@ -1,5 +1,9 @@
 .PHONY: all
 all: src/main.rs
+	cargo run --release scripts/3d
+
+.PHONY: debug
+debug: src/main.rs
 	cargo run scripts/3d
 
 .PHONY: clean
