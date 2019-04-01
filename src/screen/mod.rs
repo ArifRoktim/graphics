@@ -94,12 +94,25 @@ impl Screen {
         // Iterate over the edge list 2 points at a time
         for edge in m.m.chunks_exact(2) {
             // If any of the points have negative coords, they can't be drawn
-            if edge[0][0] < 0.0 || edge[0][1] < 0.0 ||
-                edge[1][0] < 0.0 || edge[1][1] < 0.0 {
-                    continue;
-            }
+            //if edge[0][0] < 0.0 || edge[0][1] < 0.0 ||
+            //    edge[1][0] < 0.0 || edge[1][1] < 0.0 {
+            //        continue;
+            //}
             self.draw_line(edge[0][0] as i32, edge[0][1] as i32,
                            edge[1][0] as i32, edge[1][1] as i32, c);
+        }
+    }
+
+    pub fn draw_polygons(&mut self, polygons: &Matrix, c: Color) {
+        // Iterate over the edge list 3 points at a time
+        // TODO: Implement backface culling
+        for edge in polygons.m.chunks_exact(3) {
+            self.draw_line(edge[0][0] as i32, edge[0][1] as i32,
+                           edge[1][0] as i32, edge[1][1] as i32, c);
+            self.draw_line(edge[0][0] as i32, edge[0][1] as i32,
+                           edge[2][0] as i32, edge[2][1] as i32, c);
+            self.draw_line(edge[1][0] as i32, edge[1][1] as i32,
+                           edge[2][0] as i32, edge[2][1] as i32, c);
         }
     }
 }

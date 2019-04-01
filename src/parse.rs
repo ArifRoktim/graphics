@@ -36,7 +36,7 @@ pub fn parse_file(filename: &str, screen: &mut Screen,
                 // clear screen
                 screen.clear();
                 screen.draw_lines(edges, Color::green());
-                screen.draw_lines(polygons, Color::green());
+                screen.draw_polygons(polygons, Color::green());
                 display(screen);
             },
             "ident" => transform.ident(),

@@ -88,6 +88,15 @@ pub fn add_edge(edges: &mut Matrix, x0: f64, y0: f64, z0:f64,
     add_point(edges, x1, y1, z1);
 }
 
+pub fn add_polygon(polygons: &mut Matrix,
+                   x0: f64, y0: f64, z0:f64,
+                   x1: f64, y1: f64, z1: f64,
+                   x2: f64, y2: f64, z2: f64) {
+    add_point(polygons, x0, y0, z0);
+    add_point(polygons, x1, y1, z1);
+    add_point(polygons, x2, y2, z2);
+}
+
 pub fn add_circle(edges: &mut Matrix, cx: f64, cy: f64, cz: f64,
                   r: f64, step: i32){
     // Draw a circle using parametric equations
@@ -139,27 +148,30 @@ pub fn add_curve(edges: &mut Matrix, curve: &Curve, step: i32) {
     }
 }
 
-pub fn add_box(edges: &mut Matrix, x: f64, y: f64, z: f64,
+pub fn add_box(polygons: &mut Matrix, x: f64, y: f64, z: f64,
                width: f64, height: f64, depth: f64) {
-    // Edges starting from the front bottom left corner
-    add_edge(edges, x, y, z, x + width, y, z);
-    add_edge(edges, x, y, z, x, y + height, z);
-    add_edge(edges, x, y, z, x, y, z + depth);
-    // from front bottom right corner
-    add_edge(edges, x + width, y, z, x + width, y + height, z);
-    add_edge(edges, x + width, y, z, x + width, y, z + depth);
-    // from front top left corner
-    add_edge(edges, x, y + height, z, x + width, y + height, z);
-    add_edge(edges, x, y + height, z, x, y + height, z + depth);
-    // from front top right corner
-    add_edge(edges, x + width, y + height, z, x + width, y + height, z + depth);
-    // Edges for the back-most face
-    // from back bottom left corner
-    add_edge(edges, x, y, z + depth, x + width, y, z + depth);
-    add_edge(edges, x, y, z + depth, x, y + height, z + depth);
-    // from back top right corner
-    add_edge(edges, x + width, y + height, z + depth, x + width, y, z + depth);
-    add_edge(edges, x + width, y + height, z + depth, x, y + height, z + depth);
+    let x1 = x + width;
+    let y1 = y - height;
+    let z1 = z - depth;
+
+    // front face
+    add_polygon(polygons, x, y, z, x1, y1, z, x, y1, z);
+    add_polygon(polygons, x, y, z, x1, y, z, x1, y1, z);
+    // back face
+    add_polygon(polygons, x1, y, z1, x, y1, z1, x1, y1, z1);
+    add_polygon(polygons, x1, y, z1, x, y, z1, x, y1, z1);
+    // left face
+    add_polygon(polygons, x, y1, z, x, y1, z1, x, y, z1);
+    add_polygon(polygons, x, y1, z, x, y, z1, x, y, z);
+    // right face
+    add_polygon(polygons, x1, y1, z1, x1, y1, z, x1, y, z);
+    add_polygon(polygons, x1, y1, z1, x1, y, z, x1, y, z1);
+    // top face
+    add_polygon(polygons, x1, y, z, x, y, z, x, y, z1);
+    add_polygon(polygons, x1, y, z, x, y, z1, x1, y, z1);
+    // bottom face
+    add_polygon(polygons, x1, y1, z1, x, y1, z1, x, y1, z);
+    add_polygon(polygons, x1, y1, z1, x, y1, z, x1, y1, z);
 }
 
 pub fn gen_sphere(cx: f64, cy: f64, cz: f64, r: f64, step: i32) -> Matrix {
