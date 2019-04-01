@@ -1,10 +1,10 @@
-pub mod matrix;
-pub mod screen;
-pub mod parse;
 pub mod draw;
+pub mod matrix;
+pub mod parse;
+pub mod screen;
 
 use matrix::Matrix;
-use screen::{Screen,Color};
+use screen::{Color, Screen};
 use std::env;
 use std::process;
 
@@ -24,7 +24,14 @@ fn main() {
     let mut screen = Screen::new(Color::black());
 
     let mut edges = Matrix::new(0);
+    let mut polygons = Matrix::new(0);
     let mut transform = Matrix::new(4);
 
-    parse::parse_file(filename, &mut screen, &mut edges, &mut transform);
+    parse::parse_file(
+        filename,
+        &mut screen,
+        &mut edges,
+        &mut polygons,
+        &mut transform,
+    );
 }

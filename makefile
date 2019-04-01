@@ -1,10 +1,10 @@
 .PHONY: all
 all: src/main.rs
-	cargo run --release scripts/3d
+	cargo run --release scripts/polygons
 
 .PHONY: debug
-debug: src/main.rs
-	cargo run scripts/3d
+dev: src/main.rs
+	cargo run scripts/polygons
 
 .PHONY: clean
 clean:

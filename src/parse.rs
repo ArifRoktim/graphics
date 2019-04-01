@@ -8,7 +8,7 @@ use std::fs;
 use std::process::{Command,Stdio};
 
 pub fn parse_file(filename: &str, screen: &mut Screen,
-                  edges: &mut Matrix, transform: &mut Matrix) {
+                  edges: &mut Matrix, polygons: &mut Matrix, transform: &mut Matrix) {
     let contents = match fs::read_to_string(filename) {
         Ok(contents) => contents,
         Err(error) => panic!("Error reading file \"{}\": {}", filename, error),
@@ -25,20 +25,29 @@ pub fn parse_file(filename: &str, screen: &mut Screen,
             "circle"  =>    circle(edges, iter.next()),
             "hermite" =>   hermite(edges, iter.next()),
             "bezier"  =>    bezier(edges, iter.next()),
-            "box"     =>  draw_box(edges, iter.next()),
-            "sphere"  =>    sphere(edges, iter.next()),
-            "torus"  =>    torus(edges, iter.next()),
+            "box"     =>  draw_box(polygons, iter.next()),
+            "sphere"  =>    sphere(polygons, iter.next()),
+            "torus"   =>     torus(polygons, iter.next()),
             "scale"   =>     scale(transform, iter.next()),
             "move"    => translate(transform, iter.next()),
             "rotate"  =>    rotate(transform, iter.next()),
-            "save"    => save(screen, iter.next()),
+            "save"    =>      save(screen, iter.next()),
             "display" => {
-                draw_lines(screen, edges, Color::green());
+                // clear screen
+                screen.clear();
+                screen.draw_lines(edges, Color::green());
+                screen.draw_lines(polygons, Color::green());
                 display(screen);
             },
             "ident" => transform.ident(),
-            "apply" => transform.mult(edges),
-            "clear" => edges.clear(),
+            "apply" => {
+                transform.mult(edges);
+                transform.mult(polygons);
+            },
+            "clear" => {
+                edges.clear();
+                polygons.clear();
+            },
             // some command that's not valid or yet implemented
             _ => panic!("\"{}\" not yet implemented!", line),
         }
@@ -203,13 +212,6 @@ fn save(screen: &Screen, args: Option<&str>) {
     let err_msg = "Save requires a file name!";
     let args = args.expect(err_msg);
     screen.write(args).unwrap();
-}
-
-fn draw_lines(screen: &mut Screen, edges: &mut Matrix, c: Color) {
-    // clear screen
-    screen.clear();
-    // ignore possible error
-    let _ = screen.draw_lines(edges, c);
 }
 
 fn display(screen: &Screen) {
