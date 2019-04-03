@@ -10,8 +10,8 @@ use std::process;
 
 const XRES: usize = 700;
 const YRES: usize = 700;
-const TOTAL_STEPS: i32 = 100;
-const STEP: i32 = 2;
+const STEPS_2D: i32 = 100;
+const STEPS_3D: i32 = 20;
 
 fn main() {
     let args: Vec<String> = env::args().collect();

@@ -1,7 +1,7 @@
 use crate::screen::{Color,Screen};
 use crate::matrix::Matrix;
 use crate::draw::{self, Curve};
-use crate::STEP;
+use crate::{STEPS_2D,STEPS_3D};
 
 use std::io::prelude::*;
 use std::fs;
@@ -80,7 +80,7 @@ fn circle(edges: &mut Matrix, args: Option<&str>) {
         .collect::<Vec<f64>>();
     match *args {
         [cx, cy, cz, r] => {
-            draw::add_circle(edges, cx, cy, cz, r, STEP);
+            draw::add_circle(edges, cx, cy, cz, r, STEPS_2D);
         },
         _ => panic!(err_msg),
     }
@@ -97,7 +97,7 @@ fn hermite(edges: &mut Matrix, args: Option<&str>) {
     match *args {
         [p0x, p0y, p1x, p1y, r0x, r0y, r1x, r1y] => {
             let curve = Curve::Hermite {p0x, p0y, p1x, p1y, r0x, r0y, r1x, r1y};
-            draw::add_curve(edges, &curve, STEP);
+            draw::add_curve(edges, &curve, STEPS_2D);
         },
         _ => panic!(err_msg),
     }
@@ -114,7 +114,7 @@ fn bezier(edges: &mut Matrix, args: Option<&str>) {
     match *args {
         [p0x, p0y, p1x, p1y, p2x, p2y, p3x, p3y] => {
             let curve = Curve::Bezier {p0x, p0y, p1x, p1y, p2x, p2y, p3x, p3y};
-            draw::add_curve(edges, &curve, STEP);
+            draw::add_curve(edges, &curve, STEPS_2D);
         },
         _ => panic!(err_msg),
     }
@@ -142,7 +142,7 @@ fn sphere(edges: &mut Matrix, args: Option<&str>) {
         .collect::<Vec<f64>>();
     match *args {
         [cx, cy, cz, r] => {
-            draw::add_sphere(edges, cx, cy, cz, r, STEP);
+            draw::add_sphere(edges, cx, cy, cz, r, STEPS_3D);
         },
         _ => panic!(err_msg),
     }
@@ -156,7 +156,7 @@ fn torus(edges: &mut Matrix, args: Option<&str>) {
         .collect::<Vec<f64>>();
     match *args {
         [cx, cy, cz, minor_r, major_r] => {
-            draw::add_torus(edges, cx, cy, cz, minor_r, major_r, STEP);
+            draw::add_torus(edges, cx, cy, cz, minor_r, major_r, STEPS_3D);
         },
         _ => panic!(err_msg),
     }
