@@ -97,7 +97,7 @@ pub fn add_polygon(polygons: &mut Matrix,
 }
 
 pub fn add_circle(edges: &mut Matrix, cx: f64, cy: f64, cz: f64,
-                  r: f64, steps: i32){
+                  r: f64, steps: usize){
     // Draw a circle using parametric equations
     // x_prev, y_prec, cz, and the 1st point given to `add_edge`
     let mut x_prev = cx + r;
@@ -105,7 +105,7 @@ pub fn add_circle(edges: &mut Matrix, cx: f64, cy: f64, cz: f64,
     // t goes from 0 -> TOTAL_STEPS in increments of `step`
     let mut t = 0;
     while t <= steps {
-        let theta = f64::from(t) / f64::from(steps);
+        let theta = t as f64 / steps as f64;
         let (sin, cos) = (2.0 * PI * theta).sin_cos();
         let x_next = r * cos + cx;
         let y_next = r * sin + cy;
@@ -119,7 +119,7 @@ pub fn add_circle(edges: &mut Matrix, cx: f64, cy: f64, cz: f64,
     }
 }
 
-pub fn add_curve(edges: &mut Matrix, curve: &Curve, steps: i32) {
+pub fn add_curve(edges: &mut Matrix, curve: &Curve, steps: usize) {
     let (mut x_prev, mut y_prev) = match *curve {
         Curve::Hermite {p0x, p0y, ..} => (p0x, p0y),
         Curve::Bezier  {p0x, p0y, ..} => (p0x, p0y),
@@ -128,7 +128,7 @@ pub fn add_curve(edges: &mut Matrix, curve: &Curve, steps: i32) {
 
     let mut t = 0;
     while t <= steps {
-        let progress = f64::from(t) / f64::from(steps);
+        let progress = t as f64 / steps as f64;
         let x_next = xs.m[0][0] * progress.powi(3)
             + xs.m[0][1] * progress.powi(2)
             + xs.m[0][2] * progress
@@ -173,20 +173,20 @@ pub fn add_box(polygons: &mut Matrix, x: f64, y: f64, z: f64,
     add_polygon(polygons, x1, y1, z1, x, y1, z, x1, y1, z);
 }
 
-pub fn gen_sphere(cx: f64, cy: f64, cz: f64, r: f64, steps: i32) -> Matrix {
+pub fn gen_sphere(cx: f64, cy: f64, cz: f64, r: f64, steps: usize) -> Matrix {
     // Matrix of the points of the surface of a sphere
     let mut points = Matrix::new(0);
 
     // For 0->2PI draw a semi circle that's rotated phi degrees along x axis
     let mut t_phi = 0;
     while t_phi <= steps {
-        let phi = f64::from(t_phi) / f64::from(steps);
+        let phi = t_phi as f64 / steps as f64;
         let (sin_phi, cos_phi) = (2.0 * PI * phi).sin_cos();
 
         // Draw a semicircle
         let mut t_theta = 0;
         while t_theta <= steps {
-            let theta = f64::from(t_theta) / f64::from(steps);
+            let theta = t_theta as f64 / steps as f64;
             let (sin_theta, cos_theta) = (PI * theta).sin_cos();
 
             let point = [r * cos_theta + cx,
@@ -205,7 +205,7 @@ pub fn gen_sphere(cx: f64, cy: f64, cz: f64, r: f64, steps: i32) -> Matrix {
 }
 
 pub fn add_sphere(polygons: &mut Matrix, cx: f64, cy: f64, cz: f64,
-                  r: f64, steps: i32) {
+                  r: f64, steps: usize) {
     let points = gen_sphere(cx, cy, cz, r, steps);
 
     let end: usize = steps as usize;
@@ -239,7 +239,7 @@ pub fn add_sphere(polygons: &mut Matrix, cx: f64, cy: f64, cz: f64,
     }
 }
 
-pub fn gen_torus(cx: f64, cy: f64, cz: f64, minor_r: f64, major_r: f64, steps: i32) -> Matrix {
+pub fn gen_torus(cx: f64, cy: f64, cz: f64, minor_r: f64, major_r: f64, steps: usize) -> Matrix {
     // Matrix of the points of the surface of a sphere
     let mut points = Matrix::new(0);
 
@@ -247,13 +247,13 @@ pub fn gen_torus(cx: f64, cy: f64, cz: f64, minor_r: f64, major_r: f64, steps: i
     // `major_r` in the x axis and rotated phi degrees in the y axis
     let mut t_phi = 0;
     while t_phi <= steps {
-        let phi = f64::from(t_phi) / f64::from(steps);
+        let phi = t_phi as f64 / steps as f64;
         let (sin_phi, cos_phi) = (2.0 * PI * phi).sin_cos();
 
         // Draw a circle
         let mut t_theta = 0;
         while t_theta <= steps {
-            let theta = f64::from(t_theta) / f64::from(steps);
+            let theta = t_theta as f64 / steps as f64;
             let (sin_theta, cos_theta) = (2.0 * PI * theta).sin_cos();
 
             let point = [
@@ -274,7 +274,7 @@ pub fn gen_torus(cx: f64, cy: f64, cz: f64, minor_r: f64, major_r: f64, steps: i
 }
 
 pub fn add_torus(polygons: &mut Matrix, cx: f64, cy: f64, cz: f64,
-                  minor_r: f64, major_r: f64, steps: i32) {
+                  minor_r: f64, major_r: f64, steps: usize) {
     let points = gen_torus(cx, cy, cz, minor_r, major_r, steps);
 
     let end: usize = steps as usize;
