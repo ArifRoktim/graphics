@@ -11,6 +11,7 @@ use crate::XRES;
 use crate::YRES;
 
 use crate::matrix::Matrix;
+use crate::vector::Vector;
 
 pub struct Screen {
     pub pixels: Vec<Vec<Color>>,
@@ -105,14 +106,18 @@ impl Screen {
 
     pub fn draw_polygons(&mut self, polygons: &Matrix, c: Color) {
         // Iterate over the edge list 3 points at a time
-        // TODO: Implement backface culling
         for edge in polygons.m.chunks_exact(3) {
-            self.draw_line(edge[0][0] as i32, edge[0][1] as i32,
-                           edge[1][0] as i32, edge[1][1] as i32, c);
-            self.draw_line(edge[0][0] as i32, edge[0][1] as i32,
-                           edge[2][0] as i32, edge[2][1] as i32, c);
-            self.draw_line(edge[1][0] as i32, edge[1][1] as i32,
-                           edge[2][0] as i32, edge[2][1] as i32, c);
+            // Get normal vector for backface culling
+            let normal = Vector::calculate_normal(edge);
+
+            if normal.z < 0.0 {
+                self.draw_line(edge[0][0] as i32, edge[0][1] as i32,
+                               edge[1][0] as i32, edge[1][1] as i32, c);
+                self.draw_line(edge[0][0] as i32, edge[0][1] as i32,
+                               edge[2][0] as i32, edge[2][1] as i32, c);
+                self.draw_line(edge[1][0] as i32, edge[1][1] as i32,
+                               edge[2][0] as i32, edge[2][1] as i32, c);
+            }
         }
     }
 }
