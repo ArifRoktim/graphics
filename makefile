@@ -1,10 +1,12 @@
+SCRIPT = scripts/cstack
+
 .PHONY: all
 all: src/main.rs
-	cargo run --release scripts/polygons
+	cargo run --release $(SCRIPT)
 
 .PHONY: debug
 dev: src/main.rs
-	cargo run scripts/polygons
+	cargo run $(SCRIPT)
 
 .PHONY: clean
 clean:

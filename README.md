@@ -1,19 +1,29 @@
-# w06\_polygons
+# w07\_cstack
 
 Assignment:
 
-* Create new functions to add a polygon to a matrix, and go through the matrix 3 points at a time to draw triangles.
-  * You should have a new triangle matrix that exists alongside the edge matrix.
-    * The edge matrix should be used for the shapes that are exclusively 2d (lines, circles, splines).
-    * The triangle matrix for our 3d shapes.
-  * Anything aside from shape drawing that modifies/uses the edge matrix (apply, clear, display, save) should now modify/use the triangle matrix as well.
-* Modify add box, add sphere and add torus to add triangles instead of points.
-* Make sure the parser calls the draw\_polygons functions when needed instead of draw\_lines
-* More to come...
-* Vector math & Backface culling
-  * Implement the following vector functions
-    * Normalize a vector (provided as an array/list of 3 values)
-    * Find the dot product of 2 vectors (provided as arrays/lists of 3 values)
-    * Calculate the surface normal of a triangle in the polygon matrix (provided the polygon matrix and index.
-    * Check out gmath.h/c or gmath.py for headers and comments.
-  * Implement Backface culling.
+Add/modify your current parser so it has the following behavior:
+
+* push
+  * push a copy of the current top of the coordinate system (cs) stack onto the cs stack
+  * (a full copy, not just a reference to the current top)
+* pop
+  * removes the top of the cs stack
+* move/rotate/scale
+  * create a translation/rotation/scale matrix
+  * multiply the current top of the cs stack by it
+  * The ordering of multiplication is important here.
+* box/sphere/torus
+  * add a box/sphere/torus to a temporary polygon matrix
+  * multiply it by the current top of the cs stack
+  * draw it to the screen
+  * clear the polygon matrix
+* line/curve/circle
+  * add a line to a temporary edge matrix
+  * multiply it by the current top
+  * draw it to the screen (note a line is not a solid, so avoid draw\_polygons)
+* save
+    * save the screen with the provided file name
+* display
+    * show the image
+* Also note that the ident, apply and clear commands no longer have any use
