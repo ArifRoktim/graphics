@@ -1,14 +1,14 @@
-use std::{fs::File, io::prelude::*};
 use std::fmt;
 use std::path::Path;
 use std::process::Command;
+use std::{fs::File, io::prelude::*};
 
 mod color;
 mod line;
-pub use color::Color;
-pub use line::Line;
 use crate::XRES;
 use crate::YRES;
+pub use color::Color;
+pub use line::Line;
 
 use crate::matrix::Matrix;
 use crate::vector::Vector;
@@ -44,14 +44,15 @@ impl Screen {
             Some(base) => {
                 let ppm = base.to_str().unwrap().to_owned() + ".ppm";
                 self.write_ppm(&ppm)?;
-                if let Ok(mut proc) = Command::new("convert")
-                    .arg(ppm).arg(f).spawn() {
-                        proc.wait().unwrap();
-                    } else {
-                        eprintln!("Error running `convert` command! \
-                                  Is Image Magick installed?");
-                    }
-            },
+                if let Ok(mut proc) = Command::new("convert").arg(ppm).arg(f).spawn() {
+                    proc.wait().unwrap();
+                } else {
+                    eprintln!(
+                        "Error running `convert` command! \
+                         Is Image Magick installed?"
+                    );
+                }
+            }
             None => panic!("Please specify a file name!"),
         }
         Ok(())
@@ -99,8 +100,13 @@ impl Screen {
             //    edge[1][0] < 0.0 || edge[1][1] < 0.0 {
             //        continue;
             //}
-            self.draw_line(edge[0][0] as i32, edge[0][1] as i32,
-                           edge[1][0] as i32, edge[1][1] as i32, c);
+            self.draw_line(
+                edge[0][0] as i32,
+                edge[0][1] as i32,
+                edge[1][0] as i32,
+                edge[1][1] as i32,
+                c,
+            );
         }
     }
 
@@ -111,12 +117,27 @@ impl Screen {
             let normal = Vector::calculate_normal(edge);
 
             if normal.z > 0.0 {
-                self.draw_line(edge[0][0] as i32, edge[0][1] as i32,
-                               edge[1][0] as i32, edge[1][1] as i32, c);
-                self.draw_line(edge[0][0] as i32, edge[0][1] as i32,
-                               edge[2][0] as i32, edge[2][1] as i32, c);
-                self.draw_line(edge[1][0] as i32, edge[1][1] as i32,
-                               edge[2][0] as i32, edge[2][1] as i32, c);
+                self.draw_line(
+                    edge[0][0] as i32,
+                    edge[0][1] as i32,
+                    edge[1][0] as i32,
+                    edge[1][1] as i32,
+                    c,
+                );
+                self.draw_line(
+                    edge[0][0] as i32,
+                    edge[0][1] as i32,
+                    edge[2][0] as i32,
+                    edge[2][1] as i32,
+                    c,
+                );
+                self.draw_line(
+                    edge[1][0] as i32,
+                    edge[1][1] as i32,
+                    edge[2][0] as i32,
+                    edge[2][1] as i32,
+                    c,
+                );
             }
         }
     }

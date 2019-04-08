@@ -35,9 +35,9 @@ impl Matrix {
         // [0, 0, 1, z]
         // [0, 0, 0, 1]
         let m = &[
-            [1., 0., 0., 0.,],
-            [0., 1., 0., 0.,],
-            [0., 0., 1., 0.,],
+            [1., 0., 0., 0.],
+            [0., 1., 0., 0.],
+            [0., 0., 1., 0.],
             [x, y, z, 1.],
         ][..];
         Matrix::from(m)
@@ -50,10 +50,10 @@ impl Matrix {
         // [0, 0, c, 0]
         // [0, 0, 0, 1]
         let m = &[
-            [x, 0., 0., 0.,],
-            [0., y, 0., 0.,],
-            [0., 0., z, 0.,],
-            [0., 0., 0., 1.,],
+            [x, 0., 0., 0.],
+            [0., y, 0., 0.],
+            [0., 0., z, 0.],
+            [0., 0., 0., 1.],
         ][..];
         Matrix::from(m)
     }
@@ -68,10 +68,10 @@ impl Matrix {
         let radians = theta.to_radians();
         let (sin, cos) = radians.sin_cos();
         let m = &[
-            [1., 0., 0., 0.,],
-            [0., cos, sin, 0.,],
-            [0., -1. * sin, cos, 0.,],
-            [0., 0., 0., 1.,],
+            [1., 0., 0., 0.],
+            [0., cos, sin, 0.],
+            [0., -1. * sin, cos, 0.],
+            [0., 0., 0., 1.],
         ][..];
         Matrix::from(m)
     }
@@ -86,10 +86,10 @@ impl Matrix {
         let radians = theta.to_radians();
         let (sin, cos) = radians.sin_cos();
         let m = &[
-            [cos, 0., -1. * sin, 0.,],
-            [0., 1., 0., 0.,],
-            [sin, 0., cos, 0.,],
-            [0., 0., 0., 1.,],
+            [cos, 0., -1. * sin, 0.],
+            [0., 1., 0., 0.],
+            [sin, 0., cos, 0.],
+            [0., 0., 0., 1.],
         ][..];
         Matrix::from(m)
     }
@@ -104,10 +104,10 @@ impl Matrix {
         let radians = theta.to_radians();
         let (sin, cos) = radians.sin_cos();
         let m = &[
-            [cos, sin, 0., 0.,],
-            [-1. * sin, cos, 0., 0.,],
-            [0., 0., 1., 0.,],
-            [0., 0., 0., 1.,],
+            [cos, sin, 0., 0.],
+            [-1. * sin, cos, 0., 0.],
+            [0., 0., 1., 0.],
+            [0., 0., 0., 1.],
         ][..];
         Matrix::from(m)
     }
@@ -141,8 +141,13 @@ impl Matrix {
         // columns and rows are switched
         // First check that both matrices can be multiplied
         if self.rows() != other.cols() {
-            panic!("Can't multiply {}x{} by {}x{}!",
-                   self.cols(), self.rows(), other.cols(), other.rows());
+            panic!(
+                "Can't multiply {}x{} by {}x{}!",
+                self.cols(),
+                self.rows(),
+                other.cols(),
+                other.rows()
+            );
         }
         // Graphical lens
         // for each column in other, for each row in self
@@ -164,7 +169,7 @@ impl From<&[[f64; 4]]> for Matrix {
         let mut ret = Matrix::new(0);
         for &row in matrix {
             ret.m.push(row);
-        };
+        }
         ret
     }
 }
@@ -186,14 +191,30 @@ impl fmt::Display for Matrix {
         let mut one = String::with_capacity(size);
 
         for row in &self.m {
-            x.push_str(&format!("{: <width$.prec$} ",
-                                row[0], prec = prec, width = width));
-            y.push_str(&format!("{: <width$.prec$} ",
-                                row[1], prec = prec, width = width));
-            z.push_str(&format!("{: <width$.prec$} ",
-                                row[2], prec = prec, width = width));
-            one.push_str(&format!("{: <width$.prec$} ",
-                                row[3], prec = prec, width = width));
+            x.push_str(&format!(
+                "{: <width$.prec$} ",
+                row[0],
+                prec = prec,
+                width = width
+            ));
+            y.push_str(&format!(
+                "{: <width$.prec$} ",
+                row[1],
+                prec = prec,
+                width = width
+            ));
+            z.push_str(&format!(
+                "{: <width$.prec$} ",
+                row[2],
+                prec = prec,
+                width = width
+            ));
+            one.push_str(&format!(
+                "{: <width$.prec$} ",
+                row[3],
+                prec = prec,
+                width = width
+            ));
         }
         write!(f, "{}\n{}\n{}\n{}", x, y, z, one)
     }

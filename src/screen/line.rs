@@ -20,8 +20,7 @@ impl Line {
         // make sure we draw from left to right on the screen
         else if p0x > p1x {
             Line::get_octant(p1x, p1y, p0x, p0y)
-        }
-        else if p0y == p1y {
+        } else if p0y == p1y {
             (Line::Horizontal, (p0x, p0y, p1x, p1y))
         }
         // Magnitude of slope is > 1 so line is in octant 1 or 8

@@ -1,14 +1,19 @@
-use crate::screen::{Color,Screen};
-use crate::matrix::Matrix;
 use crate::draw::{self, Curve};
-use crate::{STEPS_2D,STEPS_3D};
+use crate::matrix::Matrix;
+use crate::screen::{Color, Screen};
+use crate::{STEPS_2D, STEPS_3D};
 
-use std::io::prelude::*;
 use std::fs;
-use std::process::{Command,Stdio};
+use std::io::prelude::*;
+use std::process::{Command, Stdio};
 
-pub fn parse_file(filename: &str, screen: &mut Screen,
-                  edges: &mut Matrix, polygons: &mut Matrix, transform: &mut Matrix) {
+pub fn parse_file(
+    filename: &str,
+    screen: &mut Screen,
+    edges: &mut Matrix,
+    polygons: &mut Matrix,
+    transform: &mut Matrix,
+) {
     let contents = match fs::read_to_string(filename) {
         Ok(contents) => contents,
         Err(error) => panic!("Error reading file \"{}\": {}", filename, error),
@@ -18,36 +23,36 @@ pub fn parse_file(filename: &str, screen: &mut Screen,
     while let Some(line) = iter.next() {
         match line {
             // ignore empty lines and lines that start with #
-            "" => {},
-            comment if comment.starts_with('#') => {},
+            "" => {}
+            comment if comment.starts_with('#') => {}
 
-            "line"    => draw_line(edges, iter.next()),
-            "circle"  =>    circle(edges, iter.next()),
-            "hermite" =>   hermite(edges, iter.next()),
-            "bezier"  =>    bezier(edges, iter.next()),
-            "box"     =>  draw_box(polygons, iter.next()),
-            "sphere"  =>    sphere(polygons, iter.next()),
-            "torus"   =>     torus(polygons, iter.next()),
-            "scale"   =>     scale(transform, iter.next()),
-            "move"    => translate(transform, iter.next()),
-            "rotate"  =>    rotate(transform, iter.next()),
-            "save"    =>      save(screen, iter.next()),
+            "line" => draw_line(edges, iter.next()),
+            "circle" => circle(edges, iter.next()),
+            "hermite" => hermite(edges, iter.next()),
+            "bezier" => bezier(edges, iter.next()),
+            "box" => draw_box(polygons, iter.next()),
+            "sphere" => sphere(polygons, iter.next()),
+            "torus" => torus(polygons, iter.next()),
+            "scale" => scale(transform, iter.next()),
+            "move" => translate(transform, iter.next()),
+            "rotate" => rotate(transform, iter.next()),
+            "save" => save(screen, iter.next()),
             "display" => {
                 // clear screen
                 screen.clear();
                 screen.draw_lines(edges, Color::green());
                 screen.draw_polygons(polygons, Color::green());
                 display(screen);
-            },
+            }
             "ident" => transform.ident(),
             "apply" => {
                 transform.mult(edges);
                 transform.mult(polygons);
-            },
+            }
             "clear" => {
                 edges.clear();
                 polygons.clear();
-            },
+            }
             // some command that's not valid or yet implemented
             _ => panic!("\"{}\" not yet implemented!", line),
         }
@@ -59,13 +64,14 @@ fn draw_line(edges: &mut Matrix, args: Option<&str>) {
     let args = args.expect(err_msg);
     // Split by whitespace, parse the `str`s into `f64`s, then collect into
     // a vector. Use &* on vector to get a slice
-    let args = &* args.split_whitespace()
+    let args = &*args
+        .split_whitespace()
         .map(|n| n.parse::<f64>().expect(err_msg))
         .collect::<Vec<f64>>();
     match *args {
         [x0, y0, z0, x1, y1, z1] => {
             draw::add_edge(edges, x0, y0, z0, x1, y1, z1);
-        },
+        }
         _ => panic!(err_msg),
     }
 }
@@ -75,13 +81,14 @@ fn circle(edges: &mut Matrix, args: Option<&str>) {
     let args = args.expect(err_msg);
     // Split by whitespace, parse the `str`s into `f64`s, then collect into
     // a vector. Use &* on vector to get a slice
-    let args = &* args.split_whitespace()
+    let args = &*args
+        .split_whitespace()
         .map(|n| n.parse::<f64>().expect(err_msg))
         .collect::<Vec<f64>>();
     match *args {
         [cx, cy, cz, r] => {
             draw::add_circle(edges, cx, cy, cz, r, STEPS_2D);
-        },
+        }
         _ => panic!(err_msg),
     }
 }
@@ -91,14 +98,24 @@ fn hermite(edges: &mut Matrix, args: Option<&str>) {
     let args = args.expect(err_msg);
     // Split by whitespace, parse the `str`s into `f64`s, then collect into
     // a vector. Use &* on vector to get a slice
-    let args = &* args.split_whitespace()
+    let args = &*args
+        .split_whitespace()
         .map(|n| n.parse::<f64>().expect(err_msg))
         .collect::<Vec<f64>>();
     match *args {
         [p0x, p0y, p1x, p1y, r0x, r0y, r1x, r1y] => {
-            let curve = Curve::Hermite {p0x, p0y, p1x, p1y, r0x, r0y, r1x, r1y};
+            let curve = Curve::Hermite {
+                p0x,
+                p0y,
+                p1x,
+                p1y,
+                r0x,
+                r0y,
+                r1x,
+                r1y,
+            };
             draw::add_curve(edges, &curve, STEPS_2D);
-        },
+        }
         _ => panic!(err_msg),
     }
 }
@@ -108,14 +125,24 @@ fn bezier(edges: &mut Matrix, args: Option<&str>) {
     let args = args.expect(err_msg);
     // Split by whitespace, parse the `str`s into `f64`s, then collect into
     // a vector. Use &* on vector to get a slice
-    let args = &* args.split_whitespace()
+    let args = &*args
+        .split_whitespace()
         .map(|n| n.parse::<f64>().expect(err_msg))
         .collect::<Vec<f64>>();
     match *args {
         [p0x, p0y, p1x, p1y, p2x, p2y, p3x, p3y] => {
-            let curve = Curve::Bezier {p0x, p0y, p1x, p1y, p2x, p2y, p3x, p3y};
+            let curve = Curve::Bezier {
+                p0x,
+                p0y,
+                p1x,
+                p1y,
+                p2x,
+                p2y,
+                p3x,
+                p3y,
+            };
             draw::add_curve(edges, &curve, STEPS_2D);
-        },
+        }
         _ => panic!(err_msg),
     }
 }
@@ -123,13 +150,14 @@ fn bezier(edges: &mut Matrix, args: Option<&str>) {
 fn draw_box(edges: &mut Matrix, args: Option<&str>) {
     let err_msg = "Box requires 6 f64 args!";
     let args = args.expect(err_msg);
-    let args = &* args.split_whitespace()
+    let args = &*args
+        .split_whitespace()
         .map(|n| n.parse::<f64>().expect(err_msg))
         .collect::<Vec<f64>>();
     match *args {
         [x, y, z, width, height, depth] => {
             draw::add_box(edges, x, y, z, width, height, depth);
-        },
+        }
         _ => panic!(err_msg),
     }
 }
@@ -137,13 +165,14 @@ fn draw_box(edges: &mut Matrix, args: Option<&str>) {
 fn sphere(edges: &mut Matrix, args: Option<&str>) {
     let err_msg = "Sphere requires 4 f64 args!";
     let args = args.expect(err_msg);
-    let args = &* args.split_whitespace()
+    let args = &*args
+        .split_whitespace()
         .map(|n| n.parse::<f64>().expect(err_msg))
         .collect::<Vec<f64>>();
     match *args {
         [cx, cy, cz, r] => {
             draw::add_sphere(edges, cx, cy, cz, r, STEPS_3D);
-        },
+        }
         _ => panic!(err_msg),
     }
 }
@@ -151,13 +180,14 @@ fn sphere(edges: &mut Matrix, args: Option<&str>) {
 fn torus(edges: &mut Matrix, args: Option<&str>) {
     let err_msg = "Torus requires 5 f64 args!";
     let args = args.expect(err_msg);
-    let args = &* args.split_whitespace()
+    let args = &*args
+        .split_whitespace()
         .map(|n| n.parse::<f64>().expect(err_msg))
         .collect::<Vec<f64>>();
     match *args {
         [cx, cy, cz, minor_r, major_r] => {
             draw::add_torus(edges, cx, cy, cz, minor_r, major_r, STEPS_3D);
-        },
+        }
         _ => panic!(err_msg),
     }
 }
@@ -167,7 +197,8 @@ fn scale(transform: &mut Matrix, args: Option<&str>) {
     let args = args.expect(err_msg);
     // Split by whitespace, parse the `str`s into `f64`s, then collect into
     // a vector. Use &* on vector to get a slice
-    let args = &* args.split_whitespace()
+    let args = &*args
+        .split_whitespace()
         .map(|n| n.parse::<f64>().expect(err_msg))
         .collect::<Vec<f64>>();
     match *args {
@@ -183,7 +214,8 @@ fn translate(transform: &mut Matrix, args: Option<&str>) {
     let args = args.expect(err_msg);
     // Split by whitespace, parse the `str`s into `f64`s, then collect into
     // a vector. Use &* on vector to get a slice
-    let args = &* args.split_whitespace()
+    let args = &*args
+        .split_whitespace()
         .map(|n| n.parse::<f64>().expect(err_msg))
         .collect::<Vec<f64>>();
     match *args {
@@ -198,8 +230,7 @@ fn rotate(transform: &mut Matrix, args: Option<&str>) {
     let err_msg = "Rotate requires an axis ('x', 'y', or 'z') and a f64!";
     let args = args.expect(err_msg);
     let args: Vec<&str> = args.split_whitespace().collect();
-    let theta: f64 = args.get(1).expect(err_msg)
-        .parse().expect(err_msg);
+    let theta: f64 = args.get(1).expect(err_msg).parse().expect(err_msg);
     match args[0] {
         "x" => Matrix::new_rot_x(theta).mult(transform),
         "y" => Matrix::new_rot_y(theta).mult(transform),
@@ -216,7 +247,9 @@ fn save(screen: &Screen, args: Option<&str>) {
 
 fn display(screen: &Screen) {
     if let Ok(mut proc) = Command::new("display").stdin(Stdio::piped()).spawn() {
-        proc.stdin.as_mut().unwrap()
+        proc.stdin
+            .as_mut()
+            .unwrap()
             .write_all(screen.to_string().as_bytes())
             .unwrap();
         proc.wait().unwrap();

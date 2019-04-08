@@ -24,18 +24,18 @@ impl Vector {
         let a = Vector::new(
             triangle[1][0] - triangle[0][0],
             triangle[1][1] - triangle[0][1],
-            triangle[1][2] - triangle[0][2]
+            triangle[1][2] - triangle[0][2],
         );
         let b = Vector::new(
             triangle[2][0] - triangle[0][0],
             triangle[2][1] - triangle[0][1],
-            triangle[2][2] - triangle[0][2]
+            triangle[2][2] - triangle[0][2],
         );
 
         Vector::new(
             a.y * b.z - a.z * b.y,
             a.z * b.x - a.x * b.z,
-            a.x * b.y - a.y * b.x
+            a.x * b.y - a.y * b.x,
         )
     }
 }
