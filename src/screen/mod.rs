@@ -110,7 +110,7 @@ impl Screen {
             // Get normal vector for backface culling
             let normal = Vector::calculate_normal(edge);
 
-            if normal.z < 0.0 {
+            if normal.z > 0.0 {
                 self.draw_line(edge[0][0] as i32, edge[0][1] as i32,
                                edge[1][0] as i32, edge[1][1] as i32, c);
                 self.draw_line(edge[0][0] as i32, edge[0][1] as i32,

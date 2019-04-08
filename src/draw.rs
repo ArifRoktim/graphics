@@ -154,23 +154,23 @@ pub fn add_box(polygons: &mut Matrix, x: f64, y: f64, z: f64,
     let z1 = z - depth;
 
     // front face
-    add_polygon(polygons, x, y, z, x1, y1, z, x, y1, z);
-    add_polygon(polygons, x, y, z, x1, y, z, x1, y1, z);
+    add_polygon(polygons, x, y, z, x1, y1, z, x1, y, z);
+    add_polygon(polygons, x, y, z, x, y1, z, x1, y1, z);
     // back face
-    add_polygon(polygons, x1, y, z1, x, y1, z1, x1, y1, z1);
-    add_polygon(polygons, x1, y, z1, x, y, z1, x, y1, z1);
+    add_polygon(polygons, x1, y, z1, x, y1, z1, x, y, z1);
+    add_polygon(polygons, x1, y, z1, x1, y1, z1, x, y1, z1);
     // left face
-    add_polygon(polygons, x, y1, z, x, y1, z1, x, y, z1);
-    add_polygon(polygons, x, y1, z, x, y, z1, x, y, z);
+    add_polygon(polygons, x, y, z1, x, y1, z, x, y, z);
+    add_polygon(polygons, x, y, z1, x, y1, z1, x, y1, z);
     // right face
-    add_polygon(polygons, x1, y1, z1, x1, y1, z, x1, y, z);
-    add_polygon(polygons, x1, y1, z1, x1, y, z, x1, y, z1);
+    add_polygon(polygons, x1, y, z, x1, y1, z1, x1, y, z1);
+    add_polygon(polygons, x1, y, z, x1, y1, z, x1, y1, z1);
     // top face
-    add_polygon(polygons, x1, y, z, x, y, z, x, y, z1);
-    add_polygon(polygons, x1, y, z, x, y, z1, x1, y, z1);
+    add_polygon(polygons, x, y, z1, x1, y, z, x1, y, z1);
+    add_polygon(polygons, x, y, z1, x, y, z, x1, y, z);
     // bottom face
-    add_polygon(polygons, x1, y1, z1, x, y1, z1, x, y1, z);
-    add_polygon(polygons, x1, y1, z1, x, y1, z, x1, y1, z);
+    add_polygon(polygons, x, y1, z, x1, y1, z1, x1, y1, z);
+    add_polygon(polygons, x, y1, z, x, y1, z1, x1, y1, z1);
 }
 
 pub fn gen_sphere(cx: f64, cy: f64, cz: f64, r: f64, steps: usize) -> Matrix {
