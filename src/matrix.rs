@@ -5,6 +5,7 @@ const COLS: usize = 4;
 // For the purposes of display and multiplication, this is switched.
 // Each point is then represented by a column and the rows correspond
 // to either all the x values, y values, z values, etc.
+#[derive(Debug, Clone)]
 pub struct Matrix {
     pub m: Vec<[f64; 4]>,
 }

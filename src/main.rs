@@ -24,15 +24,14 @@ fn main() {
 
     let mut screen = Screen::new(Color::black());
 
-    let mut edges = Matrix::new(0);
-    let mut polygons = Matrix::new(0);
-    let mut transform = Matrix::new(4);
+    let mut identity = Matrix::new(4);
+    identity.ident();
+    let mut cstack = Vec::new();
+    cstack.push(identity);
 
     parse::parse_file(
         filename,
         &mut screen,
-        &mut edges,
-        &mut polygons,
-        &mut transform,
+        &mut cstack,
     );
 }
