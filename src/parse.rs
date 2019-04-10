@@ -219,9 +219,10 @@ fn scale(stack: &mut Vec<Matrix>, args: Option<&str>) {
         .collect::<Vec<f64>>();
     match *args {
         [sx, sy, sz] => {
-            Matrix::new_scale(sx, sy, sz).mult(
-                stack.last_mut().unwrap()
-            );
+            let mut tr = Matrix::new_scale(sx, sy, sz);
+            stack.last().unwrap().mult(&mut tr);
+            stack.pop();
+            stack.push(tr);
         }
         _ => panic!(err_msg),
     }
@@ -238,9 +239,10 @@ fn translate(stack: &mut Vec<Matrix>, args: Option<&str>) {
         .collect::<Vec<f64>>();
     match *args {
         [tx, ty, tz] => {
-            Matrix::new_translate(tx, ty, tz).mult(
-                stack.last_mut().unwrap()
-            );
+            let mut tr = Matrix::new_translate(tx, ty, tz);
+            stack.last().unwrap().mult(&mut tr);
+            stack.pop();
+            stack.push(tr);
         }
         _ => panic!(err_msg),
     }
@@ -251,13 +253,15 @@ fn rotate(stack: &mut Vec<Matrix>, args: Option<&str>) {
     let args = args.expect(err_msg);
     let args: Vec<&str> = args.split_whitespace().collect();
     let theta: f64 = args.get(1).expect(err_msg).parse().expect(err_msg);
-    let rot = match args[0] {
+    let mut tr = match args[0] {
         "x" => Matrix::new_rot_x(theta),
         "y" => Matrix::new_rot_y(theta),
         "z" => Matrix::new_rot_z(theta),
         _ => panic!(err_msg),
     };
-    rot.mult(stack.last_mut().unwrap());
+    stack.last().unwrap().mult(&mut tr);
+    stack.pop();
+    stack.push(tr);
 }
 
 fn save(screen: &Screen, args: Option<&str>) {
