@@ -1,5 +1,14 @@
 use std::fmt;
 
+pub const BLACK: Color = Color{ red: 0, green: 0, blue: 0 };
+pub const WHITE: Color = Color{ red: 255, green: 255, blue: 255 };
+pub const RED: Color = Color{ red: 255, green: 0, blue: 0 };
+pub const GREEN: Color = Color{ red: 0, green: 255, blue: 0 };
+pub const BLUE: Color = Color{ red: 0, green: 0, blue: 255 };
+pub const YELLOW: Color = Color{ red: 255, green: 255, blue: 0 };
+pub const PURPLE: Color = Color{ red: 255, green: 0, blue: 255 };
+pub const CYAN: Color = Color{ red: 0, green: 255, blue: 255 };
+
 #[derive(Debug, Copy, Clone)]
 pub struct Color {
     pub red: u8,
@@ -13,70 +22,6 @@ impl Color {
             red: r,
             green: g,
             blue: b,
-        }
-    }
-
-    pub fn black() -> Color {
-        Color {
-            red: 0,
-            green: 0,
-            blue: 0,
-        }
-    }
-
-    pub fn white() -> Color {
-        Color {
-            red: 255,
-            green: 255,
-            blue: 255,
-        }
-    }
-
-    pub fn red() -> Color {
-        Color {
-            red: 255,
-            green: 0,
-            blue: 0,
-        }
-    }
-
-    pub fn green() -> Color {
-        Color {
-            red: 0,
-            green: 255,
-            blue: 0,
-        }
-    }
-
-    pub fn blue() -> Color {
-        Color {
-            red: 0,
-            green: 0,
-            blue: 255,
-        }
-    }
-
-    pub fn yellow() -> Color {
-        Color {
-            red: 255,
-            green: 255,
-            blue: 0,
-        }
-    }
-
-    pub fn purple() -> Color {
-        Color {
-            red: 255,
-            green: 0,
-            blue: 255,
-        }
-    }
-
-    pub fn cyan() -> Color {
-        Color {
-            red: 0,
-            green: 255,
-            blue: 255,
         }
     }
 

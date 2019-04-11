@@ -5,9 +5,8 @@ pub mod screen;
 pub mod vector;
 
 use matrix::Matrix;
-use screen::{Color, Screen};
-use std::env;
-use std::process;
+use screen::{Screen, color};
+use std::{env, process};
 
 const XRES: usize = 700;
 const YRES: usize = 700;
@@ -22,7 +21,7 @@ fn main() {
     }
     let filename = &args[1];
 
-    let mut screen = Screen::new(Color::black());
+    let mut screen = Screen::new(color::BLACK);
 
     let mut identity = Matrix::new(4);
     identity.ident();

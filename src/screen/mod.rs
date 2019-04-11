@@ -1,17 +1,17 @@
+use crate::matrix::Matrix;
+use crate::vector::Vector;
+use crate::XRES;
+use crate::YRES;
 use std::fmt;
 use std::path::Path;
 use std::process::Command;
 use std::{fs::File, io::prelude::*};
 
-mod color;
-mod line;
-use crate::XRES;
-use crate::YRES;
+pub mod color;
+pub mod line;
+
 pub use color::Color;
 pub use line::Line;
-
-use crate::matrix::Matrix;
-use crate::vector::Vector;
 
 pub struct Screen {
     pub pixels: Vec<Vec<Color>>,
@@ -21,8 +21,8 @@ pub struct Screen {
 impl Screen {
     pub fn blank() -> Screen {
         Screen {
-            pixels: vec![vec![Color::black(); XRES]; YRES],
-            color: Color::black(),
+            pixels: vec![vec![color::BLACK; XRES]; YRES],
+            color: color::BLACK,
         }
     }
 

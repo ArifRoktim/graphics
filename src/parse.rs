@@ -1,13 +1,13 @@
 use crate::draw::{self, Curve};
 use crate::matrix::Matrix;
-use crate::screen::{Color, Screen};
+use crate::screen::{Color, Screen, color};
 use crate::{STEPS_2D, STEPS_3D};
 
 use std::fs;
 use std::io::prelude::*;
 use std::process::{Command, Stdio};
 
-const FOREGROUND: Color = Color {red: 0, green: 255, blue: 0};
+const FOREGROUND: Color = color::GREEN;
 
 pub fn parse_file(
     filename: &str,
