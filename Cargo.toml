@@ -1,5 +1,5 @@
 [package]
-name = "w07_cstack"
+name = "w07_refactor"
 version = "0.1.0"
 authors = ["Arif Roktim <aroktim@stuy.edu>"]
 edition = "2018"

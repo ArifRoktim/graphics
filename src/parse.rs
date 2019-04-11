@@ -25,7 +25,6 @@ pub fn parse_file(
 
     let mut iter = contents.lines();
     while let Some(line) = iter.next() {
-        println!("While println!:\n{:#?}\n\n", cstack);
         edges.clear();
         polygons.clear();
 
@@ -61,7 +60,7 @@ pub fn parse_file(
     }
 }
 
-fn draw_line(edges: &mut Matrix, stack: &Vec<Matrix>, screen: &mut Screen, args: Option<&str>) {
+fn draw_line(edges: &mut Matrix, stack: &[Matrix], screen: &mut Screen, args: Option<&str>) {
     let err_msg = "Line requires 6 f64 arguments!";
     let args = args.expect(err_msg);
     // Split by whitespace, parse the `str`s into `f64`s, then collect into
@@ -80,7 +79,7 @@ fn draw_line(edges: &mut Matrix, stack: &Vec<Matrix>, screen: &mut Screen, args:
     }
 }
 
-fn circle(edges: &mut Matrix, stack: &Vec<Matrix>, screen: &mut Screen, args: Option<&str>) {
+fn circle(edges: &mut Matrix, stack: &[Matrix], screen: &mut Screen, args: Option<&str>) {
     let err_msg = "Circle requires 4 f64 arguments!";
     let args = args.expect(err_msg);
     // Split by whitespace, parse the `str`s into `f64`s, then collect into
@@ -99,7 +98,7 @@ fn circle(edges: &mut Matrix, stack: &Vec<Matrix>, screen: &mut Screen, args: Op
     }
 }
 
-fn hermite(edges: &mut Matrix, stack: &Vec<Matrix>, screen: &mut Screen, args: Option<&str>) {
+fn hermite(edges: &mut Matrix, stack: &[Matrix], screen: &mut Screen, args: Option<&str>) {
     let err_msg = "Hermite requires 8 f64 arguments!";
     let args = args.expect(err_msg);
     // Split by whitespace, parse the `str`s into `f64`s, then collect into
@@ -128,7 +127,7 @@ fn hermite(edges: &mut Matrix, stack: &Vec<Matrix>, screen: &mut Screen, args: O
     }
 }
 
-fn bezier(edges: &mut Matrix, stack: &Vec<Matrix>, screen: &mut Screen, args: Option<&str>) {
+fn bezier(edges: &mut Matrix, stack: &[Matrix], screen: &mut Screen, args: Option<&str>) {
     let err_msg = "Hermite requires 8 f64 arguments!";
     let args = args.expect(err_msg);
     // Split by whitespace, parse the `str`s into `f64`s, then collect into
@@ -157,7 +156,7 @@ fn bezier(edges: &mut Matrix, stack: &Vec<Matrix>, screen: &mut Screen, args: Op
     }
 }
 
-fn draw_box(polygons: &mut Matrix, stack: &Vec<Matrix>, screen: &mut Screen, args: Option<&str>) {
+fn draw_box(polygons: &mut Matrix, stack: &[Matrix], screen: &mut Screen, args: Option<&str>) {
     let err_msg = "Box requires 6 f64 args!";
     let args = args.expect(err_msg);
     let args = &*args
@@ -174,7 +173,7 @@ fn draw_box(polygons: &mut Matrix, stack: &Vec<Matrix>, screen: &mut Screen, arg
     }
 }
 
-fn sphere(polygons: &mut Matrix, stack: &Vec<Matrix>, screen: &mut Screen, args: Option<&str>) {
+fn sphere(polygons: &mut Matrix, stack: &[Matrix], screen: &mut Screen, args: Option<&str>) {
     let err_msg = "Sphere requires 4 f64 args!";
     let args = args.expect(err_msg);
     let args = &*args
@@ -191,7 +190,7 @@ fn sphere(polygons: &mut Matrix, stack: &Vec<Matrix>, screen: &mut Screen, args:
     }
 }
 
-fn torus(polygons: &mut Matrix, stack: &Vec<Matrix>, screen: &mut Screen, args: Option<&str>) {
+fn torus(polygons: &mut Matrix, stack: &[Matrix], screen: &mut Screen, args: Option<&str>) {
     let err_msg = "Torus requires 5 f64 args!";
     let args = args.expect(err_msg);
     let args = &*args
