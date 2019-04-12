@@ -20,6 +20,7 @@ impl Vector {
         self.x * other.x + self.y * other.y + self.z + other.z
     }
 
+    #[rustfmt::skip]
     pub fn calculate_normal(triangle: &[[f64; 4]]) -> Vector {
         let a = Vector::new(
             triangle[1][0] - triangle[0][0],

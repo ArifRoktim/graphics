@@ -35,6 +35,7 @@ impl Matrix {
         // [0, 1, 0, y]
         // [0, 0, 1, z]
         // [0, 0, 0, 1]
+        #[rustfmt::skip]
         let m = &[
             [1., 0., 0., 0.],
             [0., 1., 0., 0.],
@@ -50,6 +51,7 @@ impl Matrix {
         // [0, b, 0, 0]
         // [0, 0, c, 0]
         // [0, 0, 0, 1]
+        #[rustfmt::skip]
         let m = &[
             [x, 0., 0., 0.],
             [0., y, 0., 0.],
@@ -68,6 +70,7 @@ impl Matrix {
         // [0, 0, 0, 1]
         let radians = theta.to_radians();
         let (sin, cos) = radians.sin_cos();
+        #[rustfmt::skip]
         let m = &[
             [1., 0., 0., 0.],
             [0., cos, sin, 0.],
@@ -86,6 +89,7 @@ impl Matrix {
         // [0, 0, 0, 1]
         let radians = theta.to_radians();
         let (sin, cos) = radians.sin_cos();
+        #[rustfmt::skip]
         let m = &[
             [cos, 0., -1. * sin, 0.],
             [0., 1., 0., 0.],
@@ -104,6 +108,7 @@ impl Matrix {
         // [0, 0, 0, 1]
         let radians = theta.to_radians();
         let (sin, cos) = radians.sin_cos();
+        #[rustfmt::skip]
         let m = &[
             [cos, sin, 0., 0.],
             [-1. * sin, cos, 0., 0.],
@@ -138,6 +143,7 @@ impl Matrix {
     }
 
     // Modifies other matrix to be = self * other
+    #[allow(clippy::needless_range_loop)]
     pub fn mult(&self, other: &mut Matrix) {
         // columns and rows are switched
         // First check that both matrices can be multiplied
@@ -192,30 +198,10 @@ impl fmt::Display for Matrix {
         let mut one = String::with_capacity(size);
 
         for row in &self.m {
-            x.push_str(&format!(
-                "{: <width$.prec$} ",
-                row[0],
-                prec = prec,
-                width = width
-            ));
-            y.push_str(&format!(
-                "{: <width$.prec$} ",
-                row[1],
-                prec = prec,
-                width = width
-            ));
-            z.push_str(&format!(
-                "{: <width$.prec$} ",
-                row[2],
-                prec = prec,
-                width = width
-            ));
-            one.push_str(&format!(
-                "{: <width$.prec$} ",
-                row[3],
-                prec = prec,
-                width = width
-            ));
+            x.push_str(&format!("{: <width$.prec$} ", row[0], prec = prec, width = width));
+            y.push_str(&format!("{: <width$.prec$} ", row[1], prec = prec, width = width));
+            z.push_str(&format!("{: <width$.prec$} ", row[2], prec = prec, width = width));
+            one.push_str(&format!("{: <width$.prec$} ", row[3], prec = prec, width = width));
         }
         write!(f, "{}\n{}\n{}\n{}", x, y, z, one)
     }

@@ -1,6 +1,6 @@
 use crate::draw::{self, Curve};
 use crate::matrix::Matrix;
-use crate::screen::{Color, Screen, color};
+use crate::screen::{color, Color, Screen};
 use crate::{STEPS_2D, STEPS_3D};
 
 use std::fs;
@@ -9,11 +9,7 @@ use std::process::{Command, Stdio};
 
 const FOREGROUND: Color = color::GREEN;
 
-pub fn parse_file(
-    filename: &str,
-    screen: &mut Screen,
-    cstack: &mut Vec<Matrix>,
-) {
+pub fn parse_file(filename: &str, screen: &mut Screen, cstack: &mut Vec<Matrix>) {
     let contents = match fs::read_to_string(filename) {
         Ok(contents) => contents,
         Err(error) => panic!("Error reading file \"{}\": {}", filename, error),
@@ -30,8 +26,8 @@ pub fn parse_file(
 
         match line {
             // ignore empty lines and lines that start with #
-            "" => {}
-            comment if comment.starts_with('#') => {}
+            "" => {},
+            comment if comment.starts_with('#') => {},
 
             "line" => draw_line(&mut edges, cstack, screen, iter.next()),
             "circle" => circle(&mut edges, cstack, screen, iter.next()),
@@ -65,6 +61,7 @@ fn draw_line(edges: &mut Matrix, stack: &[Matrix], screen: &mut Screen, args: Op
     let args = args.expect(err_msg);
     // Split by whitespace, parse the `str`s into `f64`s, then collect into
     // a vector. Use &* on vector to get a slice
+    #[rustfmt::skip]
     let args = &*args
         .split_whitespace()
         .map(|n| n.parse::<f64>().expect(err_msg))
@@ -74,7 +71,7 @@ fn draw_line(edges: &mut Matrix, stack: &[Matrix], screen: &mut Screen, args: Op
             draw::add_edge(edges, x0, y0, z0, x1, y1, z1);
             stack.last().unwrap().mult(edges);
             screen.draw_lines(edges, FOREGROUND);
-        }
+        },
         _ => panic!(err_msg),
     }
 }
@@ -84,6 +81,7 @@ fn circle(edges: &mut Matrix, stack: &[Matrix], screen: &mut Screen, args: Optio
     let args = args.expect(err_msg);
     // Split by whitespace, parse the `str`s into `f64`s, then collect into
     // a vector. Use &* on vector to get a slice
+    #[rustfmt::skip]
     let args = &*args
         .split_whitespace()
         .map(|n| n.parse::<f64>().expect(err_msg))
@@ -93,7 +91,7 @@ fn circle(edges: &mut Matrix, stack: &[Matrix], screen: &mut Screen, args: Optio
             draw::add_circle(edges, cx, cy, cz, r, STEPS_2D);
             stack.last().unwrap().mult(edges);
             screen.draw_lines(edges, FOREGROUND);
-        }
+        },
         _ => panic!(err_msg),
     }
 }
@@ -103,26 +101,18 @@ fn hermite(edges: &mut Matrix, stack: &[Matrix], screen: &mut Screen, args: Opti
     let args = args.expect(err_msg);
     // Split by whitespace, parse the `str`s into `f64`s, then collect into
     // a vector. Use &* on vector to get a slice
+    #[rustfmt::skip]
     let args = &*args
         .split_whitespace()
         .map(|n| n.parse::<f64>().expect(err_msg))
         .collect::<Vec<f64>>();
     match *args {
         [p0x, p0y, p1x, p1y, r0x, r0y, r1x, r1y] => {
-            let curve = Curve::Hermite {
-                p0x,
-                p0y,
-                p1x,
-                p1y,
-                r0x,
-                r0y,
-                r1x,
-                r1y,
-            };
+            let curve = Curve::Hermite { p0x, p0y, p1x, p1y, r0x, r0y, r1x, r1y };
             draw::add_curve(edges, &curve, STEPS_2D);
             stack.last().unwrap().mult(edges);
             screen.draw_lines(edges, FOREGROUND);
-        }
+        },
         _ => panic!(err_msg),
     }
 }
@@ -132,26 +122,18 @@ fn bezier(edges: &mut Matrix, stack: &[Matrix], screen: &mut Screen, args: Optio
     let args = args.expect(err_msg);
     // Split by whitespace, parse the `str`s into `f64`s, then collect into
     // a vector. Use &* on vector to get a slice
+    #[rustfmt::skip]
     let args = &*args
         .split_whitespace()
         .map(|n| n.parse::<f64>().expect(err_msg))
         .collect::<Vec<f64>>();
     match *args {
         [p0x, p0y, p1x, p1y, p2x, p2y, p3x, p3y] => {
-            let curve = Curve::Bezier {
-                p0x,
-                p0y,
-                p1x,
-                p1y,
-                p2x,
-                p2y,
-                p3x,
-                p3y,
-            };
+            let curve = Curve::Bezier { p0x, p0y, p1x, p1y, p2x, p2y, p3x, p3y };
             draw::add_curve(edges, &curve, STEPS_2D);
             stack.last().unwrap().mult(edges);
             screen.draw_lines(edges, FOREGROUND);
-        }
+        },
         _ => panic!(err_msg),
     }
 }
@@ -159,6 +141,7 @@ fn bezier(edges: &mut Matrix, stack: &[Matrix], screen: &mut Screen, args: Optio
 fn draw_box(polygons: &mut Matrix, stack: &[Matrix], screen: &mut Screen, args: Option<&str>) {
     let err_msg = "Box requires 6 f64 args!";
     let args = args.expect(err_msg);
+    #[rustfmt::skip]
     let args = &*args
         .split_whitespace()
         .map(|n| n.parse::<f64>().expect(err_msg))
@@ -168,7 +151,7 @@ fn draw_box(polygons: &mut Matrix, stack: &[Matrix], screen: &mut Screen, args: 
             draw::add_box(polygons, x, y, z, width, height, depth);
             stack.last().unwrap().mult(polygons);
             screen.draw_polygons(polygons, FOREGROUND);
-        }
+        },
         _ => panic!(err_msg),
     }
 }
@@ -176,6 +159,7 @@ fn draw_box(polygons: &mut Matrix, stack: &[Matrix], screen: &mut Screen, args: 
 fn sphere(polygons: &mut Matrix, stack: &[Matrix], screen: &mut Screen, args: Option<&str>) {
     let err_msg = "Sphere requires 4 f64 args!";
     let args = args.expect(err_msg);
+    #[rustfmt::skip]
     let args = &*args
         .split_whitespace()
         .map(|n| n.parse::<f64>().expect(err_msg))
@@ -185,7 +169,7 @@ fn sphere(polygons: &mut Matrix, stack: &[Matrix], screen: &mut Screen, args: Op
             draw::add_sphere(polygons, cx, cy, cz, r, STEPS_3D);
             stack.last().unwrap().mult(polygons);
             screen.draw_polygons(polygons, FOREGROUND);
-        }
+        },
         _ => panic!(err_msg),
     }
 }
@@ -193,6 +177,7 @@ fn sphere(polygons: &mut Matrix, stack: &[Matrix], screen: &mut Screen, args: Op
 fn torus(polygons: &mut Matrix, stack: &[Matrix], screen: &mut Screen, args: Option<&str>) {
     let err_msg = "Torus requires 5 f64 args!";
     let args = args.expect(err_msg);
+    #[rustfmt::skip]
     let args = &*args
         .split_whitespace()
         .map(|n| n.parse::<f64>().expect(err_msg))
@@ -202,7 +187,7 @@ fn torus(polygons: &mut Matrix, stack: &[Matrix], screen: &mut Screen, args: Opt
             draw::add_torus(polygons, cx, cy, cz, minor_r, major_r, STEPS_3D);
             stack.last().unwrap().mult(polygons);
             screen.draw_polygons(polygons, FOREGROUND);
-        }
+        },
         _ => panic!(err_msg),
     }
 }
@@ -212,6 +197,7 @@ fn scale(stack: &mut Vec<Matrix>, args: Option<&str>) {
     let args = args.expect(err_msg);
     // Split by whitespace, parse the `str`s into `f64`s, then collect into
     // a vector. Use &* on vector to get a slice
+    #[rustfmt::skip]
     let args = &*args
         .split_whitespace()
         .map(|n| n.parse::<f64>().expect(err_msg))
@@ -222,7 +208,7 @@ fn scale(stack: &mut Vec<Matrix>, args: Option<&str>) {
             stack.last().unwrap().mult(&mut tr);
             stack.pop();
             stack.push(tr);
-        }
+        },
         _ => panic!(err_msg),
     }
 }
@@ -232,6 +218,7 @@ fn translate(stack: &mut Vec<Matrix>, args: Option<&str>) {
     let args = args.expect(err_msg);
     // Split by whitespace, parse the `str`s into `f64`s, then collect into
     // a vector. Use &* on vector to get a slice
+    #[rustfmt::skip]
     let args = &*args
         .split_whitespace()
         .map(|n| n.parse::<f64>().expect(err_msg))
@@ -242,7 +229,7 @@ fn translate(stack: &mut Vec<Matrix>, args: Option<&str>) {
             stack.last().unwrap().mult(&mut tr);
             stack.pop();
             stack.push(tr);
-        }
+        },
         _ => panic!(err_msg),
     }
 }
@@ -271,6 +258,7 @@ fn save(screen: &Screen, args: Option<&str>) {
 
 fn display(screen: &Screen) {
     if let Ok(mut proc) = Command::new("display").stdin(Stdio::piped()).spawn() {
+        #[rustfmt::skip]
         proc.stdin
             .as_mut()
             .unwrap()

@@ -19,6 +19,7 @@ pub struct Screen {
 }
 
 impl Screen {
+    #[rustfmt::skip]
     pub fn blank() -> Screen {
         Screen {
             pixels: vec![vec![color::BLACK; XRES]; YRES],
@@ -26,6 +27,7 @@ impl Screen {
         }
     }
 
+    #[rustfmt::skip]
     pub fn new(c: Color) -> Screen {
         Screen {
             pixels: vec![vec![c; XRES]; YRES],
@@ -52,7 +54,7 @@ impl Screen {
                          Is Image Magick installed?"
                     );
                 }
-            }
+            },
             None => panic!("Please specify a file name!"),
         }
         Ok(())

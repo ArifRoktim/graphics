@@ -2,26 +2,8 @@ use crate::matrix::Matrix;
 use std::f64::consts::PI;
 
 pub enum Curve {
-    Hermite {
-        p0x: f64,
-        p0y: f64,
-        p1x: f64,
-        p1y: f64,
-        r0x: f64,
-        r0y: f64,
-        r1x: f64,
-        r1y: f64,
-    },
-    Bezier {
-        p0x: f64,
-        p0y: f64,
-        p1x: f64,
-        p1y: f64,
-        p2x: f64,
-        p2y: f64,
-        p3x: f64,
-        p3y: f64,
-    },
+    Hermite { p0x: f64, p0y: f64, p1x: f64, p1y: f64, r0x: f64, r0y: f64, r1x: f64, r1y: f64 },
+    Bezier { p0x: f64, p0y: f64, p1x: f64, p1y: f64, p2x: f64, p2y: f64, p3x: f64, p3y: f64 },
 }
 
 impl Curve {
@@ -30,40 +12,22 @@ impl Curve {
         let mut coefs_x;
         let mut coefs_y;
         match *self {
-            Curve::Hermite {
-                p0x,
-                p0y,
-                p1x,
-                p1y,
-                r0x,
-                r0y,
-                r1x,
-                r1y,
-            } => {
+            Curve::Hermite { p0x, p0y, p1x, p1y, r0x, r0y, r1x, r1y } => {
                 // [p0]
                 // [p1]
                 // [r0]
                 // [r1]
                 coefs_x = Matrix::from(&[[p0x, p1x, r0x, r1x]][..]);
                 coefs_y = Matrix::from(&[[p0y, p1y, r0y, r1y]][..]);
-            }
-            Curve::Bezier {
-                p0x,
-                p0y,
-                p1x,
-                p1y,
-                p2x,
-                p2y,
-                p3x,
-                p3y,
-            } => {
+            },
+            Curve::Bezier { p0x, p0y, p1x, p1y, p2x, p2y, p3x, p3y } => {
                 // [p0]
                 // [p1]
                 // [p2]
                 // [p3]
                 coefs_x = Matrix::from(&[[p0x, p1x, p2x, p3x]][..]);
                 coefs_y = Matrix::from(&[[p0y, p1y, p2y, p3y]][..]);
-            }
+            },
         }
         mult.mult(&mut coefs_x);
         mult.mult(&mut coefs_y);
@@ -84,7 +48,7 @@ impl Curve {
                     [1., -1., 0., 0.],
                 ][..];
                 Matrix::from(m)
-            }
+            },
             Curve::Bezier { .. } => {
                 // [-1, 3, -3, 1]
                 // [3, -6, 3, 0]
@@ -97,7 +61,7 @@ impl Curve {
                     [1., 0., 0., 0.],
                 ][..];
                 Matrix::from(m)
-            }
+            },
         }
     }
 }

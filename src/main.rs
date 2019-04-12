@@ -5,7 +5,7 @@ pub mod screen;
 pub mod vector;
 
 use matrix::Matrix;
-use screen::{Screen, color};
+use screen::{color, Screen};
 use std::{env, process};
 
 const XRES: usize = 700;
@@ -28,9 +28,5 @@ fn main() {
     let mut cstack = Vec::new();
     cstack.push(identity);
 
-    parse::parse_file(
-        filename,
-        &mut screen,
-        &mut cstack,
-    );
+    parse::parse_file(filename, &mut screen, &mut cstack);
 }
