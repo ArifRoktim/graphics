@@ -83,15 +83,90 @@ impl Screen {
         self.pixels[py][px].color(c);
     }
 
-    pub fn draw_line(&mut self, p0x: i32, p0y: i32, p1x: i32, p1y: i32, c: Color) {
-        match Line::get_octant(p0x, p0y, p1x, p1y) {
-            (Line::Horizontal, line) => self._horizontal_line(line, c),
-            (Line::Vertical, line) => self._vertical_line(line, c),
-            (Line::Octant1, line) => self._octant1(line, c),
-            (Line::Octant2, line) => self._octant2(line, c),
-            (Line::Octant7, line) => self._octant7(line, c),
-            (Line::Octant8, line) => self._octant8(line, c),
+    // Bresenham's line algorithm
+    #[allow(clippy::many_single_char_names)]
+    pub fn draw_line(&mut self, x0: i32, y0: i32, x1: i32, y1: i32, c: Color) {
+        // swap points if going right -> left
+        if x0 > x1 {
+            self.draw_line(x1, y1, x0, y0, c);
+            return;
         }
+
+        let (mut x, mut y) = (x0, y0);
+        let a = 2 * (y1 - y0);
+        let b = -2 * (x1 - x0);
+        let (mut wide, mut tall) = (false, false);
+
+        let mut d;
+        let (mut loop_start, loop_end);
+        let (dy_east, dy_northeast, dx_east, dx_northeast, d_east, d_northeast);
+
+        // octants 1/8
+        if (x1 - x0).abs() >= (y1 - y0).abs() {
+            wide = true;
+            loop_start = x;
+            loop_end = x1;
+            dx_east = 1;
+            dx_northeast = 1;
+            dy_east = 0;
+            d_east = a;
+            //octant 1
+            if a > 0 {
+                d = a + b / 2;
+                dy_northeast = 1;
+                d_northeast = a + b;
+            }
+            //octant 8
+            else {
+                d = a - b / 2;
+                dy_northeast = -1;
+                d_northeast = a - b;
+            }
+        }
+        // octants 2/7
+        else {
+            tall = true;
+            dx_east = 0;
+            dx_northeast = 1;
+            //octant 2
+            if a > 0 {
+                d = a / 2 + b;
+                dy_east = 1;
+                dy_northeast = 1;
+                d_northeast = a + b;
+                d_east = b;
+                loop_start = y;
+                loop_end = y1;
+            }
+            //octant 7
+            else {
+                d = a / 2 - b;
+                dy_east = -1;
+                dy_northeast = -1;
+                d_northeast = a - b;
+                d_east = -b;
+                loop_start = y1;
+                loop_end = y;
+            }
+        }
+        // draw points
+        while loop_start < loop_end {
+            //plot( s, zb, c, x, y, 0);
+            self.draw_point(x, y, c);
+            if (wide && ((a > 0 && d > 0) || (a < 0 && d < 0)))
+                || (tall && ((a > 0 && d < 0) || (a < 0 && d > 0)))
+            {
+                y += dy_northeast;
+                d += d_northeast;
+                x += dx_northeast;
+            } else {
+                x += dx_east;
+                y += dy_east;
+                d += d_east;
+            }
+            loop_start += 1;
+        }
+        self.draw_point(x1, y1, c);
     }
 
     pub fn draw_lines(&mut self, m: &Matrix, c: Color) {
@@ -141,129 +216,6 @@ impl Screen {
                     c,
                 );
             }
-        }
-    }
-}
-
-// private functions
-impl Screen {
-    fn _vertical_line(&mut self, line: (i32, i32, i32, i32), c: Color) {
-        let (p0x, p0y, _, p1y) = line;
-        for y in p0y..=p1y {
-            self.draw_point(p0x, y, c);
-        }
-    }
-    fn _horizontal_line(&mut self, line: (i32, i32, i32, i32), c: Color) {
-        let (p0x, p0y, p1x, _) = line;
-        for x in p0x..=p1x {
-            self.draw_point(x, p0y, c);
-        }
-    }
-    fn _octant1(&mut self, line: (i32, i32, i32, i32), c: Color) {
-        let (p0x, p0y, p1x, p1y) = line;
-        // x and y points to plot
-        let mut x = p0x;
-        let mut y = p0y;
-        // B = - delta_x
-        let delta_x = p1x - p0x;
-        // A = delta_y
-        let delta_y = p1y - p0y;
-        // d = f(x0 + 1, y0 + 1/2) - f(x0, y0)
-        // f(x0, y0) = 0
-        // d = f(x0 + 1, y0 + 1/2)
-        // ... <Algebra goes here> ...
-        // d = delta_y - 1/2 * delta_x
-        // To get rid of floating point arithmetic, multiply by 2
-        // 2d = 2 * delta_y - delta_x
-        let mut diff = 2 * delta_y - delta_x;
-        while x <= p1x {
-            self.draw_point(x, y, c);
-            if diff > 0 {
-                y += 1;
-                diff -= 2 * delta_x;
-            }
-            x += 1;
-            diff += 2 * delta_y;
-        }
-    }
-    fn _octant2(&mut self, line: (i32, i32, i32, i32), c: Color) {
-        let (p0x, p0y, p1x, p1y) = line;
-        // First cast the points to i32 from usize
-        // x and y points to plot
-        let mut x = p0x;
-        let mut y = p0y;
-        // B = - delta_x
-        let delta_x = p1x - p0x;
-        // A = delta_y
-        let delta_y = p1y - p0y;
-        // d = f(x0 + 1/2, y0 + 1)
-        // ... <Algebra goes here> ...
-        // d = 1/2 * delta_y - delta_x
-        // 2d = delta_y - 2 * delta_x
-        let mut diff = delta_y - 2 * delta_x;
-        while y <= p1y {
-            self.draw_point(x, y, c);
-            if diff < 0 {
-                x += 1;
-                diff += 2 * delta_y;
-            }
-            y += 1;
-            diff -= 2 * delta_x;
-        }
-    }
-    fn _octant8(&mut self, line: (i32, i32, i32, i32), c: Color) {
-        let (p0x, p0y, p1x, p1y) = line;
-        // First cast the points to i32 from usize
-        // x and y points to plot
-        let mut x = p0x;
-        let mut y = p0y;
-        // B = - delta_x
-        let delta_x = p1x - p0x;
-        // A = delta_y
-        let delta_y = p1y - p0y;
-        // d = f(x0 + 1, y0 - 1/2)
-        // d = A(x0 + 1) + B(y0 - 1/2) + C
-        // d = (Ax0 + By0 + C) + A - 1/2 * B
-        // d = A - 1/2 * B
-        // d = delta_y + 1/2 * delta_x
-        // 2d = 2 * delta_y + delta_x
-        let mut diff = 2 * delta_y + delta_x;
-        while x <= p1x {
-            self.draw_point(x, y, c);
-            if diff > 0 {
-                y -= 1;
-                diff -= 2 * delta_x;
-            }
-            x += 1;
-            diff -= 2 * delta_y;
-        }
-    }
-    fn _octant7(&mut self, line: (i32, i32, i32, i32), c: Color) {
-        let (p0x, p0y, p1x, p1y) = line;
-        // First cast the points to i32 from usize
-        // x and y points to plot
-        let mut x = p0x;
-        let mut y = p0y;
-        // B = - delta_x
-        let delta_x = p1x - p0x;
-        // A = delta_y
-        let delta_y = p1y - p0y;
-        // d = f(x0 + 1/2, y0 - 1)
-        // d = A(x0 + 1/2) + B(y0 - 1) + C
-        // d = (Ax0 + By0 + C) + 1/2 * A - B
-        // d = 1/2 * A - B
-        // d = 1/2 * delta_y - (- delta_x) = 1/2 * delta_y + delta_x
-        // 2d = delta_y + 2 * delta_x
-        let mut diff = delta_y + 2 * delta_x;
-        //let mut diff = -2 * delta_x - delta_y;
-        while y >= p1y {
-            self.draw_point(x, y, c);
-            if diff < 0 {
-                x += 1;
-                diff -= 2 * delta_y;
-            }
-            y -= 1;
-            diff -= 2 * delta_x;
         }
     }
 }
