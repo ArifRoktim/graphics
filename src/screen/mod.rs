@@ -8,10 +8,8 @@ use std::process::Command;
 use std::{fs::File, io::prelude::*};
 
 pub mod color;
-pub mod line;
 
 pub use color::Color;
-pub use line::Line;
 
 pub struct Screen {
     pub pixels: Vec<Vec<Color>>,
