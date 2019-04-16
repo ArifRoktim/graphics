@@ -12,7 +12,7 @@ pub mod color;
 pub use color::Color;
 
 pub struct Screen {
-    pub pixels: Vec<Vec<Color>>,
+    pub pixels: [[Color; XRES]; YRES],
     pub color: Color,
 }
 
@@ -20,7 +20,7 @@ impl Screen {
     #[rustfmt::skip]
     pub fn blank() -> Screen {
         Screen {
-            pixels: vec![vec![color::BLACK; XRES]; YRES],
+            pixels: [[color::BLACK; XRES]; YRES],
             color: color::BLACK,
         }
     }
@@ -28,7 +28,7 @@ impl Screen {
     #[rustfmt::skip]
     pub fn new(c: Color) -> Screen {
         Screen {
-            pixels: vec![vec![c; XRES]; YRES],
+            pixels: [[c; XRES]; YRES],
             color: c,
         }
     }
@@ -228,8 +228,8 @@ impl fmt::Display for Screen {
         // Total is `XRES * YRES * 3 * 4 + YRES + 50`
         let size: usize = XRES * YRES * 3 * 4 + YRES + 50;
         let mut contents = String::with_capacity(size);
-        for row in &self.pixels {
-            for pixel in row {
+        for row in self.pixels.iter() {
+            for pixel in row.iter() {
                 contents.push_str(&pixel.to_string());
             }
             contents.push_str("\n");
