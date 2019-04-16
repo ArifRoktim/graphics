@@ -1,19 +1,17 @@
-SCRIPT = scripts/cstack
+SCRIPT = scripts/solids
 
-.PHONY: all
-all: src/main.rs
+.PHONY: all dev debug clean clippy fmt
+
+all:
 	cargo run --release $(SCRIPT)
 
-.PHONY: dev
-dev: src/main.rs
+dev debug:
 	cargo run $(SCRIPT)
 
-.PHONY: clean
 clean:
 	-rm *.ppm *.png *.bak
 	cargo clean
 
-.PHONY: clippy
-clippy:
-	touch src/main.rs
-	cargo clippy
+check clippy fmt:
+	@touch src/main.rs
+	cargo +nightly $@
