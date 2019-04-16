@@ -10,6 +10,7 @@ use std::{env, process};
 
 const XRES: usize = 700;
 const YRES: usize = 700;
+const PIXELS: usize = XRES * YRES;
 const STEPS_2D: usize = 100;
 const STEPS_3D: usize = 20;
 

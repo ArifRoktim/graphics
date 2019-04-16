@@ -1,14 +1,13 @@
 use crate::matrix::Matrix;
 use crate::vector::Vector;
-use crate::XRES;
-use crate::YRES;
+use crate::{PIXELS, XRES, YRES};
 use std::fmt;
+use std::fs::File;
+use std::io::{self, prelude::*};
 use std::path::Path;
 use std::process::Command;
-use std::{fs::File, io::prelude::*};
 
 pub mod color;
-
 pub use color::Color;
 
 pub struct Screen {
@@ -33,12 +32,12 @@ impl Screen {
         }
     }
 
-    pub fn write_ppm(&self, f: &str) -> std::io::Result<()> {
+    pub fn write_ppm(&self, f: &str) -> io::Result<()> {
         let mut file = File::create(f)?;
         file.write_all(self.to_string().as_bytes())
     }
 
-    pub fn write(&self, f: &str) -> std::io::Result<()> {
+    pub fn write(&self, f: &str) -> io::Result<()> {
         let base = Path::new(f).file_stem();
         match base {
             Some(base) => {
@@ -76,7 +75,7 @@ impl Screen {
         }
         // Cast the coordinates to `usize` and also
         // make (0, 0) the bottom left corner instead of the top left corner
-        let (px, py): (usize, usize) = (px as usize, YRES - 1 - (py as usize));
+        let (px, py) = (px as usize, YRES - 1 - (py as usize));
         // Get the pixel at point p and set its color
         self.pixels[py][px].color(c);
     }
@@ -167,14 +166,9 @@ impl Screen {
         self.draw_point(x1, y1, c);
     }
 
-    pub fn draw_lines(&mut self, m: &Matrix, c: Color) {
+    pub fn draw_lines(&mut self, edges: &Matrix, c: Color) {
         // Iterate over the edge list 2 points at a time
-        for edge in m.m.chunks_exact(2) {
-            // If any of the points have negative coords, they can't be drawn
-            //if edge[0][0] < 0.0 || edge[0][1] < 0.0 ||
-            //    edge[1][0] < 0.0 || edge[1][1] < 0.0 {
-            //        continue;
-            //}
+        for edge in edges.m.chunks_exact(2) {
             self.draw_line(
                 edge[0][0] as i32,
                 edge[0][1] as i32,
@@ -221,12 +215,11 @@ impl Screen {
 impl fmt::Display for Screen {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         // Allocate a string with enough space to hold all the pixels
-        // XRES * YRES gives the number of pixels
         // Each pixel has 3 rgb values, which each are at most 4 bytes
         // Add in YRES bytes because every row has a newline character
         // and add in 50 bytes as padding to make sure we don't reallocate
         // Total is `XRES * YRES * 3 * 4 + YRES + 50`
-        let size: usize = XRES * YRES * 3 * 4 + YRES + 50;
+        let size: usize = PIXELS * 3 * 4 + YRES + 50;
         let mut contents = String::with_capacity(size);
         for row in self.pixels.iter() {
             for pixel in row.iter() {
