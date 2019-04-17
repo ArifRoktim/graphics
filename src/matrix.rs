@@ -1,13 +1,13 @@
 use std::fmt;
 
-const COLS: usize = 4;
+pub const COLS: usize = 4;
 // Each point in the matrix is a row that is 4 columns wide
 // For the purposes of display and multiplication, this is switched.
 // Each point is then represented by a column and the rows correspond
 // to either all the x values, y values, z values, etc.
 #[derive(Debug, Clone)]
 pub struct Matrix {
-    pub m: Vec<[f64; 4]>,
+    pub m: Vec<[f64; COLS]>,
 }
 
 impl Matrix {
@@ -24,7 +24,7 @@ impl Matrix {
     pub fn new(rows: usize) -> Matrix {
         let mut m: Vec<[f64; COLS]> = Vec::new();
         for _ in 0..rows {
-            m.push([0.0; 4]);
+            m.push([0.0; COLS]);
         }
         Matrix { m }
     }
@@ -122,7 +122,7 @@ impl Matrix {
         self.m.clear();
     }
 
-    pub fn push(&mut self, point: [f64; 4]) {
+    pub fn push(&mut self, point: [f64; COLS]) {
         self.m.push(point);
     }
 
@@ -171,8 +171,8 @@ impl Matrix {
     }
 }
 
-impl From<&[[f64; 4]]> for Matrix {
-    fn from(matrix: &[[f64; 4]]) -> Matrix {
+impl From<&[[f64; COLS]]> for Matrix {
+    fn from(matrix: &[[f64; COLS]]) -> Matrix {
         let mut ret = Matrix::new(0);
         for &row in matrix {
             ret.m.push(row);

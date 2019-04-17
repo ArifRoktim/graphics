@@ -208,6 +208,8 @@ impl Screen {
             }
         }
     }
+
+    //fn scanline_convert(&mut self,)
 }
 
 impl fmt::Display for Screen {

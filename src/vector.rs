@@ -1,3 +1,5 @@
+use crate::matrix::COLS;
+
 pub struct Vector {
     pub x: f64,
     pub y: f64,
@@ -21,7 +23,7 @@ impl Vector {
     }
 
     #[rustfmt::skip]
-    pub fn calculate_normal(triangle: &[[f64; 4]]) -> Vector {
+    pub fn calculate_normal(triangle: &[[f64; COLS]]) -> Vector {
         let a = Vector::new(
             triangle[1][0] - triangle[0][0],
             triangle[1][1] - triangle[0][1],
