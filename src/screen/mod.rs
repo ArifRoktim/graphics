@@ -1,6 +1,7 @@
 use crate::matrix::Matrix;
 use crate::vector::Vector;
 use crate::{PIXELS, XRES, YRES};
+use std::f64;
 use std::fmt;
 use std::fs::File;
 use std::io::{self, prelude::*};
@@ -11,25 +12,22 @@ pub mod color;
 pub use color::Color;
 
 pub struct Screen {
-    pub pixels: [[Color; XRES]; YRES],
+    pub pixels: Box<[[Color; XRES]; YRES]>,
+    pub zbuffer: Box<[[f64; XRES]; YRES]>,
     pub color: Color,
 }
 
 impl Screen {
-    #[rustfmt::skip]
-    pub fn blank() -> Screen {
+    pub fn new(c: Color) -> Screen {
         Screen {
-            pixels: [[color::BLACK; XRES]; YRES],
-            color: color::BLACK,
+            pixels: Box::new([[color::BLACK; XRES]; YRES]),
+            zbuffer: Box::new([[f64::NEG_INFINITY; XRES]; YRES]),
+            color: c,
         }
     }
 
-    #[rustfmt::skip]
-    pub fn new(c: Color) -> Screen {
-        Screen {
-            pixels: [[c; XRES]; YRES],
-            color: c,
-        }
+    pub fn blank() -> Screen {
+        Self::new(color::BLACK)
     }
 
     pub fn write_ppm(&self, f: &str) -> io::Result<()> {
