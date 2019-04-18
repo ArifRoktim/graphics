@@ -41,6 +41,7 @@ pub fn parse_file(filename: &str, screen: &mut Screen, cstack: &mut Vec<Matrix>)
             "rotate" => rotate(cstack, iter.next()),
             "save" => save(screen, iter.next()),
             "display" => display(screen),
+            "clear" => screen.clear(),
             "push" => {
                 // push a copy of the last item
                 let copy = cstack.last().unwrap().clone();
@@ -49,9 +50,9 @@ pub fn parse_file(filename: &str, screen: &mut Screen, cstack: &mut Vec<Matrix>)
             "pop" => {
                 cstack.pop();
             },
-            "ident" | "apply" | "clear" => panic!("{} is a deprecated command!", line),
+            "ident" | "apply" => panic!("{} is a deprecated command!", line),
             // some command that's not valid or yet implemented
-            _ => panic!("\"{}\" not yet implemented!", line),
+            _ => unimplemented!("{}", line),
         }
     }
 }

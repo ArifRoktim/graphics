@@ -58,8 +58,9 @@ impl Screen {
 
     pub fn fill(&mut self, c: Color) {
         for row in self.pixels.iter_mut() {
-            for (color, _) in row.iter_mut() {
-                color.color(c)
+            for (color, z) in row.iter_mut() {
+                color.color(c);
+                *z = f64::NEG_INFINITY;
             }
         }
     }
@@ -226,9 +227,8 @@ impl Screen {
                 x0 += delta_x0;
                 x1 += delta_x1;
             }
-        } else {
-            x1 = mid[0];
         }
+        x1 = mid[0];
         // Case where middle and top don't have the same y value
         // check that mid[1] != top[1]
         if (mid[1] - top[1]).abs() > f64::EPSILON {
