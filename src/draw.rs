@@ -95,12 +95,9 @@ pub fn add_polygon(
 
 pub fn add_circle(edges: &mut Matrix, cx: f64, cy: f64, cz: f64, r: f64, steps: usize) {
     // Draw a circle using parametric equations
-    // x_prev, y_prec, cz, and the 1st point given to `add_edge`
     let mut x_prev = cx + r;
     let mut y_prev = cy;
-    // t goes from 0 -> TOTAL_STEPS in increments of `step`
-    let mut t = 0;
-    while t <= steps {
+    for t in 0..=steps {
         let theta = t as f64 / steps as f64;
         let (sin, cos) = (2.0 * PI * theta).sin_cos();
         let x_next = r * cos + cx;
@@ -110,8 +107,6 @@ pub fn add_circle(edges: &mut Matrix, cx: f64, cy: f64, cz: f64, r: f64, steps: 
 
         x_prev = x_next;
         y_prev = y_next;
-
-        t += 1;
     }
 }
 
@@ -122,8 +117,7 @@ pub fn add_curve(edges: &mut Matrix, curve: &Curve, steps: usize) {
     };
     let (xs, ys) = curve.gen_coefs();
 
-    let mut t = 0;
-    while t <= steps {
+    for t in 0..=steps {
         let progress = t as f64 / steps as f64;
         let x_next = xs.m[0][0] * progress.powi(3)
             + xs.m[0][1] * progress.powi(2)
@@ -138,8 +132,6 @@ pub fn add_curve(edges: &mut Matrix, curve: &Curve, steps: usize) {
 
         x_prev = x_next;
         y_prev = y_next;
-
-        t += 1;
     }
 }
 
@@ -173,14 +165,12 @@ pub fn gen_sphere(cx: f64, cy: f64, cz: f64, r: f64, steps: usize) -> Matrix {
     let mut points = Matrix::new(0);
 
     // For 0->2PI draw a semi circle that's rotated phi degrees along x axis
-    let mut t_phi = 0;
-    while t_phi < steps {
+    for t_phi in 0..steps {
         let phi = t_phi as f64 / steps as f64;
         let (sin_phi, cos_phi) = (2.0 * PI * phi).sin_cos();
 
         // Draw a semicircle
-        let mut t_theta = 0;
-        while t_theta <= steps {
+        for t_theta in 0..=steps {
             let theta = t_theta as f64 / steps as f64;
             let (sin_theta, cos_theta) = (PI * theta).sin_cos();
 
@@ -191,11 +181,7 @@ pub fn gen_sphere(cx: f64, cy: f64, cz: f64, r: f64, steps: usize) -> Matrix {
                 1.0,
             ];
             points.push(point);
-
-            t_theta += 1;
         }
-
-        t_phi += 1;
     }
 
     points
@@ -252,14 +238,12 @@ pub fn gen_torus(cx: f64, cy: f64, cz: f64, minor_r: f64, major_r: f64, steps: u
 
     // For phi: 0->2PI, draw a circle of radius `minor_r` that is translated by
     // `major_r` in the x axis and rotated phi degrees in the y axis
-    let mut t_phi = 0;
-    while t_phi < steps {
+    for t_phi in 0..steps {
         let phi = t_phi as f64 / steps as f64;
         let (sin_phi, cos_phi) = (2.0 * PI * phi).sin_cos();
 
         // Draw a circle
-        let mut t_theta = 0;
-        while t_theta < steps {
+        for t_theta in 0..steps {
             let theta = t_theta as f64 / steps as f64;
             let (sin_theta, cos_theta) = (2.0 * PI * theta).sin_cos();
 
@@ -270,11 +254,7 @@ pub fn gen_torus(cx: f64, cy: f64, cz: f64, minor_r: f64, major_r: f64, steps: u
                 1.0,
             ];
             points.push(point);
-
-            t_theta += 1;
         }
-
-        t_phi += 1;
     }
 
     points
