@@ -174,7 +174,7 @@ pub fn gen_sphere(cx: f64, cy: f64, cz: f64, r: f64, steps: usize) -> Matrix {
 
     // For 0->2PI draw a semi circle that's rotated phi degrees along x axis
     let mut t_phi = 0;
-    while t_phi <= steps {
+    while t_phi < steps {
         let phi = t_phi as f64 / steps as f64;
         let (sin_phi, cos_phi) = (2.0 * PI * phi).sin_cos();
 
@@ -204,8 +204,8 @@ pub fn gen_sphere(cx: f64, cy: f64, cz: f64, r: f64, steps: usize) -> Matrix {
 pub fn add_sphere(polygons: &mut Matrix, cx: f64, cy: f64, cz: f64, r: f64, steps: usize) {
     let points = gen_sphere(cx, cy, cz, r, steps);
 
-    let end: usize = steps as usize;
-    let steps: usize = steps as usize + 1;
+    let end = steps;
+    let steps = steps + 1;
 
     for lat in 0..end {
         for longt in 0..end {
@@ -253,13 +253,13 @@ pub fn gen_torus(cx: f64, cy: f64, cz: f64, minor_r: f64, major_r: f64, steps: u
     // For phi: 0->2PI, draw a circle of radius `minor_r` that is translated by
     // `major_r` in the x axis and rotated phi degrees in the y axis
     let mut t_phi = 0;
-    while t_phi <= steps {
+    while t_phi < steps {
         let phi = t_phi as f64 / steps as f64;
         let (sin_phi, cos_phi) = (2.0 * PI * phi).sin_cos();
 
         // Draw a circle
         let mut t_theta = 0;
-        while t_theta <= steps {
+        while t_theta < steps {
             let theta = t_theta as f64 / steps as f64;
             let (sin_theta, cos_theta) = (2.0 * PI * theta).sin_cos();
 
@@ -291,28 +291,32 @@ pub fn add_torus(
 ) {
     let points = gen_torus(cx, cy, cz, minor_r, major_r, steps);
 
-    let end: usize = steps as usize;
-    let steps: usize = steps as usize + 1;
+    let end = steps;
 
     for lat in 0..end {
-        for longt in 0..=end {
+        for longt in 0..end {
             let p0 = lat * steps + longt;
-            let p1 = p0 + 1;
-            let p2 = (p1 + steps) % (steps * (steps - 1));
-            let p3 = (p0 + steps) % (steps * (steps - 1));
+            let p1 = if longt == steps - 1 {
+                p0 - longt
+            } else {
+                p0 + 1
+            };
+            let p2 = (p1 + steps) % (steps * steps);
+            let p3 = (p0 + steps) % (steps * steps);
 
             add_polygon(
                 polygons,
                 points.m[p0][0],
                 points.m[p0][1],
                 points.m[p0][2],
-                points.m[p1][0],
-                points.m[p1][1],
-                points.m[p1][2],
+                points.m[p3][0],
+                points.m[p3][1],
+                points.m[p3][2],
                 points.m[p2][0],
                 points.m[p2][1],
                 points.m[p2][2],
             );
+
             add_polygon(
                 polygons,
                 points.m[p0][0],
@@ -321,9 +325,9 @@ pub fn add_torus(
                 points.m[p2][0],
                 points.m[p2][1],
                 points.m[p2][2],
-                points.m[p3][0],
-                points.m[p3][1],
-                points.m[p3][2],
+                points.m[p1][0],
+                points.m[p1][1],
+                points.m[p1][2],
             );
         }
     }
