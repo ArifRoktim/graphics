@@ -1,3 +1,4 @@
+use rand::Rng;
 use std::fmt;
 
 pub const BLACK: Color = Color { red: 0, green: 0, blue: 0 };
@@ -19,6 +20,11 @@ pub struct Color {
 impl Color {
     pub fn new(r: u8, g: u8, b: u8) -> Color {
         Color { red: r, green: g, blue: b }
+    }
+
+    pub fn rand() -> Color {
+        let mut rng = rand::thread_rng();
+        Color { red: rng.gen(), green: rng.gen(), blue: rng.gen() }
     }
 
     pub fn color(&mut self, c: Color) {

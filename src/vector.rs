@@ -24,6 +24,8 @@ impl Vector {
 
     #[rustfmt::skip]
     pub fn calculate_normal(triangle: &[[f64; COLS]]) -> Vector {
+        assert_eq!(3, triangle.len(), "Triangles must have 3 points!");
+
         let a = Vector::new(
             triangle[1][0] - triangle[0][0],
             triangle[1][1] - triangle[0][1],

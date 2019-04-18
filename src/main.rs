@@ -8,8 +8,8 @@ use matrix::Matrix;
 use screen::{color, Screen};
 use std::{env, process};
 
-const XRES: usize = 700;
-const YRES: usize = 700;
+const XRES: usize = 500;
+const YRES: usize = 500;
 const PIXELS: usize = XRES * YRES;
 const STEPS_2D: usize = 100;
 const STEPS_3D: usize = 20;

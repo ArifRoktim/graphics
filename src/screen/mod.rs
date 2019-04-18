@@ -1,4 +1,4 @@
-use crate::matrix::Matrix;
+use crate::matrix::{Matrix, COLS};
 use crate::vector::Vector;
 use crate::{PIXELS, XRES, YRES};
 use std::f64;
@@ -184,32 +184,66 @@ impl Screen {
             let normal = Vector::calculate_normal(edge);
 
             if normal.z > 0.0 {
-                self.draw_line(
-                    edge[0][0] as i32,
-                    edge[0][1] as i32,
-                    edge[1][0] as i32,
-                    edge[1][1] as i32,
-                    c,
-                );
-                self.draw_line(
-                    edge[0][0] as i32,
-                    edge[0][1] as i32,
-                    edge[2][0] as i32,
-                    edge[2][1] as i32,
-                    c,
-                );
-                self.draw_line(
-                    edge[1][0] as i32,
-                    edge[1][1] as i32,
-                    edge[2][0] as i32,
-                    edge[2][1] as i32,
-                    c,
-                );
+                self.scanline_convert(edge);
             }
         }
     }
 
-    //fn scanline_convert(&mut self,)
+    fn scanline_convert(&mut self, triangle: &[[f64; COLS]]) {
+        assert_eq!(3, triangle.len(), "Triangles must have 3 points!");
+        let c = Color::rand();
+        // order the 3 points from lowest to highest y value
+        let (mut min, mid, mut max);
+        if triangle[0][1] < triangle[1][1] {
+            min = triangle[0];
+            max = triangle[1];
+        } else {
+            min = triangle[1];
+            max = triangle[0];
+        }
+        if triangle[2][1] > max[1] {
+            mid = max;
+            max = triangle[2]
+        } else if triangle[2][1] < min[1] {
+            mid = min;
+            min = triangle[2]
+        } else {
+            mid = triangle[2]
+        }
+
+        // make vars immutable
+        let (bot, mid, top) = (min, mid, max);
+
+        // Given a ▲BMT where b.y <= m.y <= t.y:
+        // for y in b.y..t.y, draw a line from (x0, y) to (x1, y), where
+        // x0 := the point along line BT with a y value of `y`
+        // x1 := the point along either line BM or MT with a y value of `y`
+        let (mut x0, mut x1) = (bot[0], bot[0]);
+        let delta_x0 = (top[0] - bot[0]) / (top[1] - bot[1]);
+        // Case where bottom and middle don't have the same y value
+        // check that bot[1] != mid[1]
+        if (bot[1] - mid[1]).abs() > f64::EPSILON {
+            let delta_x1 = (mid[0] - bot[0]) / (mid[1] - bot[1]);
+            for y in (bot[1] as i32)..(mid[1] as i32) {
+                self.draw_line(x0 as i32, y, x1 as i32, y, c);
+                x0 += delta_x0;
+                x1 += delta_x1;
+            }
+        } else {
+            x1 = mid[0];
+        }
+        // Case where middle and top don't have the same y value
+        // check that mid[1] != top[1]
+        if (mid[1] - top[1]).abs() > f64::EPSILON {
+            let delta_x1 = (top[0] - mid[0]) / (top[1] - mid[1]);
+            for y in (mid[1] as i32)..(top[1] as i32) {
+                self.draw_line(x0 as i32, y, x1 as i32, y, c);
+                x0 += delta_x0;
+                x1 += delta_x1;
+            }
+        }
+    }
+
 }
 
 impl fmt::Display for Screen {
