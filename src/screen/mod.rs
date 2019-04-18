@@ -65,7 +65,7 @@ impl Screen {
         }
     }
 
-    pub fn draw_point(&mut self, px: i32, py: i32, c: Color) {
+    pub fn plot(&mut self, px: i32, py: i32, z: f64, c: Color) {
         if px < 0 || px >= (XRES as i32) || py < 0 || py >= (YRES as i32) {
             return;
         }
@@ -73,19 +73,25 @@ impl Screen {
         // make (0, 0) the bottom left corner instead of the top left corner
         let (px, py) = (px as usize, YRES - 1 - (py as usize));
         // Get the color and change it
-        self.pixels[py][px].0.color(c);
+        let pixel = &mut self.pixels[py][px];
+        if z > pixel.1 {
+            pixel.0 = c;
+            pixel.1 = z;
+        }
     }
 
     // Bresenham's line algorithm
     #[allow(clippy::many_single_char_names)]
-    pub fn draw_line(&mut self, x0: i32, y0: i32, x1: i32, y1: i32, c: Color) {
+    // TODO: Fix having too many arguments in this function
+    #[allow(clippy::too_many_arguments)]
+    pub fn draw_line(&mut self, x0: i32, y0: i32, z0: f64, x1: i32, y1: i32, z1: f64, c: Color) {
         // swap points if going right -> left
         if x0 > x1 {
-            self.draw_line(x1, y1, x0, y0, c);
+            self.draw_line(x1, y1, z1, x0, y0, z0, c);
             return;
         }
 
-        let (mut x, mut y) = (x0, y0);
+        let (mut x, mut y, mut z) = (x0, y0, z0);
         let a = 2 * (y1 - y0);
         let b = -2 * (x1 - x0);
         let (mut wide, mut tall) = (false, false);
@@ -103,13 +109,13 @@ impl Screen {
             dx_northeast = 1;
             dy_east = 0;
             d_east = a;
-            //octant 1
+            // octant 1
             if a > 0 {
                 d = a + b / 2;
                 dy_northeast = 1;
                 d_northeast = a + b;
             }
-            //octant 8
+            // octant 8
             else {
                 d = a - b / 2;
                 dy_northeast = -1;
@@ -121,7 +127,7 @@ impl Screen {
             tall = true;
             dx_east = 0;
             dx_northeast = 1;
-            //octant 2
+            // octant 2
             if a > 0 {
                 d = a / 2 + b;
                 dy_east = 1;
@@ -131,7 +137,7 @@ impl Screen {
                 loop_start = y;
                 loop_end = y1;
             }
-            //octant 7
+            // octant 7
             else {
                 d = a / 2 - b;
                 dy_east = -1;
@@ -142,24 +148,26 @@ impl Screen {
                 loop_end = y;
             }
         }
+        let dz = (z1 - z0) / f64::from(loop_start - loop_end).abs();
         // draw points
         while loop_start < loop_end {
-            //plot( s, zb, c, x, y, 0);
-            self.draw_point(x, y, c);
+            self.plot(x, y, z, c);
             if (wide && ((a > 0 && d > 0) || (a < 0 && d < 0)))
                 || (tall && ((a > 0 && d < 0) || (a < 0 && d > 0)))
             {
                 y += dy_northeast;
                 d += d_northeast;
                 x += dx_northeast;
+                z += dz;
             } else {
                 x += dx_east;
                 y += dy_east;
                 d += d_east;
+                z += dz;
             }
             loop_start += 1;
         }
-        self.draw_point(x1, y1, c);
+        self.plot(x1, y1, z1, c);
     }
 
     pub fn draw_lines(&mut self, edges: &Matrix, c: Color) {
@@ -168,8 +176,10 @@ impl Screen {
             self.draw_line(
                 edge[0][0] as i32,
                 edge[0][1] as i32,
+                edge[0][2],
                 edge[1][0] as i32,
                 edge[1][1] as i32,
+                edge[1][2],
                 c,
             );
         }
@@ -216,27 +226,35 @@ impl Screen {
         // for y in b.y..t.y, draw a line from (x0, y) to (x1, y), where
         // x0 := the point along line BT with a y value of `y`
         // x1 := the point along either line BM or MT with a y value of `y`
-        let (mut x0, mut x1) = (bot[0], bot[0]);
+        let (mut x0, mut x1, mut z0, mut z1) = (bot[0], bot[0], bot[2], bot[2]);
         let delta_x0 = (top[0] - bot[0]) / (top[1] - bot[1]);
+        let delta_z0 = (top[2] - bot[2]) / (top[1] - bot[1]);
         // Case where bottom and middle don't have the same y value
         // check that bot[1] != mid[1]
         if (bot[1] - mid[1]).abs() > f64::EPSILON {
             let delta_x1 = (mid[0] - bot[0]) / (mid[1] - bot[1]);
+            let delta_z1 = (mid[2] - bot[2]) / (mid[1] - bot[1]);
             for y in (bot[1] as i32)..(mid[1] as i32) {
-                self.draw_line(x0 as i32, y, x1 as i32, y, c);
+                self.draw_line(x0 as i32, y, z0, x1 as i32, y, z1, c);
                 x0 += delta_x0;
                 x1 += delta_x1;
+                z0 += delta_z0;
+                z1 += delta_z1;
             }
         }
         x1 = mid[0];
+        z1 = mid[2];
         // Case where middle and top don't have the same y value
         // check that mid[1] != top[1]
         if (mid[1] - top[1]).abs() > f64::EPSILON {
             let delta_x1 = (top[0] - mid[0]) / (top[1] - mid[1]);
+            let delta_z1 = (top[2] - mid[2]) / (top[1] - mid[1]);
             for y in (mid[1] as i32)..(top[1] as i32) {
-                self.draw_line(x0 as i32, y, x1 as i32, y, c);
+                self.draw_line(x0 as i32, y, z0, x1 as i32, y, z1, c);
                 x0 += delta_x0;
                 x1 += delta_x1;
+                z0 += delta_z0;
+                z1 += delta_z1;
             }
         }
     }

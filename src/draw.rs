@@ -276,11 +276,7 @@ pub fn add_torus(
     for lat in 0..end {
         for longt in 0..end {
             let p0 = lat * steps + longt;
-            let p1 = if longt == steps - 1 {
-                p0 - longt
-            } else {
-                p0 + 1
-            };
+            let p1 = if longt == steps - 1 { p0 - longt } else { p0 + 1 };
             let p2 = (p1 + steps) % (steps * steps);
             let p3 = (p0 + steps) % (steps * steps);
 
