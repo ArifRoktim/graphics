@@ -82,12 +82,15 @@ impl Screen {
 
     // Bresenham's line algorithm
     #[allow(clippy::many_single_char_names)]
-    // TODO: Fix having too many arguments in this function
-    #[allow(clippy::too_many_arguments)]
-    pub fn draw_line(&mut self, x0: i32, y0: i32, z0: f64, x1: i32, y1: i32, z1: f64, c: Color) {
+    pub fn draw_line(
+        &mut self,
+        (x0, y0, z0): (i32, i32, f64),
+        (x1, y1, z1): (i32, i32, f64),
+        c: Color,
+    ) {
         // swap points if going right -> left
         if x0 > x1 {
-            self.draw_line(x1, y1, z1, x0, y0, z0, c);
+            self.draw_line((x1, y1, z1), (x0, y0, z0), c);
             return;
         }
 
@@ -174,18 +177,14 @@ impl Screen {
         // Iterate over the edge list 2 points at a time
         for edge in edges.m.chunks_exact(2) {
             self.draw_line(
-                edge[0][0] as i32,
-                edge[0][1] as i32,
-                edge[0][2],
-                edge[1][0] as i32,
-                edge[1][1] as i32,
-                edge[1][2],
+                (edge[0][0] as i32, edge[0][1] as i32, edge[0][2]),
+                (edge[1][0] as i32, edge[1][1] as i32, edge[1][2]),
                 c,
             );
         }
     }
 
-    pub fn draw_polygons(&mut self, polygons: &Matrix, c: Color) {
+    pub fn draw_polygons(&mut self, polygons: &Matrix, _c: Color) {
         // Iterate over the edge list 3 points at a time
         for edge in polygons.m.chunks_exact(3) {
             // Get normal vector for backface culling
@@ -235,7 +234,7 @@ impl Screen {
             let delta_x1 = (mid[0] - bot[0]) / (mid[1] - bot[1]);
             let delta_z1 = (mid[2] - bot[2]) / (mid[1] - bot[1]);
             for y in (bot[1] as i32)..(mid[1] as i32) {
-                self.draw_line(x0 as i32, y, z0, x1 as i32, y, z1, c);
+                self.draw_line((x0 as i32, y, z0), (x1 as i32, y, z1), c);
                 x0 += delta_x0;
                 x1 += delta_x1;
                 z0 += delta_z0;
@@ -250,7 +249,7 @@ impl Screen {
             let delta_x1 = (top[0] - mid[0]) / (top[1] - mid[1]);
             let delta_z1 = (top[2] - mid[2]) / (top[1] - mid[1]);
             for y in (mid[1] as i32)..(top[1] as i32) {
-                self.draw_line(x0 as i32, y, z0, x1 as i32, y, z1, c);
+                self.draw_line((x0 as i32, y, z0), (x1 as i32, y, z1), c);
                 x0 += delta_x0;
                 x1 += delta_x1;
                 z0 += delta_z0;

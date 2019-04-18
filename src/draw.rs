@@ -78,15 +78,9 @@ pub fn add_edge(edges: &mut Matrix, x0: f64, y0: f64, z0: f64, x1: f64, y1: f64,
 
 pub fn add_polygon(
     polygons: &mut Matrix,
-    x0: f64,
-    y0: f64,
-    z0: f64,
-    x1: f64,
-    y1: f64,
-    z1: f64,
-    x2: f64,
-    y2: f64,
-    z2: f64,
+    (x0, y0, z0): (f64, f64, f64),
+    (x1, y1, z1): (f64, f64, f64),
+    (x2, y2, z2): (f64, f64, f64),
 ) {
     add_point(polygons, x0, y0, z0);
     add_point(polygons, x1, y1, z1);
@@ -141,23 +135,23 @@ pub fn add_box(polygons: &mut Matrix, x: f64, y: f64, z: f64, width: f64, height
     let z1 = z - depth;
 
     // front face
-    add_polygon(polygons, x, y, z, x1, y1, z, x1, y, z);
-    add_polygon(polygons, x, y, z, x, y1, z, x1, y1, z);
+    add_polygon(polygons, (x, y, z), (x1, y1, z), (x1, y, z));
+    add_polygon(polygons, (x, y, z), (x, y1, z), (x1, y1, z));
     // back face
-    add_polygon(polygons, x1, y, z1, x, y1, z1, x, y, z1);
-    add_polygon(polygons, x1, y, z1, x1, y1, z1, x, y1, z1);
+    add_polygon(polygons, (x1, y, z1), (x, y1, z1), (x, y, z1));
+    add_polygon(polygons, (x1, y, z1), (x1, y1, z1), (x, y1, z1));
     // left face
-    add_polygon(polygons, x, y, z1, x, y1, z, x, y, z);
-    add_polygon(polygons, x, y, z1, x, y1, z1, x, y1, z);
+    add_polygon(polygons, (x, y, z1), (x, y1, z), (x, y, z));
+    add_polygon(polygons, (x, y, z1), (x, y1, z1), (x, y1, z));
     // right face
-    add_polygon(polygons, x1, y, z, x1, y1, z1, x1, y, z1);
-    add_polygon(polygons, x1, y, z, x1, y1, z, x1, y1, z1);
+    add_polygon(polygons, (x1, y, z), (x1, y1, z1), (x1, y, z1));
+    add_polygon(polygons, (x1, y, z), (x1, y1, z), (x1, y1, z1));
     // top face
-    add_polygon(polygons, x, y, z1, x1, y, z, x1, y, z1);
-    add_polygon(polygons, x, y, z1, x, y, z, x1, y, z);
+    add_polygon(polygons, (x, y, z1), (x1, y, z), (x1, y, z1));
+    add_polygon(polygons, (x, y, z1), (x, y, z), (x1, y, z));
     // bottom face
-    add_polygon(polygons, x, y1, z, x1, y1, z1, x1, y1, z);
-    add_polygon(polygons, x, y1, z, x, y1, z1, x1, y1, z1);
+    add_polygon(polygons, (x, y1, z), (x1, y1, z1), (x1, y1, z));
+    add_polygon(polygons, (x, y1, z), (x, y1, z1), (x1, y1, z1));
 }
 
 pub fn gen_sphere(cx: f64, cy: f64, cz: f64, r: f64, steps: usize) -> Matrix {
@@ -203,29 +197,17 @@ pub fn add_sphere(polygons: &mut Matrix, cx: f64, cy: f64, cz: f64, r: f64, step
             if longt != steps - 2 {
                 add_polygon(
                     polygons,
-                    points.m[p0][0],
-                    points.m[p0][1],
-                    points.m[p0][2],
-                    points.m[p1][0],
-                    points.m[p1][1],
-                    points.m[p1][2],
-                    points.m[p2][0],
-                    points.m[p2][1],
-                    points.m[p2][2],
+                    (points.m[p0][0], points.m[p0][1], points.m[p0][2]),
+                    (points.m[p1][0], points.m[p1][1], points.m[p1][2]),
+                    (points.m[p2][0], points.m[p2][1], points.m[p2][2]),
                 );
             }
             if longt != 0 {
                 add_polygon(
                     polygons,
-                    points.m[p0][0],
-                    points.m[p0][1],
-                    points.m[p0][2],
-                    points.m[p2][0],
-                    points.m[p2][1],
-                    points.m[p2][2],
-                    points.m[p3][0],
-                    points.m[p3][1],
-                    points.m[p3][2],
+                    (points.m[p0][0], points.m[p0][1], points.m[p0][2]),
+                    (points.m[p2][0], points.m[p2][1], points.m[p2][2]),
+                    (points.m[p3][0], points.m[p3][1], points.m[p3][2]),
                 );
             }
         }
@@ -282,28 +264,16 @@ pub fn add_torus(
 
             add_polygon(
                 polygons,
-                points.m[p0][0],
-                points.m[p0][1],
-                points.m[p0][2],
-                points.m[p3][0],
-                points.m[p3][1],
-                points.m[p3][2],
-                points.m[p2][0],
-                points.m[p2][1],
-                points.m[p2][2],
+                (points.m[p0][0], points.m[p0][1], points.m[p0][2]),
+                (points.m[p3][0], points.m[p3][1], points.m[p3][2]),
+                (points.m[p2][0], points.m[p2][1], points.m[p2][2]),
             );
 
             add_polygon(
                 polygons,
-                points.m[p0][0],
-                points.m[p0][1],
-                points.m[p0][2],
-                points.m[p2][0],
-                points.m[p2][1],
-                points.m[p2][2],
-                points.m[p1][0],
-                points.m[p1][1],
-                points.m[p1][2],
+                (points.m[p0][0], points.m[p0][1], points.m[p0][2]),
+                (points.m[p2][0], points.m[p2][1], points.m[p2][2]),
+                (points.m[p1][0], points.m[p1][1], points.m[p1][2]),
             );
         }
     }
