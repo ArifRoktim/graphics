@@ -1,0 +1,141 @@
+# body {{{1
+push
+move
+250 200 0
+scale
+0.9 0.9 0.9
+rotate
+x -10
+rotate
+y 15
+rotate
+z 20
+
+# cylinder body {{{2
+push
+scale
+1 10 1
+torus
+0 0 0 10 70
+pop
+
+# body head plate {{{2
+push
+move
+0 100 0
+scale
+1 0.3 1
+rotate
+z 90
+sphere
+0 0 0 70
+pop
+
+# head {{{2
+push
+move
+0 175 0
+# below mouth {{{3
+torus
+0 -55 0 10 37
+# mouth  {{{3
+push
+scale
+1.3 1.8 1
+torus
+0 -20 -5 7 27
+pop
+# above mouth {{{3
+push
+scale
+1 4 1
+torus
+0 4.3 0 10 37
+pop
+# upper head {{{3
+push
+sphere
+0 50 0 40
+sphere
+0 89 0 10
+# antennae {{{4
+push
+move
+0 100 0
+scale
+0.4 7 0.4
+torus
+0 0 0 4 10
+pop
+sphere
+0 132 0 10
+# }}}4
+pop
+
+# }}}3
+# visor/eyes {{{3
+push
+move
+0 40 53.5
+box
+-35 0 0 70 40 20
+sphere
+-17.5 -20 0 17.5
+sphere
+17.5 -20 0 17.5
+
+pop
+
+pop
+# left arm {{{2
+push
+move
+-105 0 0
+rotate
+z -45
+scale
+1.75 25 1
+torus
+0 0 0 4 10
+pop
+
+# right arm {{{2
+push
+move
+105 0 0
+rotate
+z 45
+scale
+1.75 25 1
+torus
+0 0 0 4 10
+pop
+
+# left leg {{{2
+push
+move
+-35 -180 0
+scale
+1.75 20 1
+torus
+0 0 0 4 10
+pop
+
+# right leg {{{2
+push
+move
+35 -180 0
+scale
+1.75 20 1
+torus
+0 0 0 4 10
+pop
+
+# }}}2
+display
+
+save
+better_bender.png
+
+# }}}1
+# vim:foldmethod=marker
