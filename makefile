@@ -12,6 +12,10 @@ clean:
 	-rm *.ppm *.png *.bak
 	cargo clean
 
-check clippy fmt:
+check:
+	@touch src/main.rs
+	cargo check
+
+clippy fmt:
 	@touch src/main.rs
 	cargo +nightly $@

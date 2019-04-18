@@ -11,19 +11,16 @@ use std::process::Command;
 pub mod color;
 pub use color::Color;
 
+type Pixel = (Color, f64);
+
 pub struct Screen {
-    pub pixels: Box<[[Color; XRES]; YRES]>,
-    pub zbuffer: Box<[[f64; XRES]; YRES]>,
+    pub pixels: Box<[[Pixel; XRES]; YRES]>,
     pub color: Color,
 }
 
 impl Screen {
     pub fn new(c: Color) -> Screen {
-        Screen {
-            pixels: Box::new([[color::BLACK; XRES]; YRES]),
-            zbuffer: Box::new([[f64::NEG_INFINITY; XRES]; YRES]),
-            color: c,
-        }
+        Screen { pixels: Box::new([[(c, f64::NEG_INFINITY); XRES]; YRES]), color: c }
     }
 
     pub fn blank() -> Screen {
@@ -61,8 +58,8 @@ impl Screen {
 
     pub fn fill(&mut self, c: Color) {
         for row in self.pixels.iter_mut() {
-            for pixel in row.iter_mut() {
-                pixel.color(c)
+            for (color, _) in row.iter_mut() {
+                color.color(c)
             }
         }
     }
@@ -71,11 +68,11 @@ impl Screen {
         if px < 0 || px >= (XRES as i32) || py < 0 || py >= (YRES as i32) {
             return;
         }
-        // Cast the coordinates to `usize` and also
+        // Cast the coordinates to `usize` and
         // make (0, 0) the bottom left corner instead of the top left corner
         let (px, py) = (px as usize, YRES - 1 - (py as usize));
-        // Get the pixel at point p and set its color
-        self.pixels[py][px].color(c);
+        // Get the color and change it
+        self.pixels[py][px].0.color(c);
     }
 
     // Bresenham's line algorithm
@@ -243,7 +240,6 @@ impl Screen {
             }
         }
     }
-
 }
 
 impl fmt::Display for Screen {
@@ -256,8 +252,8 @@ impl fmt::Display for Screen {
         let size: usize = PIXELS * 3 * 4 + YRES + 50;
         let mut contents = String::with_capacity(size);
         for row in self.pixels.iter() {
-            for pixel in row.iter() {
-                contents.push_str(&pixel.to_string());
+            for (color, _) in row.iter() {
+                contents.push_str(&color.to_string());
             }
             contents.push_str("\n");
         }
