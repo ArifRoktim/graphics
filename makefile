@@ -1,20 +1,26 @@
-SCRIPT = scripts/solids
+# path to the script file to run
+S := scripts/solids
 
-.PHONY: all dev debug clean clippy fmt
+.PHONY: all dev debug clear clean check test clippy fmt
 
 all:
-	cargo run --release $(SCRIPT)
+	cargo run --release $(S)
 
-dev debug:
-	cargo run $(SCRIPT)
+dev:
+	cargo run $(S)
 
-clean:
+debug:
+	RUST_BACKTRACE=1 cargo run $(S)
+
+clear:
 	-rm *.ppm *.png *.bak
+
+clean: clear
 	cargo clean
 
-check:
+check test:
 	@touch src/main.rs
-	cargo check
+	cargo $@
 
 clippy fmt:
 	@touch src/main.rs

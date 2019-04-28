@@ -1,5 +1,5 @@
 [package]
-name = "w08_solids"
+name = "w08_refactor"
 version = "0.1.0"
 authors = ["Arif Roktim <aroktim@stuy.edu>"]
 edition = "2018"
