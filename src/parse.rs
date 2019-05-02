@@ -1,5 +1,5 @@
 use crate::draw::{self, Curve};
-use crate::matrix::Matrix;
+use crate::matrix::{Matrix, SquareMatrix};
 use crate::screen::{color, Color, Screen};
 use crate::{STEPS_2D, STEPS_3D};
 
@@ -9,7 +9,7 @@ use std::process::{Command, Stdio};
 
 const FOREGROUND: Color = color::GREEN;
 
-pub fn parse_file(filename: &str, screen: &mut Screen, cstack: &mut Vec<Matrix>) {
+pub fn parse_file(filename: &str, screen: &mut Screen, cstack: &mut Vec<SquareMatrix>) {
     let contents = match fs::read_to_string(filename) {
         Ok(contents) => contents,
         Err(error) => panic!("Error reading file \"{}\": {}", filename, error),
@@ -57,7 +57,7 @@ pub fn parse_file(filename: &str, screen: &mut Screen, cstack: &mut Vec<Matrix>)
     }
 }
 
-fn draw_line(edges: &mut Matrix, stack: &[Matrix], screen: &mut Screen, args: Option<&str>) {
+fn draw_line(edges: &mut Matrix, stack: &[SquareMatrix], screen: &mut Screen, args: Option<&str>) {
     let err_msg = "Line requires 6 f64 arguments!";
     let args = args.expect(err_msg);
     // Split by whitespace, parse the `str`s into `f64`s, then collect into
@@ -77,7 +77,7 @@ fn draw_line(edges: &mut Matrix, stack: &[Matrix], screen: &mut Screen, args: Op
     }
 }
 
-fn circle(edges: &mut Matrix, stack: &[Matrix], screen: &mut Screen, args: Option<&str>) {
+fn circle(edges: &mut Matrix, stack: &[SquareMatrix], screen: &mut Screen, args: Option<&str>) {
     let err_msg = "Circle requires 4 f64 arguments!";
     let args = args.expect(err_msg);
     // Split by whitespace, parse the `str`s into `f64`s, then collect into
@@ -97,7 +97,7 @@ fn circle(edges: &mut Matrix, stack: &[Matrix], screen: &mut Screen, args: Optio
     }
 }
 
-fn hermite(edges: &mut Matrix, stack: &[Matrix], screen: &mut Screen, args: Option<&str>) {
+fn hermite(edges: &mut Matrix, stack: &[SquareMatrix], screen: &mut Screen, args: Option<&str>) {
     let err_msg = "Hermite requires 8 f64 arguments!";
     let args = args.expect(err_msg);
     // Split by whitespace, parse the `str`s into `f64`s, then collect into
@@ -118,7 +118,7 @@ fn hermite(edges: &mut Matrix, stack: &[Matrix], screen: &mut Screen, args: Opti
     }
 }
 
-fn bezier(edges: &mut Matrix, stack: &[Matrix], screen: &mut Screen, args: Option<&str>) {
+fn bezier(edges: &mut Matrix, stack: &[SquareMatrix], screen: &mut Screen, args: Option<&str>) {
     let err_msg = "Hermite requires 8 f64 arguments!";
     let args = args.expect(err_msg);
     // Split by whitespace, parse the `str`s into `f64`s, then collect into
@@ -139,7 +139,7 @@ fn bezier(edges: &mut Matrix, stack: &[Matrix], screen: &mut Screen, args: Optio
     }
 }
 
-fn draw_box(polygons: &mut Matrix, stack: &[Matrix], screen: &mut Screen, args: Option<&str>) {
+fn draw_box(polygons: &mut Matrix, stack: &[SquareMatrix], screen: &mut Screen, args: Option<&str>) {
     let err_msg = "Box requires 6 f64 args!";
     let args = args.expect(err_msg);
     #[rustfmt::skip]
@@ -157,7 +157,7 @@ fn draw_box(polygons: &mut Matrix, stack: &[Matrix], screen: &mut Screen, args: 
     }
 }
 
-fn sphere(polygons: &mut Matrix, stack: &[Matrix], screen: &mut Screen, args: Option<&str>) {
+fn sphere(polygons: &mut Matrix, stack: &[SquareMatrix], screen: &mut Screen, args: Option<&str>) {
     let err_msg = "Sphere requires 4 f64 args!";
     let args = args.expect(err_msg);
     #[rustfmt::skip]
@@ -175,7 +175,7 @@ fn sphere(polygons: &mut Matrix, stack: &[Matrix], screen: &mut Screen, args: Op
     }
 }
 
-fn torus(polygons: &mut Matrix, stack: &[Matrix], screen: &mut Screen, args: Option<&str>) {
+fn torus(polygons: &mut Matrix, stack: &[SquareMatrix], screen: &mut Screen, args: Option<&str>) {
     let err_msg = "Torus requires 5 f64 args!";
     let args = args.expect(err_msg);
     #[rustfmt::skip]
@@ -193,7 +193,7 @@ fn torus(polygons: &mut Matrix, stack: &[Matrix], screen: &mut Screen, args: Opt
     }
 }
 
-fn scale(stack: &mut Vec<Matrix>, args: Option<&str>) {
+fn scale(stack: &mut Vec<SquareMatrix>, args: Option<&str>) {
     let err_msg = "Scale requires 3 f64 arguments!";
     let args = args.expect(err_msg);
     // Split by whitespace, parse the `str`s into `f64`s, then collect into
@@ -205,7 +205,7 @@ fn scale(stack: &mut Vec<Matrix>, args: Option<&str>) {
         .collect::<Vec<f64>>();
     match *args {
         [sx, sy, sz] => {
-            let mut tr = Matrix::new_scale(sx, sy, sz);
+            let mut tr = SquareMatrix::new_scale(sx, sy, sz);
             stack.last().unwrap().mult(&mut tr);
             stack.pop();
             stack.push(tr);
@@ -214,7 +214,7 @@ fn scale(stack: &mut Vec<Matrix>, args: Option<&str>) {
     }
 }
 
-fn translate(stack: &mut Vec<Matrix>, args: Option<&str>) {
+fn translate(stack: &mut Vec<SquareMatrix>, args: Option<&str>) {
     let err_msg = "Move requires 3 f64 arguments!";
     let args = args.expect(err_msg);
     // Split by whitespace, parse the `str`s into `f64`s, then collect into
@@ -226,7 +226,7 @@ fn translate(stack: &mut Vec<Matrix>, args: Option<&str>) {
         .collect::<Vec<f64>>();
     match *args {
         [tx, ty, tz] => {
-            let mut tr = Matrix::new_translate(tx, ty, tz);
+            let mut tr = SquareMatrix::new_translate(tx, ty, tz);
             stack.last().unwrap().mult(&mut tr);
             stack.pop();
             stack.push(tr);
@@ -235,15 +235,15 @@ fn translate(stack: &mut Vec<Matrix>, args: Option<&str>) {
     }
 }
 
-fn rotate(stack: &mut Vec<Matrix>, args: Option<&str>) {
+fn rotate(stack: &mut Vec<SquareMatrix>, args: Option<&str>) {
     let err_msg = "Rotate requires an axis ('x', 'y', or 'z') and a f64!";
     let args = args.expect(err_msg);
     let args: Vec<&str> = args.split_whitespace().collect();
     let theta: f64 = args.get(1).expect(err_msg).parse().expect(err_msg);
     let mut tr = match args[0] {
-        "x" => Matrix::new_rot_x(theta),
-        "y" => Matrix::new_rot_y(theta),
-        "z" => Matrix::new_rot_z(theta),
+        "x" => SquareMatrix::new_rot_x(theta),
+        "y" => SquareMatrix::new_rot_y(theta),
+        "z" => SquareMatrix::new_rot_z(theta),
         _ => panic!(err_msg),
     };
     stack.last().unwrap().mult(&mut tr);

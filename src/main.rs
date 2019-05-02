@@ -4,7 +4,7 @@ pub mod parse;
 pub mod screen;
 pub mod vector;
 
-use matrix::Matrix;
+use matrix::SquareMatrix;
 use screen::{color, Screen};
 use std::{env, process};
 
@@ -24,7 +24,7 @@ fn main() {
 
     let mut screen = Screen::new(color::BLACK);
 
-    let mut identity = Matrix::new(4);
+    let mut identity = SquareMatrix::new();
     identity.ident();
     let mut cstack = Vec::new();
     cstack.push(identity);

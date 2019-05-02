@@ -1,4 +1,5 @@
 use std::fmt;
+use std::ops::{Deref, DerefMut};
 
 pub const COLS: usize = 4;
 // Each point in the matrix is a row that is 4 columns wide
@@ -29,95 +30,6 @@ impl Matrix {
         Matrix { m }
     }
 
-    pub fn new_translate(x: f64, y: f64, z: f64) -> Matrix {
-        // Translation matrix:
-        // [1, 0, 0, x]
-        // [0, 1, 0, y]
-        // [0, 0, 1, z]
-        // [0, 0, 0, 1]
-        #[rustfmt::skip]
-        let m = &[
-            [1., 0., 0., 0.],
-            [0., 1., 0., 0.],
-            [0., 0., 1., 0.],
-            [x, y, z, 1.],
-        ][..];
-        Matrix::from(m)
-    }
-
-    pub fn new_scale(x: f64, y: f64, z: f64) -> Matrix {
-        // scale matrix:
-        // [a, 0, 0, 0]
-        // [0, b, 0, 0]
-        // [0, 0, c, 0]
-        // [0, 0, 0, 1]
-        #[rustfmt::skip]
-        let m = &[
-            [x, 0., 0., 0.],
-            [0., y, 0., 0.],
-            [0., 0., z, 0.],
-            [0., 0., 0., 1.],
-        ][..];
-        Matrix::from(m)
-    }
-
-    pub fn new_rot_x(theta: f64) -> Matrix {
-        // theta(θ) is in degrees
-        // rotation_x matrix:
-        // [1, 0, 0, 0]
-        // [0, cosθ, -sinθ, 0]
-        // [0, sinθ, cosθ, 0]
-        // [0, 0, 0, 1]
-        let radians = theta.to_radians();
-        let (sin, cos) = radians.sin_cos();
-        #[rustfmt::skip]
-        let m = &[
-            [1., 0., 0., 0.],
-            [0., cos, sin, 0.],
-            [0., -1. * sin, cos, 0.],
-            [0., 0., 0., 1.],
-        ][..];
-        Matrix::from(m)
-    }
-
-    pub fn new_rot_y(theta: f64) -> Matrix {
-        // theta(θ) is in degrees
-        // rotation_y matrix:
-        // [cosθ, 0, sinθ, 0]
-        // [0, 1, 0, 0]
-        // [-sinθ, 0, cosθ, 0]
-        // [0, 0, 0, 1]
-        let radians = theta.to_radians();
-        let (sin, cos) = radians.sin_cos();
-        #[rustfmt::skip]
-        let m = &[
-            [cos, 0., -1. * sin, 0.],
-            [0., 1., 0., 0.],
-            [sin, 0., cos, 0.],
-            [0., 0., 0., 1.],
-        ][..];
-        Matrix::from(m)
-    }
-
-    pub fn new_rot_z(theta: f64) -> Matrix {
-        // theta(θ) is in degrees
-        // rotation_z matrix:
-        // [cosθ, -sinθ, 0, 0]
-        // [sinθ, cosθ, 0, 0]
-        // [0, 0, 1, 0]
-        // [0, 0, 0, 1]
-        let radians = theta.to_radians();
-        let (sin, cos) = radians.sin_cos();
-        #[rustfmt::skip]
-        let m = &[
-            [cos, sin, 0., 0.],
-            [-1. * sin, cos, 0., 0.],
-            [0., 0., 1., 0.],
-            [0., 0., 0., 1.],
-        ][..];
-        Matrix::from(m)
-    }
-
     pub fn clear(&mut self) {
         self.m.clear();
     }
@@ -126,27 +38,13 @@ impl Matrix {
         self.m.push(point);
     }
 
-    // Modifies a square matrix to become the identity matrix
-    pub fn ident(&mut self) {
-        if self.rows() != self.cols() {
-            panic!("Can't call method ident() on a non-square matrix!");
-        }
-        for (row_n, row) in self.m.iter_mut().enumerate() {
-            for (col_n, col) in row.iter_mut().enumerate() {
-                if row_n == col_n {
-                    *col = 1.;
-                } else {
-                    *col = 0.;
-                }
-            }
-        }
-    }
-
     // Modifies other matrix to be = self * other
     #[allow(clippy::needless_range_loop)]
     pub fn mult(&self, other: &mut Matrix) {
         // columns and rows are switched
         // First check that both matrices can be multiplied
+        // Graphical lens: LEFT.cols == RIGHT.rows
+        // Implementation: self.rows == other.cols
         if self.rows() != other.cols() {
             panic!(
                 "Can't multiply {}x{} by {}x{}!",
@@ -156,8 +54,8 @@ impl Matrix {
                 other.rows()
             );
         }
-        // Graphical lens
-        // for each column in other, for each row in self
+        // Graphical lens: for each column in other, for each row      in self
+        // Implementation: for each row    in other, for each column   in self
         for row in other.m.iter_mut() {
             let orig_other_row = *row;
             for self_col in 0..self.cols() {
@@ -204,5 +102,177 @@ impl fmt::Display for Matrix {
             one.push_str(&format!("{: <width$.prec$} ", row[3], prec = prec, width = width));
         }
         write!(f, "{}\n{}\n{}\n{}", x, y, z, one)
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct SquareMatrix(pub Matrix);
+
+impl SquareMatrix {
+    pub fn new() -> SquareMatrix {
+        SquareMatrix(Matrix::new(4))
+    }
+
+    pub fn new_translate(x: f64, y: f64, z: f64) -> SquareMatrix {
+        // Translation matrix:
+        // [1, 0, 0, x]
+        // [0, 1, 0, y]
+        // [0, 0, 1, z]
+        // [0, 0, 0, 1]
+        #[rustfmt::skip]
+        let m = &[
+            [1., 0., 0., 0.],
+            [0., 1., 0., 0.],
+            [0., 0., 1., 0.],
+            [x, y, z, 1.],
+        ][..];
+        SquareMatrix::from(m)
+    }
+
+    pub fn new_scale(x: f64, y: f64, z: f64) -> SquareMatrix {
+        // scale matrix:
+        // [a, 0, 0, 0]
+        // [0, b, 0, 0]
+        // [0, 0, c, 0]
+        // [0, 0, 0, 1]
+        #[rustfmt::skip]
+        let m = &[
+            [x, 0., 0., 0.],
+            [0., y, 0., 0.],
+            [0., 0., z, 0.],
+            [0., 0., 0., 1.],
+        ][..];
+        SquareMatrix::from(m)
+    }
+
+    pub fn new_rot_x(theta: f64) -> SquareMatrix {
+        // theta(θ) is in degrees
+        // rotation_x matrix:
+        // [1, 0, 0, 0]
+        // [0, cosθ, -sinθ, 0]
+        // [0, sinθ, cosθ, 0]
+        // [0, 0, 0, 1]
+        let radians = theta.to_radians();
+        let (sin, cos) = radians.sin_cos();
+        #[rustfmt::skip]
+        let m = &[
+            [1., 0., 0., 0.],
+            [0., cos, sin, 0.],
+            [0., -1. * sin, cos, 0.],
+            [0., 0., 0., 1.],
+        ][..];
+        SquareMatrix::from(m)
+    }
+
+    pub fn new_rot_y(theta: f64) -> SquareMatrix {
+        // theta(θ) is in degrees
+        // rotation_y matrix:
+        // [cosθ, 0, sinθ, 0]
+        // [0, 1, 0, 0]
+        // [-sinθ, 0, cosθ, 0]
+        // [0, 0, 0, 1]
+        let radians = theta.to_radians();
+        let (sin, cos) = radians.sin_cos();
+        #[rustfmt::skip]
+        let m = &[
+            [cos, 0., -1. * sin, 0.],
+            [0., 1., 0., 0.],
+            [sin, 0., cos, 0.],
+            [0., 0., 0., 1.],
+        ][..];
+        SquareMatrix::from(m)
+    }
+
+    pub fn new_rot_z(theta: f64) -> SquareMatrix {
+        // theta(θ) is in degrees
+        // rotation_z matrix:
+        // [cosθ, -sinθ, 0, 0]
+        // [sinθ, cosθ, 0, 0]
+        // [0, 0, 1, 0]
+        // [0, 0, 0, 1]
+        let radians = theta.to_radians();
+        let (sin, cos) = radians.sin_cos();
+        #[rustfmt::skip]
+        let m = &[
+            [cos, sin, 0., 0.],
+            [-1. * sin, cos, 0., 0.],
+            [0., 0., 1., 0.],
+            [0., 0., 0., 1.],
+        ][..];
+        SquareMatrix::from(m)
+    }
+
+    // Modifies a square matrix to become the identity matrix
+    pub fn ident(&mut self) {
+        if self.rows() != self.cols() {
+            panic!("Can't call method ident() on a non-square matrix!");
+        }
+        for (row_n, row) in self.m.iter_mut().enumerate() {
+            for (col_n, col) in row.iter_mut().enumerate() {
+                if row_n == col_n {
+                    *col = 1.;
+                } else {
+                    *col = 0.;
+                }
+            }
+        }
+    }
+
+}
+
+impl From<&[[f64; COLS]]> for SquareMatrix {
+    fn from(matrix: &[[f64; COLS]]) -> SquareMatrix {
+        SquareMatrix(Matrix::from(matrix))
+    }
+}
+
+impl Deref for SquareMatrix {
+    type Target = Matrix;
+
+    fn deref(&self) -> &Matrix {
+        &self.0
+    }
+}
+
+impl DerefMut for SquareMatrix {
+    fn deref_mut(&mut self) -> &mut Matrix {
+        &mut self.0
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn deref_square_matrix() {
+        let square = &[
+            [1., 2., 3., 4.],
+            [2., 4., 6., 8.],
+            [3., 6., 9., 12.],
+            [4., 8., 12., 16.],
+        ][..];
+            let mut square0 = SquareMatrix::from(square);
+            let mut square1 = SquareMatrix::from(square);
+
+            let ident = &[
+                [1., 0., 0., 0.],
+                [0., 1., 0., 0.],
+                [0., 0., 1., 0.],
+                [0., 0., 0., 1.],
+            ][..];
+                let ident = SquareMatrix::from(ident);
+                ident.mult(&mut square0);
+                assert_eq!(square0.0.m, square1.0.m);
+
+                let wrong_ident = &[
+                    [2., 0., 0., 0.],
+                    [0., 1., 0., 0.],
+                    [0., 0., 1., 0.],
+                    [0., 0., 0., 1.],
+                ][..];
+                    let wrong_ident = SquareMatrix::from(wrong_ident);
+                    wrong_ident.mult(&mut square0);
+                    assert_ne!(square0.0.m, square1.0.m);
     }
 }
