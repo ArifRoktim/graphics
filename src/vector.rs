@@ -1,5 +1,7 @@
 use crate::matrix::COLS;
+use std::ops::Sub;
 
+#[derive(Debug)]
 pub struct Vector {
     pub x: f64,
     pub y: f64,
@@ -26,21 +28,33 @@ impl Vector {
     pub fn calculate_normal(triangle: &[[f64; COLS]]) -> Vector {
         assert_eq!(3, triangle.len(), "Triangles must have 3 points!");
 
-        let a = Vector::new(
-            triangle[1][0] - triangle[0][0],
-            triangle[1][1] - triangle[0][1],
-            triangle[1][2] - triangle[0][2],
-        );
-        let b = Vector::new(
-            triangle[2][0] - triangle[0][0],
-            triangle[2][1] - triangle[0][1],
-            triangle[2][2] - triangle[0][2],
-        );
+        let a = Vector::from(&triangle[1]) - Vector::from(&triangle[0]);
+        let b = Vector::from(&triangle[2]) - Vector::from(&triangle[0]);
 
         Vector::new(
             a.y * b.z - a.z * b.y,
             a.z * b.x - a.x * b.z,
             a.x * b.y - a.y * b.x,
+        )
+    }
+}
+
+impl From<&[f64; COLS]> for Vector {
+    fn from(vector: &[f64; COLS]) -> Vector {
+        assert_eq!(3, vector.len() - 1, "Triangles must have 3 points!");
+
+        Vector::new(vector[0], vector[1], vector[2])
+    }
+}
+
+impl Sub for Vector {
+    type Output = Vector;
+
+    fn sub(self, rhs: Vector) -> Vector {
+        Vector::new(
+            self.x - rhs.x,
+            self.y - rhs.y,
+            self.z - rhs.z,
         )
     }
 }
