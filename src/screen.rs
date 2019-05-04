@@ -23,10 +23,6 @@ impl Screen {
         Screen { pixels: Box::new([[(c, f64::NEG_INFINITY); XRES]; YRES]), color: c }
     }
 
-    pub fn blank() -> Screen {
-        Self::new(color::BLACK)
-    }
-
     pub fn write_ppm(&self, f: &str) -> io::Result<()> {
         let mut file = File::create(f)?;
         file.write_all(self.to_string().as_bytes())
@@ -275,5 +271,11 @@ impl fmt::Display for Screen {
             contents.push_str("\n");
         }
         write!(f, "P3 {} {} 255\n{}", XRES, YRES, contents)
+    }
+}
+
+impl Default for Screen {
+    fn default() -> Screen {
+        Self::new(Color::default())
     }
 }

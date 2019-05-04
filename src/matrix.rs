@@ -109,10 +109,6 @@ impl fmt::Display for Matrix {
 pub struct SquareMatrix(pub Matrix);
 
 impl SquareMatrix {
-    pub fn new() -> SquareMatrix {
-        SquareMatrix(Matrix::new(4))
-    }
-
     pub fn new_translate(x: f64, y: f64, z: f64) -> SquareMatrix {
         // Translation matrix:
         // [1, 0, 0, x]
@@ -201,28 +197,24 @@ impl SquareMatrix {
         ][..];
         SquareMatrix::from(m)
     }
-
-    // Modifies a square matrix to become the identity matrix
-    pub fn ident(&mut self) {
-        if self.rows() != self.cols() {
-            panic!("Can't call method ident() on a non-square matrix!");
-        }
-        for (row_n, row) in self.m.iter_mut().enumerate() {
-            for (col_n, col) in row.iter_mut().enumerate() {
-                if row_n == col_n {
-                    *col = 1.;
-                } else {
-                    *col = 0.;
-                }
-            }
-        }
-    }
-
 }
 
 impl From<&[[f64; COLS]]> for SquareMatrix {
     fn from(matrix: &[[f64; COLS]]) -> SquareMatrix {
         SquareMatrix(Matrix::from(matrix))
+    }
+}
+
+impl Default for SquareMatrix {
+    // return the identity matrix
+    fn default() -> SquareMatrix {
+        let m = &[
+            [1., 0., 0., 0.],
+            [0., 1., 0., 0.],
+            [0., 0., 1., 0.],
+            [0., 0., 0., 1.],
+        ][..];
+        SquareMatrix::from(m)
     }
 }
 
@@ -252,27 +244,21 @@ mod tests {
             [3., 6., 9., 12.],
             [4., 8., 12., 16.],
         ][..];
-            let mut square0 = SquareMatrix::from(square);
-            let mut square1 = SquareMatrix::from(square);
+        let mut square0 = SquareMatrix::from(square);
+        let mut square1 = SquareMatrix::from(square);
 
-            let ident = &[
-                [1., 0., 0., 0.],
-                [0., 1., 0., 0.],
-                [0., 0., 1., 0.],
-                [0., 0., 0., 1.],
-            ][..];
-                let ident = SquareMatrix::from(ident);
-                ident.mult(&mut square0);
-                assert_eq!(square0.0.m, square1.0.m);
+        let ident = SquareMatrix::default();
+        ident.mult(&mut square0);
+        assert_eq!(square0.0.m, square1.0.m);
 
-                let wrong_ident = &[
-                    [2., 0., 0., 0.],
-                    [0., 1., 0., 0.],
-                    [0., 0., 1., 0.],
-                    [0., 0., 0., 1.],
-                ][..];
-                    let wrong_ident = SquareMatrix::from(wrong_ident);
-                    wrong_ident.mult(&mut square0);
-                    assert_ne!(square0.0.m, square1.0.m);
+        let wrong_ident = &[
+            [2., 0., 0., 0.],
+            [0., 1., 0., 0.],
+            [0., 0., 1., 0.],
+            [0., 0., 0., 1.],
+        ][..];
+        let wrong_ident = SquareMatrix::from(wrong_ident);
+        wrong_ident.mult(&mut square0);
+        assert_ne!(square0.0.m, square1.0.m);
     }
 }

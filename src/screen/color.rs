@@ -10,7 +10,7 @@ pub const YELLOW: Color = Color { red: 255, green: 255, blue: 0 };
 pub const PURPLE: Color = Color { red: 255, green: 0, blue: 255 };
 pub const CYAN: Color = Color { red: 0, green: 255, blue: 255 };
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Default, Copy, Clone)]
 pub struct Color {
     pub red: u8,
     pub green: u8,

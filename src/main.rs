@@ -5,7 +5,7 @@ pub mod screen;
 pub mod vector;
 
 use matrix::SquareMatrix;
-use screen::{color, Screen};
+use screen::Screen;
 use std::{env, process};
 
 const XRES: usize = 500;
@@ -22,12 +22,8 @@ fn main() {
     }
     let filename = &args[1];
 
-    let mut screen = Screen::new(color::BLACK);
-
-    let mut identity = SquareMatrix::new();
-    identity.ident();
-    let mut cstack = Vec::new();
-    cstack.push(identity);
+    let mut screen = Screen::default();
+    let mut cstack = vec![SquareMatrix::default()];
 
     parse::parse_file(filename, &mut screen, &mut cstack);
 }
