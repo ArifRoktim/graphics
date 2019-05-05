@@ -1,5 +1,5 @@
 use crate::draw::{self, Curve};
-use crate::matrix::{Matrix, SquareMatrix};
+use crate::matrix::{Matrix, MatrixMult, SquareMatrix};
 use crate::screen::{color, Color, Screen};
 use crate::{STEPS_2D, STEPS_3D};
 

@@ -1,24 +1,53 @@
 use std::fmt;
-use std::ops::{Deref, DerefMut};
 
 pub const COLS: usize = 4;
 // Each point in the matrix is a row that is 4 columns wide
 // For the purposes of display and multiplication, this is switched.
 // Each point is then represented by a column and the rows correspond
 // to either all the x values, y values, z values, etc.
+pub trait MatrixMult {
+    fn raw(&self) -> &[[f64; COLS]];
+    fn raw_mut(&mut self) -> &mut [[f64; COLS]];
+
+    fn cols(&self) -> usize {
+        COLS
+    }
+    fn rows(&self) -> usize {
+        self.raw().len()
+    }
+
+    // Modifies other matrix to be = self * other
+    #[allow(clippy::needless_range_loop)]
+    fn mult(&self, other: &mut MatrixMult) {
+        // columns and rows are switched
+        // First check that both matrices can be multiplied
+        // Graphical lens: LEFT.cols == RIGHT.rows
+        // Implementation: self.rows == other.cols
+        assert_eq!(self.rows(), other.cols(),
+                   "Can't multiply {}x{} by {}x{}!",
+                   self.cols(),
+                   self.rows(),
+                   other.cols(),
+                   other.rows()
+        );
+        // Graphical lens: for each column in other, for each row      in self
+        // Implementation: for each row    in other, for each column   in self
+        for row in other.raw_mut().iter_mut() {
+            let orig_other_row = *row;
+            for self_col in 0..self.cols() {
+                let mut sum = 0.0;
+                for self_row in 0..self.rows() {
+                    sum += self.raw()[self_row][self_col] * orig_other_row[self_row];
+                }
+                row[self_col] = sum;
+            }
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct Matrix {
     pub m: Vec<[f64; COLS]>,
-}
-
-impl Matrix {
-    pub fn rows(&self) -> usize {
-        self.m.len()
-    }
-
-    pub fn cols(&self) -> usize {
-        COLS
-    }
 }
 
 impl Matrix {
@@ -37,35 +66,15 @@ impl Matrix {
     pub fn push(&mut self, point: [f64; COLS]) {
         self.m.push(point);
     }
+}
 
-    // Modifies other matrix to be = self * other
-    #[allow(clippy::needless_range_loop)]
-    pub fn mult(&self, other: &mut Matrix) {
-        // columns and rows are switched
-        // First check that both matrices can be multiplied
-        // Graphical lens: LEFT.cols == RIGHT.rows
-        // Implementation: self.rows == other.cols
-        if self.rows() != other.cols() {
-            panic!(
-                "Can't multiply {}x{} by {}x{}!",
-                self.cols(),
-                self.rows(),
-                other.cols(),
-                other.rows()
-            );
-        }
-        // Graphical lens: for each column in other, for each row      in self
-        // Implementation: for each row    in other, for each column   in self
-        for row in other.m.iter_mut() {
-            let orig_other_row = *row;
-            for self_col in 0..self.cols() {
-                let mut sum = 0.0;
-                for self_row in 0..self.rows() {
-                    sum += self.m[self_row][self_col] * orig_other_row[self_row];
-                }
-                row[self_col] = sum;
-            }
-        }
+impl MatrixMult for Matrix {
+    fn raw(&self) -> &[[f64; COLS]] {
+        self.m.as_slice()
+    }
+
+    fn raw_mut(&mut self) -> &mut [[f64; COLS]] {
+        self.m.as_mut_slice()
     }
 }
 
@@ -106,7 +115,9 @@ impl fmt::Display for Matrix {
 }
 
 #[derive(Debug, Clone)]
-pub struct SquareMatrix(pub Matrix);
+pub struct SquareMatrix {
+    m: [[f64; COLS]; COLS],
+}
 
 impl SquareMatrix {
     pub fn new_translate(x: f64, y: f64, z: f64) -> SquareMatrix {
@@ -116,12 +127,12 @@ impl SquareMatrix {
         // [0, 0, 1, z]
         // [0, 0, 0, 1]
         #[rustfmt::skip]
-        let m = &[
+        let m = [
             [1., 0., 0., 0.],
             [0., 1., 0., 0.],
             [0., 0., 1., 0.],
             [x, y, z, 1.],
-        ][..];
+        ];
         SquareMatrix::from(m)
     }
 
@@ -132,12 +143,12 @@ impl SquareMatrix {
         // [0, 0, c, 0]
         // [0, 0, 0, 1]
         #[rustfmt::skip]
-        let m = &[
+        let m = [
             [x, 0., 0., 0.],
             [0., y, 0., 0.],
             [0., 0., z, 0.],
             [0., 0., 0., 1.],
-        ][..];
+        ];
         SquareMatrix::from(m)
     }
 
@@ -151,12 +162,12 @@ impl SquareMatrix {
         let radians = theta.to_radians();
         let (sin, cos) = radians.sin_cos();
         #[rustfmt::skip]
-        let m = &[
+        let m = [
             [1., 0., 0., 0.],
             [0., cos, sin, 0.],
             [0., -1. * sin, cos, 0.],
             [0., 0., 0., 1.],
-        ][..];
+        ];
         SquareMatrix::from(m)
     }
 
@@ -170,12 +181,12 @@ impl SquareMatrix {
         let radians = theta.to_radians();
         let (sin, cos) = radians.sin_cos();
         #[rustfmt::skip]
-        let m = &[
+        let m = [
             [cos, 0., -1. * sin, 0.],
             [0., 1., 0., 0.],
             [sin, 0., cos, 0.],
             [0., 0., 0., 1.],
-        ][..];
+        ];
         SquareMatrix::from(m)
     }
 
@@ -189,76 +200,42 @@ impl SquareMatrix {
         let radians = theta.to_radians();
         let (sin, cos) = radians.sin_cos();
         #[rustfmt::skip]
-        let m = &[
+        let m = [
             [cos, sin, 0., 0.],
             [-1. * sin, cos, 0., 0.],
             [0., 0., 1., 0.],
             [0., 0., 0., 1.],
-        ][..];
+        ];
         SquareMatrix::from(m)
+    }
+
+}
+
+impl MatrixMult for SquareMatrix {
+    fn raw(&self) -> &[[f64; COLS]] {
+        &self.m
+    }
+
+    fn raw_mut(&mut self) -> &mut [[f64; COLS]] {
+        &mut self.m
     }
 }
 
-impl From<&[[f64; COLS]]> for SquareMatrix {
-    fn from(matrix: &[[f64; COLS]]) -> SquareMatrix {
-        SquareMatrix(Matrix::from(matrix))
+impl From<[[f64; COLS]; COLS]> for SquareMatrix {
+    fn from(matrix: [[f64; COLS]; COLS]) -> SquareMatrix {
+        SquareMatrix { m: matrix }
     }
 }
 
 impl Default for SquareMatrix {
     // return the identity matrix
     fn default() -> SquareMatrix {
-        let m = &[
+        let m = [
             [1., 0., 0., 0.],
             [0., 1., 0., 0.],
             [0., 0., 1., 0.],
             [0., 0., 0., 1.],
-        ][..];
+        ];
         SquareMatrix::from(m)
-    }
-}
-
-impl Deref for SquareMatrix {
-    type Target = Matrix;
-
-    fn deref(&self) -> &Matrix {
-        &self.0
-    }
-}
-
-impl DerefMut for SquareMatrix {
-    fn deref_mut(&mut self) -> &mut Matrix {
-        &mut self.0
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn deref_square_matrix() {
-        let square = &[
-            [1., 2., 3., 4.],
-            [2., 4., 6., 8.],
-            [3., 6., 9., 12.],
-            [4., 8., 12., 16.],
-        ][..];
-        let mut square0 = SquareMatrix::from(square);
-        let mut square1 = SquareMatrix::from(square);
-
-        let ident = SquareMatrix::default();
-        ident.mult(&mut square0);
-        assert_eq!(square0.0.m, square1.0.m);
-
-        let wrong_ident = &[
-            [2., 0., 0., 0.],
-            [0., 1., 0., 0.],
-            [0., 0., 1., 0.],
-            [0., 0., 0., 1.],
-        ][..];
-        let wrong_ident = SquareMatrix::from(wrong_ident);
-        wrong_ident.mult(&mut square0);
-        assert_ne!(square0.0.m, square1.0.m);
     }
 }

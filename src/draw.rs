@@ -1,4 +1,4 @@
-use crate::matrix::Matrix;
+use crate::matrix::{Matrix, MatrixMult};
 use std::f64::consts::PI;
 
 pub enum Curve {
