@@ -1,7 +1,7 @@
 use crate::matrix::COLS;
-use std::ops::Sub;
+use std::ops::{Mul, Sub};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Vector {
     pub x: f64,
     pub y: f64,
@@ -13,11 +13,19 @@ impl Vector {
         Vector { x, y, z }
     }
 
-    pub fn normalize(&mut self) {
+    pub fn normalize(&mut self) -> &Vector {
         let magnitude = (self.x.powi(2) + self.y.powi(2) + self.z.powi(2)).sqrt();
         self.x /= magnitude;
         self.y /= magnitude;
         self.z /= magnitude;
+
+        self
+    }
+
+    pub fn norm(&self) -> Vector {
+        let mut new = self.clone();
+        new.normalize();
+        new
     }
 
     pub fn dot_product(&self, other: &Vector) -> f64 {
@@ -28,8 +36,8 @@ impl Vector {
     pub fn calculate_normal(triangle: &[[f64; COLS]]) -> Vector {
         assert_eq!(3, triangle.len(), "Triangles must have 3 points!");
 
-        let a = Vector::from(&triangle[1]) - Vector::from(&triangle[0]);
-        let b = Vector::from(&triangle[2]) - Vector::from(&triangle[0]);
+        let a = Vector::from(&triangle[1]) - &Vector::from(&triangle[0]);
+        let b = Vector::from(&triangle[2]) - &Vector::from(&triangle[0]);
 
         Vector::new(
             a.y * b.z - a.z * b.y,
@@ -47,10 +55,16 @@ impl From<&[f64; COLS]> for Vector {
     }
 }
 
-impl Sub for Vector {
+impl Sub<&Self> for Vector {
     type Output = Vector;
+    fn sub(self, rhs: &Vector) -> Vector {
+        &self - rhs
+    }
+}
 
-    fn sub(self, rhs: Vector) -> Vector {
+impl Sub for &Vector {
+    type Output = Vector;
+    fn sub(self, rhs: &Vector) -> Vector {
         Vector::new(
             self.x - rhs.x,
             self.y - rhs.y,
@@ -58,3 +72,14 @@ impl Sub for Vector {
         )
     }
 }
+
+//impl Mul<f64> for &Vector {
+//    type Output = Vector;
+//    fn mul(self, rhs: f64) -> Vector {
+//        Vector::new(
+//            self.x * rhs,
+//            self.y * rhs,
+//            self.z * rhs,
+//        )
+//    }
+//}

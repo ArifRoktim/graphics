@@ -9,7 +9,7 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 
 pub mod color;
-pub use color::Color;
+pub use color::{Color, Shine};
 
 type Pixel = (Color, f64);
 
@@ -213,14 +213,14 @@ impl Screen {
             let normal = Vector::calculate_normal(edge);
 
             if normal.z > 0.0 {
-                self.scanline_convert(edge);
+                let c = Shine::get_shine(&normal);
+                self.scanline_convert(edge, c);
             }
         }
     }
 
-    fn scanline_convert(&mut self, triangle: &[[f64; COLS]]) {
+    fn scanline_convert(&mut self, triangle: &[[f64; COLS]], c: Color) {
         assert_eq!(3, triangle.len(), "Triangles must have 3 points!");
-        let c = Color::rand();
         // order the 3 points from lowest to highest y value
         let (mut min, mid, mut max);
         if triangle[0][1] < triangle[1][1] {
