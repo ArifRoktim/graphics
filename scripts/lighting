@@ -1,0 +1,20 @@
+#clear everything, test torus
+push
+move
+250 250 0
+torus
+0 0 0 50 150
+display
+#clear everything, test torus again
+clear
+rotate
+z 30
+rotate
+y 30
+rotate
+x 45
+torus
+0 0 0 75 150
+display
+clear
+pop

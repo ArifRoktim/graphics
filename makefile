@@ -1,5 +1,5 @@
 # path to the script file to run
-S := scripts/solids
+S := scripts/lighting
 
 .PHONY: all dev debug clear clean check test clippy fmt
 
