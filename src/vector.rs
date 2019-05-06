@@ -13,23 +13,21 @@ impl Vector {
         Vector { x, y, z }
     }
 
-    pub fn normalize(&mut self) -> &Vector {
+    pub fn normalize(&mut self) {
         let magnitude = (self.x.powi(2) + self.y.powi(2) + self.z.powi(2)).sqrt();
         self.x /= magnitude;
         self.y /= magnitude;
         self.z /= magnitude;
-
-        self
     }
 
-    pub fn norm(&self) -> Vector {
+    pub fn normalized(&self) -> Vector {
         let mut new = self.clone();
         new.normalize();
         new
     }
 
     pub fn dot_product(&self, other: &Vector) -> f64 {
-        self.x * other.x + self.y * other.y + self.z + other.z
+        self.x * other.x + self.y * other.y + self.z * other.z
     }
 
     #[rustfmt::skip]
@@ -73,13 +71,20 @@ impl Sub for &Vector {
     }
 }
 
-//impl Mul<f64> for &Vector {
-//    type Output = Vector;
-//    fn mul(self, rhs: f64) -> Vector {
-//        Vector::new(
-//            self.x * rhs,
-//            self.y * rhs,
-//            self.z * rhs,
-//        )
-//    }
-//}
+impl Mul<f64> for Vector {
+    type Output = Vector;
+    fn mul(self, rhs: f64) -> Vector {
+        &self * rhs
+    }
+}
+
+impl Mul<f64> for &Vector {
+    type Output = Vector;
+    fn mul(self, rhs: f64) -> Vector {
+        Vector::new(
+            self.x * rhs,
+            self.y * rhs,
+            self.z * rhs,
+        )
+    }
+}

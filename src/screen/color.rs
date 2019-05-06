@@ -1,5 +1,8 @@
-use crate::{AMBIENT_LIGHT, AMBIENT_REFLECT, DIFFUSE_REFLECT, LIGHT_COLOR, LIGHT_POS, SPECULAR_EXP, SPECULAR_REFLECT, VIEW_VECTOR};
 use crate::vector::Vector;
+use crate::{
+    AMBIENT_LIGHT, AMBIENT_REFLECT, DIFFUSE_REFLECT, LIGHT_COLOR, LIGHT_POS, SPECULAR_EXP,
+    SPECULAR_REFLECT, VIEW_VECTOR,
+};
 use rand::Rng;
 use std::f64;
 use std::fmt;
@@ -57,7 +60,7 @@ impl Add for &Color {
         Color::new(
             self.red.saturating_add(rhs.red),
             self.green.saturating_add(rhs.green),
-            self.blue.saturating_add(rhs.blue)
+            self.blue.saturating_add(rhs.blue),
         )
     }
 }
@@ -73,9 +76,9 @@ impl Mul<&Shine> for &Color {
     type Output = Color;
     fn mul(self, rhs: &Shine) -> Color {
         Color::new(
-            (f64::from(self.red) * rhs.red) as u8,
-            (f64::from(self.green) * rhs.green) as u8,
-            (f64::from(self.blue) * rhs.blue) as u8
+            as_u8(f64::from(self.red) * rhs.red),
+            as_u8(f64::from(self.green) * rhs.green),
+            as_u8(f64::from(self.blue) * rhs.blue),
         )
     }
 }
@@ -103,26 +106,40 @@ pub struct Shine {
 
 impl Shine {
     pub fn new(s: f64) -> Shine {
-        Shine {red: s, green: s, blue: s}
+        Shine { red: s, green: s, blue: s }
     }
 
-    // color get_lighting( double *normal, double *view, color alight, double light[2][3], double *areflect, double *dreflect, double *sreflect) {
     pub fn get_shine(normal: &Vector) -> Color {
-        &Shine::get_ambient() + &Shine::get_diffuse(normal) + &Shine::get_specular(normal)
+        let light = LIGHT_POS.normalized();
+        let view = VIEW_VECTOR.normalized();
+        let normal = normal.normalized();
+
+        &Shine::get_ambient()
+            + &Shine::get_diffuse(&normal, &light)
+            + &Shine::get_specular(&normal, &light, &view)
     }
 
     fn get_ambient() -> Color {
         AMBIENT_LIGHT * &AMBIENT_REFLECT
     }
 
-    fn get_diffuse(normal: &Vector) -> Color {
-        LIGHT_COLOR * &DIFFUSE_REFLECT * (normal.norm().dot_product(&LIGHT_POS.norm()))
+    fn get_diffuse(normal: &Vector, light: &Vector) -> Color {
+        LIGHT_COLOR * &DIFFUSE_REFLECT * (normal.dot_product(light))
     }
 
-    fn get_specular(normal: &Vector) -> Color {
-        Color::default()
+    fn get_specular(normal: &Vector, light: &Vector, view: &Vector) -> Color {
+        let reflected = normal * 2. * light.dot_product(normal) - light;
+        let angle = reflected.dot_product(&view).powi(SPECULAR_EXP);
+        LIGHT_COLOR * &SPECULAR_REFLECT * angle
     }
 }
-//color calculate_ambient(color alight, double *areflect ) {
-//color calculate_diffuse(double light[2][3], double *dreflect, double *normal ) {
-//color calculate_specular(double light[2][3], double *sreflect, double *view, double *normal ) {
+
+fn as_u8(f: f64) -> u8 {
+    if f < 0. {
+        0
+    } else if f > 255. {
+        255
+    } else {
+        f as u8
+    }
+}
