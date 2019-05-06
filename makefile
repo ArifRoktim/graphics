@@ -13,7 +13,7 @@ debug:
 	RUST_BACKTRACE=1 cargo run $(S)
 
 clear:
-	-rm *.ppm *.png *.bak
+	-rm out/*
 
 clean: clear
 	cargo clean

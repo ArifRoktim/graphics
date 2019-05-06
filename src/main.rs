@@ -8,6 +8,7 @@ use matrix::SquareMatrix;
 use screen::Screen;
 use std::{env, process};
 
+const PICTURE_DIR: &str = "out";
 const XRES: usize = 500;
 const YRES: usize = 500;
 const PIXELS: usize = XRES * YRES;

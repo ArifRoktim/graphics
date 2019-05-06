@@ -1,11 +1,11 @@
 use crate::matrix::{Matrix, COLS};
 use crate::vector::Vector;
-use crate::{PIXELS, XRES, YRES};
+use crate::{PICTURE_DIR, PIXELS, XRES, YRES};
 use std::f64;
 use std::fmt;
-use std::fs::File;
+use std::fs::{DirBuilder, File};
 use std::io::{self, prelude::*};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::process::Command;
 
 pub mod color;
@@ -23,28 +23,54 @@ impl Screen {
         Screen { pixels: Box::new([[(c, f64::NEG_INFINITY); XRES]; YRES]), color: c }
     }
 
-    pub fn write_ppm(&self, f: &str) -> io::Result<()> {
+    fn write_ppm(&self, f: &Path) -> io::Result<()> {
         let mut file = File::create(f)?;
         file.write_all(self.to_string().as_bytes())
     }
 
     pub fn write(&self, f: &str) -> io::Result<()> {
-        let base = Path::new(f).file_stem();
-        match base {
-            Some(base) => {
-                let ppm = base.to_str().unwrap().to_owned() + ".ppm";
-                self.write_ppm(&ppm)?;
-                if let Ok(mut proc) = Command::new("convert").arg(ppm).arg(f).spawn() {
-                    proc.wait().unwrap();
-                } else {
-                    eprintln!(
-                        "Error running `convert` command! \
-                         Is Image Magick installed?"
-                    );
-                }
-            },
-            None => panic!("Please specify a file name!"),
+        // Make sure output directory exists
+        let mut path = PathBuf::from(PICTURE_DIR);
+        DirBuilder::new()
+            .recursive(true)
+            .create(&path)
+            .unwrap_or_else(
+                |e| panic!("Failed to create image output directory: `{}/`\nError: {}", PICTURE_DIR, e)
+            );
+
+        // Add given file name to path
+        path.push(f);
+
+        // Save a copy of the original extension before we replace it
+        let extension = path
+            .extension()
+            .map(|s| s.to_str().expect("Filename isn't valid unicode!").to_owned());
+
+        // Change ext to ".ppm" and write the image as a ppm
+        let success = path.set_extension("ppm");
+        assert!(success, "Failed to change extension of file name: {:?}", path);
+        self.write_ppm(&path)?;
+
+        // If the file originally had an extension, use imagemagick to convert it
+        if let Some(extension) = extension {
+            let ppm = path.as_path().to_owned();
+            path.set_extension(extension);
+
+            if let Ok(mut proc) = Command::new("convert")
+                .arg(ppm)
+                .arg(path)
+                .spawn()
+            {
+                proc.wait().unwrap();
+            } else {
+                eprintln!(
+                    "Error running the `convert` command! \
+                     Is Image Magick installed?"
+                );
+
+            }
         }
+
         Ok(())
     }
 
