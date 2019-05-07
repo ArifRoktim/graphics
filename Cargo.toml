@@ -1,5 +1,5 @@
 [package]
-name = "w09_lighting"
+name = "w09_refactor"
 version = "0.1.0"
 authors = ["Arif Roktim <aroktim@stuy.edu>"]
 edition = "2018"

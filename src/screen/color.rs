@@ -7,14 +7,14 @@ use std::f64;
 use std::fmt;
 use std::ops::{Add, Mul};
 
-pub const BLACK: Color = Color { red: 0, green: 0, blue: 0 };
-pub const WHITE: Color = Color { red: 255, green: 255, blue: 255 };
-pub const RED: Color = Color { red: 255, green: 0, blue: 0 };
-pub const GREEN: Color = Color { red: 0, green: 255, blue: 0 };
-pub const BLUE: Color = Color { red: 0, green: 0, blue: 255 };
-pub const YELLOW: Color = Color { red: 255, green: 255, blue: 0 };
-pub const PURPLE: Color = Color { red: 255, green: 0, blue: 255 };
-pub const CYAN: Color = Color { red: 0, green: 255, blue: 255 };
+pub const BLACK: Color = Color::new(0, 0, 0);
+pub const WHITE: Color = Color::new(255, 255, 255);
+pub const RED: Color = Color::new(255, 0, 0);
+pub const GREEN: Color = Color::new(0, 255, 0);
+pub const BLUE: Color = Color::new(0, 0, 255);
+pub const YELLOW: Color = Color::new(255, 255, 0);
+pub const PURPLE: Color = Color::new(255, 0, 255);
+pub const CYAN: Color = Color::new(0, 255, 255);
 
 #[derive(Debug, Default, Copy, Clone)]
 pub struct Color {
@@ -24,7 +24,7 @@ pub struct Color {
 }
 
 impl Color {
-    pub fn new(r: u8, g: u8, b: u8) -> Color {
+    pub const fn new(r: u8, g: u8, b: u8) -> Color {
         Color { red: r, green: g, blue: b }
     }
 
@@ -41,13 +41,6 @@ impl fmt::Display for Color {
     }
 }
 
-impl Add<&Self> for Color {
-    type Output = Color;
-    fn add(self, rhs: &Color) -> Color {
-        &self + rhs
-    }
-}
-
 impl Add for &Color {
     type Output = Color;
     fn add(self, rhs: &Color) -> Color {
@@ -59,10 +52,11 @@ impl Add for &Color {
     }
 }
 
-impl Mul<&Shine> for Color {
+impl Add<&Self> for Color {
     type Output = Color;
-    fn mul(self, rhs: &Shine) -> Color {
-        &self * rhs
+    #[allow(clippy::op_ref)]
+    fn add(self, rhs: &Color) -> Color {
+        &self + rhs
     }
 }
 
@@ -77,9 +71,10 @@ impl Mul<&Shine> for &Color {
     }
 }
 
-impl Mul<f64> for Color {
+impl Mul<&Shine> for Color {
     type Output = Color;
-    fn mul(self, rhs: f64) -> Color {
+    #[allow(clippy::op_ref)]
+    fn mul(self, rhs: &Shine) -> Color {
         &self * rhs
     }
 }
@@ -87,7 +82,19 @@ impl Mul<f64> for Color {
 impl Mul<f64> for &Color {
     type Output = Color;
     fn mul(self, rhs: f64) -> Color {
-        self * &Shine::new(rhs)
+        Color::new(
+            as_u8(f64::from(self.red) * rhs),
+            as_u8(f64::from(self.green) * rhs),
+            as_u8(f64::from(self.blue) * rhs),
+        )
+    }
+}
+
+impl Mul<f64> for Color {
+    type Output = Color;
+    #[allow(clippy::op_ref)]
+    fn mul(self, rhs: f64) -> Color {
+        &self * rhs
     }
 }
 
@@ -99,8 +106,8 @@ pub struct Shine {
 }
 
 impl Shine {
-    pub fn new(s: f64) -> Shine {
-        Shine { red: s, green: s, blue: s }
+    pub const fn new(r: f64, g: f64, b: f64) -> Shine {
+        Shine { red: r, green: g, blue: b }
     }
 
     pub fn get_shine(normal: &Vector) -> Color {

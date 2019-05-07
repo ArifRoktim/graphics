@@ -1,6 +1,15 @@
 use std::fmt;
 
 pub const COLS: usize = 4;
+pub const IDENTITY: SquareMatrix = SquareMatrix {
+    m: [
+        [1., 0., 0., 0.],
+        [0., 1., 0., 0.],
+        [0., 0., 1., 0.],
+        [0., 0., 0., 1.],
+    ]
+};
+
 // Each point in the matrix is a row that is 4 columns wide
 // For the purposes of display and multiplication, this is switched.
 // Each point is then represented by a column and the rows correspond
@@ -230,12 +239,13 @@ impl From<[[f64; COLS]; COLS]> for SquareMatrix {
 impl Default for SquareMatrix {
     // return the identity matrix
     fn default() -> SquareMatrix {
-        let m = [
-            [1., 0., 0., 0.],
-            [0., 1., 0., 0.],
-            [0., 0., 1., 0.],
-            [0., 0., 0., 1.],
-        ];
-        SquareMatrix::from(m)
+        self::IDENTITY
+    }
+}
+
+impl Default for &SquareMatrix {
+    // return the identity matrix
+    fn default() -> &'static SquareMatrix {
+        &self::IDENTITY
     }
 }
