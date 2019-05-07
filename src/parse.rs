@@ -44,11 +44,15 @@ pub fn parse_file(filename: &str, screen: &mut Screen, cstack: &mut Vec<SquareMa
             "clear" => screen.clear(),
             "push" => {
                 // push a copy of the last item
-                let copy = cstack.last().unwrap().clone();
+                let copy = cstack.last().unwrap_or_default().clone();
                 cstack.push(copy);
             },
             "pop" => {
                 cstack.pop();
+                // Make sure that the stack is never empty
+                if cstack.is_empty() {
+                    cstack.push(SquareMatrix::default());
+                }
             },
             "ident" | "apply" => panic!("{} is a deprecated command!", line),
             // some command that's not valid or yet implemented
@@ -70,7 +74,7 @@ fn draw_line(edges: &mut Matrix, stack: &[SquareMatrix], screen: &mut Screen, ar
     match *args {
         [x0, y0, z0, x1, y1, z1] => {
             draw::add_edge(edges, x0, y0, z0, x1, y1, z1);
-            stack.last().unwrap().mult(edges);
+            stack.last().unwrap_or_default().mult(edges);
             screen.draw_lines(edges, FOREGROUND);
         },
         _ => panic!(err_msg),
@@ -90,7 +94,7 @@ fn circle(edges: &mut Matrix, stack: &[SquareMatrix], screen: &mut Screen, args:
     match *args {
         [cx, cy, cz, r] => {
             draw::add_circle(edges, cx, cy, cz, r, STEPS_2D);
-            stack.last().unwrap().mult(edges);
+            stack.last().unwrap_or_default().mult(edges);
             screen.draw_lines(edges, FOREGROUND);
         },
         _ => panic!(err_msg),
@@ -111,7 +115,7 @@ fn hermite(edges: &mut Matrix, stack: &[SquareMatrix], screen: &mut Screen, args
         [p0x, p0y, p1x, p1y, r0x, r0y, r1x, r1y] => {
             let curve = Curve::Hermite { p0x, p0y, p1x, p1y, r0x, r0y, r1x, r1y };
             draw::add_curve(edges, &curve, STEPS_2D);
-            stack.last().unwrap().mult(edges);
+            stack.last().unwrap_or_default().mult(edges);
             screen.draw_lines(edges, FOREGROUND);
         },
         _ => panic!(err_msg),
@@ -132,7 +136,7 @@ fn bezier(edges: &mut Matrix, stack: &[SquareMatrix], screen: &mut Screen, args:
         [p0x, p0y, p1x, p1y, p2x, p2y, p3x, p3y] => {
             let curve = Curve::Bezier { p0x, p0y, p1x, p1y, p2x, p2y, p3x, p3y };
             draw::add_curve(edges, &curve, STEPS_2D);
-            stack.last().unwrap().mult(edges);
+            stack.last().unwrap_or_default().mult(edges);
             screen.draw_lines(edges, FOREGROUND);
         },
         _ => panic!(err_msg),
@@ -150,7 +154,7 @@ fn draw_box(polygons: &mut Matrix, stack: &[SquareMatrix], screen: &mut Screen, 
     match *args {
         [x, y, z, width, height, depth] => {
             draw::add_box(polygons, x, y, z, width, height, depth);
-            stack.last().unwrap().mult(polygons);
+            stack.last().unwrap_or_default().mult(polygons);
             screen.draw_polygons(polygons, FOREGROUND);
         },
         _ => panic!(err_msg),
@@ -168,7 +172,7 @@ fn sphere(polygons: &mut Matrix, stack: &[SquareMatrix], screen: &mut Screen, ar
     match *args {
         [cx, cy, cz, r] => {
             draw::add_sphere(polygons, cx, cy, cz, r, STEPS_3D);
-            stack.last().unwrap().mult(polygons);
+            stack.last().unwrap_or_default().mult(polygons);
             screen.draw_polygons(polygons, FOREGROUND);
         },
         _ => panic!(err_msg),
@@ -186,7 +190,7 @@ fn torus(polygons: &mut Matrix, stack: &[SquareMatrix], screen: &mut Screen, arg
     match *args {
         [cx, cy, cz, minor_r, major_r] => {
             draw::add_torus(polygons, cx, cy, cz, minor_r, major_r, STEPS_3D);
-            stack.last().unwrap().mult(polygons);
+            stack.last().unwrap_or_default().mult(polygons);
             screen.draw_polygons(polygons, FOREGROUND);
         },
         _ => panic!(err_msg),
@@ -206,7 +210,7 @@ fn scale(stack: &mut Vec<SquareMatrix>, args: Option<&str>) {
     match *args {
         [sx, sy, sz] => {
             let mut tr = SquareMatrix::new_scale(sx, sy, sz);
-            stack.last().unwrap().mult(&mut tr);
+            stack.last().unwrap_or_default().mult(&mut tr);
             stack.pop();
             stack.push(tr);
         },
@@ -227,7 +231,7 @@ fn translate(stack: &mut Vec<SquareMatrix>, args: Option<&str>) {
     match *args {
         [tx, ty, tz] => {
             let mut tr = SquareMatrix::new_translate(tx, ty, tz);
-            stack.last().unwrap().mult(&mut tr);
+            stack.last().unwrap_or_default().mult(&mut tr);
             stack.pop();
             stack.push(tr);
         },
@@ -246,7 +250,7 @@ fn rotate(stack: &mut Vec<SquareMatrix>, args: Option<&str>) {
         "z" => SquareMatrix::new_rot_z(theta),
         _ => panic!(err_msg),
     };
-    stack.last().unwrap().mult(&mut tr);
+    stack.last().unwrap_or_default().mult(&mut tr);
     stack.pop();
     stack.push(tr);
 }
