@@ -5,8 +5,8 @@ pub mod screen;
 pub mod vector;
 
 use matrix::IDENTITY;
-use screen::Screen;
 use screen::color::{self, Color, Shine};
+use screen::Screen;
 use std::{env, process};
 use vector::Vector;
 

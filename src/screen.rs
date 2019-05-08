@@ -31,20 +31,16 @@ impl Screen {
     pub fn write(&self, f: &str) -> io::Result<()> {
         // Make sure output directory exists
         let mut path = PathBuf::from(PICTURE_DIR);
-        DirBuilder::new()
-            .recursive(true)
-            .create(&path)
-            .unwrap_or_else(
-                |e| panic!("Failed to create image output directory: `{}/`\nError: {}", PICTURE_DIR, e)
-            );
+        DirBuilder::new().recursive(true).create(&path).unwrap_or_else(|e| {
+            panic!("Failed to create image output directory: `{}/`\nError: {}", PICTURE_DIR, e)
+        });
 
         // Add given file name to path
         path.push(f);
 
         // Save a copy of the original extension before we replace it
-        let extension = path
-            .extension()
-            .map(|s| s.to_str().expect("Filename isn't valid unicode!").to_owned());
+        let extension =
+            path.extension().map(|s| s.to_str().expect("Filename isn't valid unicode!").to_owned());
 
         // Change ext to ".ppm" and write the image as a ppm
         let success = path.set_extension("ppm");
@@ -56,18 +52,13 @@ impl Screen {
             let ppm = path.as_path().to_owned();
             path.set_extension(extension);
 
-            if let Ok(mut proc) = Command::new("convert")
-                .arg(ppm)
-                .arg(path)
-                .spawn()
-            {
+            if let Ok(mut proc) = Command::new("convert").arg(ppm).arg(path).spawn() {
                 proc.wait().unwrap();
             } else {
                 eprintln!(
                     "Error running the `convert` command! \
                      Is Image Magick installed?"
                 );
-
             }
         }
 

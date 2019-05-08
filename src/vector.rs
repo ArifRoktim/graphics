@@ -63,11 +63,7 @@ impl Sub<&Self> for Vector {
 impl Sub for &Vector {
     type Output = Vector;
     fn sub(self, rhs: &Vector) -> Vector {
-        Vector::new(
-            self.x - rhs.x,
-            self.y - rhs.y,
-            self.z - rhs.z,
-        )
+        Vector::new(self.x - rhs.x, self.y - rhs.y, self.z - rhs.z)
     }
 }
 
@@ -81,10 +77,6 @@ impl Mul<f64> for Vector {
 impl Mul<f64> for &Vector {
     type Output = Vector;
     fn mul(self, rhs: f64) -> Vector {
-        Vector::new(
-            self.x * rhs,
-            self.y * rhs,
-            self.z * rhs,
-        )
+        Vector::new(self.x * rhs, self.y * rhs, self.z * rhs)
     }
 }

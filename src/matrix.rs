@@ -1,6 +1,7 @@
 use std::fmt;
 
 pub const COLS: usize = 4;
+#[rustfmt::skip]
 pub const IDENTITY: SquareMatrix = SquareMatrix {
     m: [
         [1., 0., 0., 0.],
@@ -32,12 +33,14 @@ pub trait MatrixMult {
         // First check that both matrices can be multiplied
         // Graphical lens: LEFT.cols == RIGHT.rows
         // Implementation: self.rows == other.cols
-        assert_eq!(self.rows(), other.cols(),
-                   "Can't multiply {}x{} by {}x{}!",
-                   self.cols(),
-                   self.rows(),
-                   other.cols(),
-                   other.rows()
+        assert_eq!(
+            self.rows(),
+            other.cols(),
+            "Can't multiply {}x{} by {}x{}!",
+            self.cols(),
+            self.rows(),
+            other.cols(),
+            other.rows()
         );
         // Graphical lens: for each column in other, for each row      in self
         // Implementation: for each row    in other, for each column   in self
@@ -217,7 +220,6 @@ impl SquareMatrix {
         ];
         SquareMatrix::from(m)
     }
-
 }
 
 impl MatrixMult for SquareMatrix {

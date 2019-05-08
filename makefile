@@ -13,10 +13,10 @@ debug:
 	RUST_BACKTRACE=1 cargo run $(S)
 
 clear:
-	-rm out/*
+	rm -vf *.bak out/*
 
 clean: clear
-	cargo clean
+	cargo -v clean
 
 check test:
 	@touch src/main.rs

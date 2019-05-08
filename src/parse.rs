@@ -143,7 +143,12 @@ fn bezier(edges: &mut Matrix, stack: &[SquareMatrix], screen: &mut Screen, args:
     }
 }
 
-fn draw_box(polygons: &mut Matrix, stack: &[SquareMatrix], screen: &mut Screen, args: Option<&str>) {
+fn draw_box(
+    polygons: &mut Matrix,
+    stack: &[SquareMatrix],
+    screen: &mut Screen,
+    args: Option<&str>,
+) {
     let err_msg = "Box requires 6 f64 args!";
     let args = args.expect(err_msg);
     #[rustfmt::skip]
