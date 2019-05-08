@@ -16,9 +16,10 @@ pub const IDENTITY: SquareMatrix = SquareMatrix {
 // Each point is then represented by a column and the rows correspond
 // to either all the x values, y values, z values, etc.
 pub trait MatrixMult {
+    // TODO: Make a RawMatrix trait for just these four methods
+    // TODO: Add a transpose method for RawMatrix and use it in the from methods
     fn raw(&self) -> &[[f64; COLS]];
     fn raw_mut(&mut self) -> &mut [[f64; COLS]];
-
     fn cols(&self) -> usize {
         COLS
     }
@@ -26,6 +27,7 @@ pub trait MatrixMult {
         self.raw().len()
     }
 
+    // TODO: Make a seperate MatrixMult that is blanket implemented on RawMatrix
     // Modifies other matrix to be = self * other
     #[allow(clippy::needless_range_loop)]
     fn mult(&self, other: &mut MatrixMult) {
@@ -64,6 +66,8 @@ pub struct Matrix {
 
 impl Matrix {
     pub fn new(rows: usize) -> Matrix {
+        // TODO: Use Vec::with_capacity here
+        // TODO: Also write a seperate Matrix::with_capacity method
         let mut m: Vec<[f64; COLS]> = Vec::new();
         for _ in 0..rows {
             m.push([0.0; COLS]);
@@ -92,6 +96,7 @@ impl MatrixMult for Matrix {
 
 impl From<&[[f64; COLS]]> for Matrix {
     fn from(matrix: &[[f64; COLS]]) -> Matrix {
+        // TODO: Replace 0 with matrix.len()
         let mut ret = Matrix::new(0);
         for &row in matrix {
             ret.m.push(row);
@@ -100,6 +105,7 @@ impl From<&[[f64; COLS]]> for Matrix {
     }
 }
 
+// TODO: Blanked implement fmt::Display for RawMatrix
 impl fmt::Display for Matrix {
     // Print 2d array so that each point is a column
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -125,6 +131,8 @@ impl fmt::Display for Matrix {
         write!(f, "{}\n{}\n{}\n{}", x, y, z, one)
     }
 }
+
+// TODO: Implement Default for Matrix to be an empty matrix
 
 #[derive(Debug, Clone)]
 pub struct SquareMatrix {

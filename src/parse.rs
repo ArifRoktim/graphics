@@ -16,6 +16,7 @@ pub fn parse_file(filename: &str, screen: &mut Screen, cstack: &mut Vec<SquareMa
     };
 
     // Temporary edge and polygon matrices
+    // TODO: Have only 1 temporary matrix for both edges and polygons
     let mut edges = Matrix::new(0);
     let mut polygons = Matrix::new(0);
 
@@ -62,12 +63,10 @@ pub fn parse_file(filename: &str, screen: &mut Screen, cstack: &mut Vec<SquareMa
 }
 
 fn draw_line(edges: &mut Matrix, stack: &[SquareMatrix], screen: &mut Screen, args: Option<&str>) {
-    let err_msg = "Line requires 6 f64 arguments!";
+    let err_msg = "Line requires 6 f64 args: (x0, y0, z0, x1, y1, z1)";
     let args = args.expect(err_msg);
-    // Split by whitespace, parse the `str`s into `f64`s, then collect into
-    // a vector. Use &* on vector to get a slice
     #[rustfmt::skip]
-    let args = &*args
+    let args = args
         .split_whitespace()
         .map(|n| n.parse::<f64>().expect(err_msg))
         .collect::<Vec<f64>>();
@@ -82,12 +81,10 @@ fn draw_line(edges: &mut Matrix, stack: &[SquareMatrix], screen: &mut Screen, ar
 }
 
 fn circle(edges: &mut Matrix, stack: &[SquareMatrix], screen: &mut Screen, args: Option<&str>) {
-    let err_msg = "Circle requires 4 f64 arguments!";
+    let err_msg = "Circle requires 4 f64 args: (cx, cy, cz, r)";
     let args = args.expect(err_msg);
-    // Split by whitespace, parse the `str`s into `f64`s, then collect into
-    // a vector. Use &* on vector to get a slice
     #[rustfmt::skip]
-    let args = &*args
+    let args = args
         .split_whitespace()
         .map(|n| n.parse::<f64>().expect(err_msg))
         .collect::<Vec<f64>>();
@@ -102,12 +99,10 @@ fn circle(edges: &mut Matrix, stack: &[SquareMatrix], screen: &mut Screen, args:
 }
 
 fn hermite(edges: &mut Matrix, stack: &[SquareMatrix], screen: &mut Screen, args: Option<&str>) {
-    let err_msg = "Hermite requires 8 f64 arguments!";
+    let err_msg = "Hermite requires 8 f64 args: (p0x, p0y, p1x, p1y, r0x, r0y, r1x, r1y)";
     let args = args.expect(err_msg);
-    // Split by whitespace, parse the `str`s into `f64`s, then collect into
-    // a vector. Use &* on vector to get a slice
     #[rustfmt::skip]
-    let args = &*args
+    let args = args
         .split_whitespace()
         .map(|n| n.parse::<f64>().expect(err_msg))
         .collect::<Vec<f64>>();
@@ -123,12 +118,10 @@ fn hermite(edges: &mut Matrix, stack: &[SquareMatrix], screen: &mut Screen, args
 }
 
 fn bezier(edges: &mut Matrix, stack: &[SquareMatrix], screen: &mut Screen, args: Option<&str>) {
-    let err_msg = "Hermite requires 8 f64 arguments!";
+    let err_msg = "Bezier requires 8 f64 args: (p0x, p0y, p1x, p1y, p2x, p2y, p3x, p3y)";
     let args = args.expect(err_msg);
-    // Split by whitespace, parse the `str`s into `f64`s, then collect into
-    // a vector. Use &* on vector to get a slice
     #[rustfmt::skip]
-    let args = &*args
+    let args = args
         .split_whitespace()
         .map(|n| n.parse::<f64>().expect(err_msg))
         .collect::<Vec<f64>>();
@@ -149,10 +142,10 @@ fn draw_box(
     screen: &mut Screen,
     args: Option<&str>,
 ) {
-    let err_msg = "Box requires 6 f64 args!";
+    let err_msg = "Box requires 6 f64 args: (x, y, z, width, height, depth)";
     let args = args.expect(err_msg);
     #[rustfmt::skip]
-    let args = &*args
+    let args = args
         .split_whitespace()
         .map(|n| n.parse::<f64>().expect(err_msg))
         .collect::<Vec<f64>>();
@@ -167,10 +160,10 @@ fn draw_box(
 }
 
 fn sphere(polygons: &mut Matrix, stack: &[SquareMatrix], screen: &mut Screen, args: Option<&str>) {
-    let err_msg = "Sphere requires 4 f64 args!";
+    let err_msg = "Sphere requires 4 f64 args: (cx, cy, cz, r)";
     let args = args.expect(err_msg);
     #[rustfmt::skip]
-    let args = &*args
+    let args = args
         .split_whitespace()
         .map(|n| n.parse::<f64>().expect(err_msg))
         .collect::<Vec<f64>>();
@@ -185,10 +178,10 @@ fn sphere(polygons: &mut Matrix, stack: &[SquareMatrix], screen: &mut Screen, ar
 }
 
 fn torus(polygons: &mut Matrix, stack: &[SquareMatrix], screen: &mut Screen, args: Option<&str>) {
-    let err_msg = "Torus requires 5 f64 args!";
+    let err_msg = "Torus requires 5 f64 args: (cx, cy, cz, minor_r, major_r)";
     let args = args.expect(err_msg);
     #[rustfmt::skip]
-    let args = &*args
+    let args = args
         .split_whitespace()
         .map(|n| n.parse::<f64>().expect(err_msg))
         .collect::<Vec<f64>>();
@@ -203,12 +196,10 @@ fn torus(polygons: &mut Matrix, stack: &[SquareMatrix], screen: &mut Screen, arg
 }
 
 fn scale(stack: &mut Vec<SquareMatrix>, args: Option<&str>) {
-    let err_msg = "Scale requires 3 f64 arguments!";
+    let err_msg = "Scale requires 3 f64 args: (sx, sy, sz)";
     let args = args.expect(err_msg);
-    // Split by whitespace, parse the `str`s into `f64`s, then collect into
-    // a vector. Use &* on vector to get a slice
     #[rustfmt::skip]
-    let args = &*args
+    let args = args
         .split_whitespace()
         .map(|n| n.parse::<f64>().expect(err_msg))
         .collect::<Vec<f64>>();
@@ -224,12 +215,10 @@ fn scale(stack: &mut Vec<SquareMatrix>, args: Option<&str>) {
 }
 
 fn translate(stack: &mut Vec<SquareMatrix>, args: Option<&str>) {
-    let err_msg = "Move requires 3 f64 arguments!";
+    let err_msg = "Move requires 3 f64 args: (tx, ty, tz)";
     let args = args.expect(err_msg);
-    // Split by whitespace, parse the `str`s into `f64`s, then collect into
-    // a vector. Use &* on vector to get a slice
     #[rustfmt::skip]
-    let args = &*args
+    let args = args
         .split_whitespace()
         .map(|n| n.parse::<f64>().expect(err_msg))
         .collect::<Vec<f64>>();
@@ -245,7 +234,7 @@ fn translate(stack: &mut Vec<SquareMatrix>, args: Option<&str>) {
 }
 
 fn rotate(stack: &mut Vec<SquareMatrix>, args: Option<&str>) {
-    let err_msg = "Rotate requires an axis ('x', 'y', or 'z') and a f64!";
+    let err_msg = "Rotate requires an axis ('x', 'y', or 'z'), and an f64, theta";
     let args = args.expect(err_msg);
     let args: Vec<&str> = args.split_whitespace().collect();
     let theta: f64 = args.get(1).expect(err_msg).parse().expect(err_msg);
@@ -267,6 +256,7 @@ fn save(screen: &Screen, args: Option<&str>) {
 }
 
 fn display(screen: &Screen) {
+    // TODO: If `display` command doesn't exist/work, instead save the file and print its name
     if let Ok(mut proc) = Command::new("display").stdin(Stdio::piped()).spawn() {
         #[rustfmt::skip]
         proc.stdin

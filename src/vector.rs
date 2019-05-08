@@ -13,6 +13,7 @@ impl Vector {
         Vector { x, y, z }
     }
 
+    // TODO: Choose more distinguishing names for these two methods
     pub fn normalize(&mut self) {
         let magnitude = (self.x.powi(2) + self.y.powi(2) + self.z.powi(2)).sqrt();
         self.x /= magnitude;
@@ -34,9 +35,10 @@ impl Vector {
     pub fn calculate_normal(triangle: &[[f64; COLS]]) -> Vector {
         assert_eq!(3, triangle.len(), "Triangles must have 3 points!");
 
-        let a = Vector::from(&triangle[1]) - &Vector::from(&triangle[0]);
-        let b = Vector::from(&triangle[2]) - &Vector::from(&triangle[0]);
+        let a = Vector::from(&triangle[1][..3]) - &Vector::from(&triangle[0][..3]);
+        let b = Vector::from(&triangle[2][..3]) - &Vector::from(&triangle[0][..3]);
 
+        // TODO: Write a cross product method
         Vector::new(
             a.y * b.z - a.z * b.y,
             a.z * b.x - a.x * b.z,
@@ -45,9 +47,9 @@ impl Vector {
     }
 }
 
-impl From<&[f64; COLS]> for Vector {
-    fn from(vector: &[f64; COLS]) -> Vector {
-        assert_eq!(3, vector.len() - 1, "Triangles must have 3 points!");
+impl From<&[f64]> for Vector {
+    fn from(vector: &[f64]) -> Vector {
+        assert_eq!(3, vector.len(), "Triangles must have 3 points!");
 
         Vector::new(vector[0], vector[1], vector[2])
     }

@@ -79,17 +79,18 @@ impl Screen {
     }
 
     pub fn plot(&mut self, px: i32, py: i32, z: f64, c: Color) {
+        // Can't plot points outside the screen
         if px < 0 || px >= (XRES as i32) || py < 0 || py >= (YRES as i32) {
             return;
         }
         // Cast the coordinates to `usize` and
         // make (0, 0) the bottom left corner instead of the top left corner
         let (px, py) = (px as usize, YRES - 1 - (py as usize));
-        // Get the color and change it
-        let pixel = &mut self.pixels[py][px];
-        if z > pixel.1 {
-            pixel.0 = c;
-            pixel.1 = z;
+        // Get the pixel and change its color and zbuffer values
+        let (color, zbuffer) = &mut self.pixels[py][px];
+        if z > *zbuffer {
+            color.color(c);
+            *zbuffer = z;
         }
     }
 
@@ -213,26 +214,26 @@ impl Screen {
     fn scanline_convert(&mut self, triangle: &[[f64; COLS]], c: Color) {
         assert_eq!(3, triangle.len(), "Triangles must have 3 points!");
         // order the 3 points from lowest to highest y value
-        let (mut min, mid, mut max);
+        let (mut bot, mid, mut top);
         if triangle[0][1] < triangle[1][1] {
-            min = triangle[0];
-            max = triangle[1];
+            bot = triangle[0];
+            top = triangle[1];
         } else {
-            min = triangle[1];
-            max = triangle[0];
+            bot = triangle[1];
+            top = triangle[0];
         }
-        if triangle[2][1] > max[1] {
-            mid = max;
-            max = triangle[2]
-        } else if triangle[2][1] < min[1] {
-            mid = min;
-            min = triangle[2]
+        if triangle[2][1] > top[1] {
+            mid = top;
+            top = triangle[2]
+        } else if triangle[2][1] < bot[1] {
+            mid = bot;
+            bot = triangle[2]
         } else {
             mid = triangle[2]
         }
 
         // make vars immutable
-        let (bot, mid, top) = (min, mid, max);
+        let (bot, top) = (bot, top);
 
         // Given a ▲BMT where b.y <= m.y <= t.y:
         // for y in b.y..t.y, draw a line from (x0, y) to (x1, y), where
@@ -274,11 +275,7 @@ impl Screen {
 
 impl fmt::Display for Screen {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        // Allocate a string with enough space to hold all the pixels
-        // Each pixel has 3 rgb values, which each are at most 4 bytes
-        // Add in YRES bytes because every row has a newline character
-        // and add in 50 bytes as padding to make sure we don't reallocate
-        // Total is `XRES * YRES * 3 * 4 + YRES + 50`
+        // TODO: Use std::mem::size_of_val instead of manually calculating size
         let size: usize = PIXELS * 3 * 4 + YRES + 50;
         let mut contents = String::with_capacity(size);
         for row in self.pixels.iter() {

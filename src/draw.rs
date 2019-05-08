@@ -9,8 +9,7 @@ pub enum Curve {
 impl Curve {
     pub fn gen_coefs(&self) -> (Matrix, Matrix) {
         let mult = self.gen_coef_helper();
-        let mut coefs_x;
-        let mut coefs_y;
+        let (mut coefs_x, mut coefs_y);
         match *self {
             Curve::Hermite { p0x, p0y, p1x, p1y, r0x, r0y, r1x, r1y } => {
                 // [p0]
@@ -156,6 +155,9 @@ pub fn add_box(polygons: &mut Matrix, x: f64, y: f64, z: f64, width: f64, height
 
 pub fn gen_sphere(cx: f64, cy: f64, cz: f64, r: f64, steps: usize) -> Matrix {
     // Matrix of the points of the surface of a sphere
+    // TODO: Construct matrix with capacity of `steps * steps` OR
+    // TODO: Mutably borrow from add_sphere
+    // TODO: ditto for torus
     let mut points = Matrix::new(0);
 
     // For 0->2PI draw a semi circle that's rotated phi degrees along x axis

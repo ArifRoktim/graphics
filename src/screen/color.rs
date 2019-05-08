@@ -130,11 +130,9 @@ impl Shine {
 
     fn get_specular(normal: &Vector, light: &Vector, view: &Vector) -> Color {
         let reflected = normal * 2. * light.dot_product(normal) - light;
-        let angle = reflected.dot_product(&view);
-        let angle = if angle < 0. {
-            0.
-        } else {
-            angle.powi(SPECULAR_EXP)
+        let angle = match reflected.dot_product(&view) {
+            neg if neg < 0. => 0.,
+            others => others.powi(SPECULAR_EXP),
         };
         LIGHT_COLOR * &SPECULAR_REFLECT * angle
     }
@@ -143,8 +141,6 @@ impl Shine {
 fn as_u8(f: f64) -> u8 {
     if f < 0. {
         0
-    } else if f > 255. {
-        255
     } else {
         f as u8
     }
