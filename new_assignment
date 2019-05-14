@@ -21,8 +21,7 @@ trap usage ERR
 
 function new {
     git checkout -b "$1"
-    rm -f Cargo.lock
-    sed -i.bak 's/\(name = \)".*"/\1"'"$1"'"/' Cargo.toml
+    cargo bump patch
 }
 
 if [[ $# -ne 1 ]]; then
