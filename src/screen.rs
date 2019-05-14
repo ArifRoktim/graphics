@@ -9,7 +9,7 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 
 pub mod color;
-pub use color::{Color, Shine};
+pub use color::{consts, Color, Shine};
 
 type Pixel = (Color, f64);
 

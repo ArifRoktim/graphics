@@ -1,13 +1,13 @@
 use crate::draw::{self, Curve};
 use crate::matrix::{Matrix, MatrixMult, SquareMatrix};
-use crate::screen::{color, Color, Screen};
+use crate::screen::{consts, Color, Screen};
 use crate::{STEPS_2D, STEPS_3D};
 
 use std::fs;
 use std::io::prelude::*;
 use std::process::{Command, Stdio};
 
-const FOREGROUND: Color = color::GREEN;
+const FOREGROUND: Color = consts::GREEN;
 
 pub fn parse_file(filename: &str, screen: &mut Screen, cstack: &mut Vec<SquareMatrix>) {
     let contents = match fs::read_to_string(filename) {
