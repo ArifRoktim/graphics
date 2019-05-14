@@ -1,4 +1,4 @@
-use ::graphics::{parse, Screen, IDENTITY};
+use lib_graphics::{parse, Screen, IDENTITY};
 use std::{env, process};
 
 fn main() {

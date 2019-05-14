@@ -21,7 +21,6 @@ trap usage ERR
 
 function new {
     git checkout -b "$1"
-    cargo bump patch
 }
 
 if [[ $# -ne 1 ]]; then

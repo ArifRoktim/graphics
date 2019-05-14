@@ -1,7 +1,7 @@
 # path to the script file to run
 S := scripts/lighting
 
-.PHONY: all dev debug clear clean check test clippy fmt
+.PHONY: all dev debug clear clean
 
 all:
 	cargo run --release $(S)
@@ -17,11 +17,3 @@ clear:
 
 clean: clear
 	cargo -v clean
-
-check test:
-	@touch src/main.rs
-	cargo $@
-
-clippy fmt:
-	@touch src/main.rs
-	cargo +nightly $@
