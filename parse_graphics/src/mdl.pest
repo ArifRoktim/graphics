@@ -1,0 +1,46 @@
+program = _{ SOI ~ "\n"* ~ (statement ~ "\n"+)* ~ statement? ~ EOI }
+
+// Only ever matches with 1 pair
+statement = {
+      push
+    | pop
+    | display
+    | save
+    // `move` is a reserved word. Use `translate` instead
+    | translate
+    | scale
+    | rotate
+    // `box` is a reserved word. Use `cuboid` instead
+    | cuboid
+    | sphere
+    | torus
+    | line
+    | constants
+}
+
+push = { "push" }
+pop = { "pop" }
+display = { "display" }
+save = { "save" ~ ident }
+
+translate = { "move"  ~ float{3} ~ ident? }
+scale =     { "scale" ~ float{3} ~ ident? }
+rotate =    { "rotate" ~ axis ~ float ~ ident? }
+
+cuboid = { "box"    ~ ident? ~ float{6} ~ ident? }
+sphere = { "sphere" ~ ident? ~ float{4} ~ ident? }
+torus =  { "torus"  ~ ident? ~ float{5} ~ ident? }
+
+line = { "line" ~ ident? ~ float{3} ~ ident? ~ float{3} ~ ident? }
+constants = { "constants" ~ ident ~ float{9} ~ float{3}? }
+
+// atomics
+float = @{
+    "-"? ~ ASCII_DIGIT+ ~ ("." ~ ASCII_DIGIT*)?
+    | "-"? ~ "." ~ ASCII_DIGIT+
+}
+ident = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_" | ".")* }
+axis = @{ ^"x" | ^"y" | ^"z" }
+
+WHITESPACE = _{ " " }
+COMMENT = _{ "//" ~ (!"\n" ~ ANY)* }
