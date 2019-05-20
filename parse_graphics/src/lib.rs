@@ -1,18 +1,118 @@
+use pest::*;
 use pest_derive::*;
+use pest::error::Error;
+use pest::iterators::Pair;
 
 #[derive(Parser)]
 #[grammar = "mdl.pest"]
 pub struct MDLParser;
 
+#[derive(Debug)]
+pub enum Command {
+    Push,
+    Pop,
+    Display,
+    Save,
+    Translate,
+    Scale,
+    Rotate,
+    Cuboid,
+    Sphere,
+    Torus,
+    Line,
+    Constants
+}
+
+#[derive(Debug)]
+pub enum Axis {
+    X,
+    Y,
+    Z
+}
+
+#[derive(Debug)]
+pub enum AstNode {
+    Float(f64),
+    Ident(String),
+    Axis,
+    Expression {
+        command: Command,
+        args: Vec<AstNode>,
+    },
+}
+
+pub fn parse(source: &str) -> Result<Vec<AstNode>, Error<Rule>> {
+    let mut ast: Vec<AstNode> = vec![];
+
+    let pairs = MDLParser::parse(Rule::program, source)?;
+    for pair in pairs {
+        match pair.as_rule() {
+            Rule::statement => {
+                ast.push(build_node_from_statement(pair));
+            },
+            Rule::EOI => break,
+            _ => unreachable!(),
+        }
+    }
+
+    Ok(ast)
+}
+
+fn build_node_from_statement(pair: Pair<Rule>) -> AstNode {
+    match pair.as_rule() {
+        // Recursion will be useful in future for more complex statements
+        Rule::statement => {
+            build_node_from_statement(
+                pair.into_inner().next().unwrap()
+            )
+        },
+        // No args
+        Rule::push => AstNode::Expression {
+            command: Command::Push,
+            args: vec![],
+        },
+        Rule::pop => AstNode::Expression {
+            command: Command::Pop,
+            args: vec![],
+        },
+        Rule::display => AstNode::Expression {
+            command: Command::Display,
+            args: vec![],
+        },
+        // Has args
+        Rule::save => {
+            let args = pair.into_inner().next().unwrap();
+            dbg!(&args);
+            unimplemented!()
+        },
+        Rule::constants => {
+            unimplemented!()
+        },
+        // Primitives
+        Rule::float => AstNode::Float(pair.as_str().parse::<f64>().unwrap()),
+        Rule::ident => AstNode::Ident(pair.as_str().to_owned()),
+        _ => unimplemented!()
+    }
+
+    //let inner = pair.into_inner()
+    //    .next() // unwrap the 1 rule in the statement
+    //    .unwrap_or_else(|| unreachable!()); // never fails as 
+    //dbg!(&inner);
+    //dbg!(&pairs.next().unwrap());
+    //match pair.as_rule() {
+    //}
+
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
-    use pest::error::Error as PError;
+    use pest::error::Error;
     use pest::iterators::Pairs;
     use pest::Parser;
     //assert_eq!("OUTPUT HERE", as_str(MDLParser::parse(Rule::<RULE>, "PARSE STRING")));
 
-    fn as_str(parsed: Result<Pairs<'_, Rule>, PError<Rule>>) -> &str {
+    fn as_str(parsed: Result<Pairs<'_, Rule>, Error<Rule>>) -> &str {
         dbg!(parsed).ok().map_or("", |s| s.as_str())
     }
 
