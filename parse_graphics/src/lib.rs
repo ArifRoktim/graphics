@@ -1,7 +1,8 @@
 pub mod ast;
-pub use ast::{Command, Axis, AstNode, ParseAxisError};
-
+pub use ast::{Command, Axis, AstNode};
 use pest_derive::*;
+
+use lib_graphics::Shine;
 use std::fs;
 use std::collections::HashMap;
 use std::default::Default;
@@ -19,10 +20,11 @@ type SymbolTable<'a> = HashMap<&'a str, Vec<Args>>;
 pub struct Operation {
     pub command: Command,
     pub args: Vec<Args>,
+    pub constants: Option<[Shine; 3]>,
 }
 impl Operation {
-    pub fn new(command: Command, args: Vec<Args>) -> Operation {
-        Operation { command, args }
+    pub fn new(command: Command, args: Vec<Args>, constants: Option<[Shine; 3]>) -> Operation {
+        Operation { command, args, constants }
     }
 }
 
@@ -32,8 +34,8 @@ pub struct ToDoList<'a> {
     pub symbols: SymbolTable<'a>,
 }
 impl<'a> ToDoList<'a> {
-    pub fn push_op(&mut self, command: &Command, args: &[Args]) {
-        self.ops.push(Operation::new(command.to_owned(), args.to_vec()));
+    pub fn push_op(&mut self, command: &Command, args: Vec<Args>) {
+        self.ops.push(Operation::new(command.to_owned(), args));
     }
 }
 impl<'a> Default for ToDoList<'a> {
@@ -49,39 +51,61 @@ impl<'a> Default for ToDoList<'a> {
 #[grammar = "mdl.pest"]
 pub struct MDLParser;
 
+#[derive(Debug)]
+pub enum ParseError {
+    AstIntoError,
+    ParseError,
+    SemanticError,
+}
+impl From<ast::AstIntoError> for ParseError {
+    fn from(_: ast::AstIntoError) -> ParseError {
+        ParseError::AstIntoError
+    }
+}
+impl From<ast::ParseAxisError> for ParseError {
+    fn from(_: ast::ParseAxisError) -> ParseError {
+        ParseError::ParseError
+    }
+}
+
 impl MDLParser {
-    pub fn file(filename: &str) {
+    pub fn file(filename: &str) -> Result<(), ParseError> {
         let file = fs::read_to_string(filename).expect("Error reading file!");
         let nodes = ast::parse(&file).expect("Failed while performing parsing!");
-        Self::analyze_nodes(&nodes);
+        Self::analyze_nodes(&nodes)?;
+        Ok(())
     }
 
-    fn analyze_nodes(nodes: &[AstNode]) {
+    fn analyze_nodes(nodes: &[AstNode]) -> Result<(), ParseError> {
         let mut todo = ToDoList::default();
         for node in nodes {
-            Self::analyze(node, &mut todo);
-            // Do post order traversal by checking if any of the `Expression` nodes
-            // have arguments that are also `Expression`s
+            Self::analyze(node, &mut todo)?;
 
         }
         dbg!(&todo);
+        Ok(())
     }
 
-    fn analyze(node: &AstNode, todo: &mut ToDoList) {
-        //dbg!(&node);
-        if let AstNode::Expression {command, args} = node {
-            match command {
-                Command::Push => todo.push_op(command, &[]),
-                Command::Pop => todo.push_op(command, &[]),
-                Command::Display => todo.push_op(command, &[]),
-                Command::Save => {
-                },
-                _ => unimplemented!(),
-            }
+    fn analyze(node: &AstNode, todo: &mut ToDoList) -> Result<(), ParseError> {
+        if let AstNode::MdlCommand {command, args} = node {
+            // TODO: Iterate through `args` when we eventually need to do a
+            // post order traversal on the Ast
+            // In which case, make the `node` argument mutable, then replace
+            // each `expression` with its resulting value
+
+            // convert from AstNode -> Args
+            let args = args.iter()
+                .map(|a| a.into())
+                .collect::<Result<Vec<Args>, ast::AstIntoError>>()?;
+
+            todo.push_op(command, args);
+            Ok(())
         } else {
+            // TODO: Change this when the Ast becomes more complex and has expressions
             unreachable!()
         }
     }
+
 }
 
 #[cfg(test)]
@@ -89,6 +113,7 @@ mod tests {
     use std::path::PathBuf;
     use super::*;
 
+    #[allow(dead_code)]
     fn get_mdl() -> String {
         let mut mdl_file = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
         mdl_file.push("tests/face.mdl");
@@ -96,14 +121,23 @@ mod tests {
     }
 
     #[test]
-    fn test_analyze() {
+    fn test_analyze() -> Result<(), ParseError> {
         let text = "
 push
 pop
-push
+save foo.bar
 ";
-        //dbg!(&text);
         let nodes = ast::parse(&text).expect("Failed while performing parsing!");
-        MDLParser::analyze_nodes(&nodes[..]);
+        dbg!(&nodes);
+        MDLParser::analyze_nodes(&nodes[..])?;
+        Ok(())
+    }
+
+    #[test]
+    fn mdl_analyze() -> Result<(), ParseError> {
+        let nodes = ast::parse(&get_mdl()).unwrap();
+        dbg!(&nodes);
+        MDLParser::analyze_nodes(&nodes)?;
+        Ok(())
     }
 }

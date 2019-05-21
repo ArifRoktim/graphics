@@ -2,8 +2,9 @@ use pest::Parser;
 use pest::error::Error;
 use pest::iterators::Pair;
 use std::str::FromStr;
+use std::convert::Into;
 
-use super::{MDLParser, Rule};
+use super::{Args, MDLParser, Rule};
 
 #[derive(Clone, Debug)]
 pub enum Command {
@@ -54,6 +55,8 @@ pub enum AstNode {
         args: Vec<AstNode>,
     },
 }
+#[derive(Debug)]
+pub struct AstIntoError;
 
 impl AstNode {
     pub fn is_expression(&self) -> bool {
@@ -63,7 +66,17 @@ impl AstNode {
         }
     }
 }
-
+impl Into<Result<Args, AstIntoError>> for &AstNode {
+    fn into(self) -> Result<Args, AstIntoError> {
+        match self {
+            AstNode::Float(i) => Ok(Args::Float(*i)),
+            AstNode::Ident(i) => Ok(Args::Ident(i.to_owned())),
+            AstNode::Str(i)   => Ok(Args::Str(i.to_owned())),
+            AstNode::Axis(i)  => Ok(Args::Axis(i.to_owned())),
+            AstNode::MdlCommand {..} => Err(AstIntoError),
+        }
+    }
+}
 
 pub fn parse(source: &str) -> Result<Vec<AstNode>, Error<Rule>> {
     let mut ast: Vec<AstNode> = vec![];
