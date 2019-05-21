@@ -7,23 +7,15 @@ use std::fs;
 use std::collections::HashMap;
 use std::default::Default;
 
-#[derive(Clone, Debug)]
-pub enum Args {
-    Float(f64),
-    Ident(String),
-    Str(String),
-    Axis(Axis),
-}
-
-type SymbolTable<'a> = HashMap<&'a str, Vec<Args>>;
+type SymbolTable<'a> = HashMap<&'a str, Vec<AstNode>>;
 #[derive(Debug)]
 pub struct Operation {
     pub command: Command,
-    pub args: Vec<Args>,
+    pub args: Vec<AstNode>,
     pub constants: Option<[Shine; 3]>,
 }
 impl Operation {
-    pub fn new(command: Command, args: Vec<Args>, constants: Option<[Shine; 3]>) -> Operation {
+    pub fn new(command: Command, args: Vec<AstNode>, constants: Option<[Shine; 3]>) -> Operation {
         Operation { command, args, constants }
     }
 }
@@ -34,8 +26,13 @@ pub struct ToDoList<'a> {
     pub symbols: SymbolTable<'a>,
 }
 impl<'a> ToDoList<'a> {
-    pub fn push_op(&mut self, command: &Command, args: Vec<Args>) {
-        self.ops.push(Operation::new(command.to_owned(), args));
+    pub fn push_op(
+        &mut self,
+        command: &Command,
+        args: Vec<AstNode>,
+        constants: Option<[Shine; 3]>,
+    ) {
+        self.ops.push(Operation::new(command.to_owned(), args, constants));
     }
 }
 impl<'a> Default for ToDoList<'a> {
@@ -93,12 +90,8 @@ impl MDLParser {
             // In which case, make the `node` argument mutable, then replace
             // each `expression` with its resulting value
 
-            // convert from AstNode -> Args
-            let args = args.iter()
-                .map(|a| a.into())
-                .collect::<Result<Vec<Args>, ast::AstIntoError>>()?;
 
-            todo.push_op(command, args);
+            //todo.push_op(command, args);
             Ok(())
         } else {
             // TODO: Change this when the Ast becomes more complex and has expressions

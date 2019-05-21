@@ -2,9 +2,8 @@ use pest::Parser;
 use pest::error::Error;
 use pest::iterators::Pair;
 use std::str::FromStr;
-use std::convert::Into;
 
-use super::{Args, MDLParser, Rule};
+use super::{MDLParser, Rule};
 
 #[derive(Clone, Debug)]
 pub enum Command {
@@ -63,17 +62,6 @@ impl AstNode {
         match *self {
             AstNode::MdlCommand {..} => true,
             _ => false,
-        }
-    }
-}
-impl Into<Result<Args, AstIntoError>> for &AstNode {
-    fn into(self) -> Result<Args, AstIntoError> {
-        match self {
-            AstNode::Float(i) => Ok(Args::Float(*i)),
-            AstNode::Ident(i) => Ok(Args::Ident(i.to_owned())),
-            AstNode::Str(i)   => Ok(Args::Str(i.to_owned())),
-            AstNode::Axis(i)  => Ok(Args::Axis(i.to_owned())),
-            AstNode::MdlCommand {..} => Err(AstIntoError),
         }
     }
 }
