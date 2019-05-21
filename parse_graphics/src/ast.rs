@@ -49,8 +49,7 @@ pub enum AstNode {
     Ident(String),
     Str(String),
     Axis(Axis),
-    // TODO: Rename `Expression` to `Operation`
-    Expression {
+    MdlCommand {
         command: Command,
         args: Vec<AstNode>,
     },
@@ -59,7 +58,7 @@ pub enum AstNode {
 impl AstNode {
     pub fn is_expression(&self) -> bool {
         match *self {
-            AstNode::Expression {..} => true,
+            AstNode::MdlCommand {..} => true,
             _ => false,
         }
     }
@@ -93,55 +92,55 @@ fn node_from_statement(pair: Pair<Rule>) -> AstNode {
             )
         },
         // No args
-        Rule::push => AstNode::Expression {
+        Rule::push => AstNode::MdlCommand {
             command: Command::Push,
             args: vec![],
         },
-        Rule::pop => AstNode::Expression {
+        Rule::pop => AstNode::MdlCommand {
             command: Command::Pop,
             args: vec![],
         },
-        Rule::display => AstNode::Expression {
+        Rule::display => AstNode::MdlCommand {
             command: Command::Display,
             args: vec![],
         },
         // Has args
-        Rule::save => AstNode::Expression {
+        Rule::save => AstNode::MdlCommand {
             command: Command::Save,
             args: get_args(pair),
         },
         // Transformations
-        Rule::translate => AstNode::Expression {
+        Rule::translate => AstNode::MdlCommand {
             command: Command::Translate,
             args: get_args(pair),
         },
-        Rule::scale => AstNode::Expression {
+        Rule::scale => AstNode::MdlCommand {
             command: Command::Scale,
             args: get_args(pair),
         },
-        Rule::rotate => AstNode::Expression {
+        Rule::rotate => AstNode::MdlCommand {
             command: Command::Rotate,
             args: get_args(pair),
         },
         // 3D objects
-        Rule::cuboid => AstNode::Expression {
+        Rule::cuboid => AstNode::MdlCommand {
             command: Command::Cuboid,
             args: get_args(pair),
         },
-        Rule::sphere => AstNode::Expression {
+        Rule::sphere => AstNode::MdlCommand {
             command: Command::Sphere,
             args: get_args(pair),
         },
-        Rule::torus => AstNode::Expression {
+        Rule::torus => AstNode::MdlCommand {
             command: Command::Torus,
             args: get_args(pair),
         },
         // others
-        Rule::line => AstNode::Expression {
+        Rule::line => AstNode::MdlCommand {
             command: Command::Line,
             args: get_args(pair),
         },
-        Rule::constants => AstNode::Expression {
+        Rule::constants => AstNode::MdlCommand {
             command: Command::Constants,
             args: get_args(pair),
         },
