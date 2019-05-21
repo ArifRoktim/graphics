@@ -21,7 +21,7 @@ statement = {
 push = { "push" }
 pop = { "pop" }
 display = { "display" }
-save = { "save" ~ ident }
+save = { "save" ~ string }
 
 translate = { "move"  ~ float{3} ~ ident? }
 scale =     { "scale" ~ float{3} ~ ident? }
@@ -40,6 +40,7 @@ float = @{
     | "-"? ~ "." ~ ASCII_DIGIT+
 }
 ident = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_" | ".")* }
+string = @{ ident }
 axis = @{ ^"x" | ^"y" | ^"z" }
 
 WHITESPACE = _{ " " }

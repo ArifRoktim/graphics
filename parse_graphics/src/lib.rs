@@ -1,156 +1,109 @@
-use pest::*;
-use pest_derive::*;
-use pest::error::Error;
-use pest::iterators::Pair;
+pub mod ast;
+pub use ast::{Command, Axis, AstNode, ParseAxisError};
 
-use std::str::FromStr;
+use pest_derive::*;
+use std::fs;
+use std::collections::HashMap;
+use std::default::Default;
+
+#[derive(Clone, Debug)]
+pub enum Args {
+    Float(f64),
+    Ident(String),
+    Str(String),
+    Axis(Axis),
+}
+
+type SymbolTable<'a> = HashMap<&'a str, Vec<Args>>;
+#[derive(Debug)]
+pub struct Operation {
+    pub command: Command,
+    pub args: Vec<Args>,
+}
+impl Operation {
+    pub fn new(command: Command, args: Vec<Args>) -> Operation {
+        Operation { command, args }
+    }
+}
+
+#[derive(Debug)]
+pub struct ToDoList<'a> {
+    pub ops: Vec<Operation>,
+    pub symbols: SymbolTable<'a>,
+}
+impl<'a> ToDoList<'a> {
+    pub fn push_op(&mut self, command: &Command, args: &[Args]) {
+        self.ops.push(Operation::new(command.to_owned(), args.to_vec()));
+    }
+}
+impl<'a> Default for ToDoList<'a> {
+    fn default() -> Self {
+        let ops = vec![];
+        let symbols: SymbolTable = HashMap::new();
+        ToDoList { ops, symbols }
+    }
+}
+
 
 #[derive(Parser)]
 #[grammar = "mdl.pest"]
 pub struct MDLParser;
 
-#[derive(Debug)]
-pub enum Command {
-    Push,
-    Pop,
-    Display,
-    Save,
-    Translate,
-    Scale,
-    Rotate,
-    Cuboid,
-    Sphere,
-    Torus,
-    Line,
-    Constants
-}
+impl MDLParser {
+    pub fn file(filename: &str) {
+        let file = fs::read_to_string(filename).expect("Error reading file!");
+        let nodes = ast::parse(&file).expect("Failed while performing parsing!");
+        Self::analyze_nodes(&nodes);
+    }
 
-#[derive(Debug)]
-pub enum Axis {
-    X,
-    Y,
-    Z,
-}
+    fn analyze_nodes(nodes: &[AstNode]) {
+        let mut todo = ToDoList::default();
+        for node in nodes {
+            Self::analyze(node, &mut todo);
+            // Do post order traversal by checking if any of the `Expression` nodes
+            // have arguments that are also `Expression`s
 
-#[derive(Debug)]
-pub struct ParseAxisError;
+        }
+        dbg!(&todo);
+    }
 
-impl FromStr for Axis {
-    type Err = ParseAxisError;
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "x" | "X" => Ok(Axis::X),
-            "y" | "Y" => Ok(Axis::Y),
-            "z" | "Z" => Ok(Axis::Z),
-            _ => Err(ParseAxisError),
+    fn analyze(node: &AstNode, todo: &mut ToDoList) {
+        //dbg!(&node);
+        if let AstNode::Expression {command, args} = node {
+            match command {
+                Command::Push => todo.push_op(command, &[]),
+                Command::Pop => todo.push_op(command, &[]),
+                Command::Display => todo.push_op(command, &[]),
+                Command::Save => {
+                },
+                _ => unimplemented!(),
+            }
+        } else {
+            unreachable!()
         }
     }
 }
 
-#[derive(Debug)]
-pub enum AstNode {
-    Float(f64),
-    Ident(String),
-    Axis(Axis),
-    Expression {
-        command: Command,
-        args: Vec<AstNode>,
-    },
-}
+#[cfg(test)]
+mod tests {
+    use std::path::PathBuf;
+    use super::*;
 
-pub fn parse(source: &str) -> Result<Vec<AstNode>, Error<Rule>> {
-    let mut ast: Vec<AstNode> = vec![];
-
-    let pairs = MDLParser::parse(Rule::program, source)?;
-    for pair in pairs {
-        match pair.as_rule() {
-            Rule::statement => {
-                ast.push(node_from_statement(pair));
-            },
-            Rule::EOI => break,
-            _ => unreachable!(),
-        }
+    fn get_mdl() -> String {
+        let mut mdl_file = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        mdl_file.push("tests/face.mdl");
+        fs::read_to_string(&mdl_file).expect("face.mdl missing!")
     }
 
-    traverse_tree(&mut ast);
-    Ok(ast)
-}
-
-fn node_from_statement(pair: Pair<Rule>) -> AstNode {
-    match pair.as_rule() {
-        // Recursion will be useful in future for more complex statements
-        Rule::statement => {
-            node_from_statement(
-                // extract a match from the statement; never fails
-                pair.into_inner().next().unwrap()
-            )
-        },
-        // No args
-        Rule::push => AstNode::Expression {
-            command: Command::Push,
-            args: vec![],
-        },
-        Rule::pop => AstNode::Expression {
-            command: Command::Pop,
-            args: vec![],
-        },
-        Rule::display => AstNode::Expression {
-            command: Command::Display,
-            args: vec![],
-        },
-        // Has args
-        Rule::save => AstNode::Expression {
-            command: Command::Save,
-            args: get_args(pair),
-        },
-        // Transformations
-        Rule::translate => AstNode::Expression {
-            command: Command::Translate,
-            args: get_args(pair),
-        },
-        Rule::scale => AstNode::Expression {
-            command: Command::Scale,
-            args: get_args(pair),
-        },
-        Rule::rotate => AstNode::Expression {
-            command: Command::Rotate,
-            args: get_args(pair),
-        },
-        // 3D objects
-        Rule::cuboid => AstNode::Expression {
-            command: Command::Cuboid,
-            args: get_args(pair),
-        },
-        Rule::sphere => AstNode::Expression {
-            command: Command::Sphere,
-            args: get_args(pair),
-        },
-        Rule::torus => AstNode::Expression {
-            command: Command::Torus,
-            args: get_args(pair),
-        },
-        // others
-        Rule::line => AstNode::Expression {
-            command: Command::Line,
-            args: get_args(pair),
-        },
-        Rule::constants => AstNode::Expression {
-            command: Command::Constants,
-            args: get_args(pair),
-        },
-        // Primitives
-        Rule::float => AstNode::Float(pair.as_str().parse::<f64>().unwrap()),
-        Rule::axis  => AstNode::Axis(pair.as_str().parse::<Axis>().unwrap()),
-        Rule::ident => AstNode::Ident(pair.as_str().to_owned()),
-        _ => unimplemented!()
+    #[test]
+    fn test_analyze() {
+        let text = "
+push
+pop
+push
+";
+        //dbg!(&text);
+        let nodes = ast::parse(&text).expect("Failed while performing parsing!");
+        MDLParser::analyze_nodes(&nodes[..]);
     }
-}
-
-fn get_args(pair: Pair<Rule>) -> Vec<AstNode> {
-    pair.into_inner().map(node_from_statement).collect()
-}
-
-fn traverse_tree(_trees: &mut Vec<AstNode>) {
-    //TODO: Replace this with code that traverses the syntax trees
-    // when the language reachers that level of complexity.
 }

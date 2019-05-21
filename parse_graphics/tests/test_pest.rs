@@ -1,4 +1,4 @@
-use parse_graphics::*;
+use parse_graphics::{ast, MDLParser, Rule};
 use pest::error::Error;
 use pest::iterators::Pairs;
 use pest::Parser;
@@ -21,7 +21,7 @@ fn test_pest() {
 #[test]
 fn test_ast() {
     let mdl = get_mdl();
-    let nodes = parse(&mdl).unwrap();
+    let nodes = ast::parse(&mdl).unwrap();
     dbg!(&nodes);
 }
 
