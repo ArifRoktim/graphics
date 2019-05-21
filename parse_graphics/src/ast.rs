@@ -43,7 +43,7 @@ impl FromStr for Axis {
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub enum AstNode {
     Float(f64),
     Ident(String),

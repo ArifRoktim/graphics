@@ -27,45 +27,43 @@ impl From<ast::ParseAxisError> for ParseError {
     }
 }
 
-impl MDLParser {
-    pub fn file(filename: &str) -> Result<(), ParseError> {
-        let file = fs::read_to_string(filename).expect("Error reading file!");
-        let nodes = ast::parse(&file).expect("Failed while performing parsing!");
-        Self::analyze_nodes(&nodes)?;
-        Ok(())
-    }
-
-    fn analyze_nodes(nodes: &[AstNode]) -> Result<(), ParseError> {
-        let mut todo = ToDoList::default();
-        for node in nodes {
-            Self::analyze(node, &mut todo)?;
-        }
-        dbg!(&todo);
-        Ok(())
-    }
-
-    fn analyze(node: &AstNode, todo: &mut ToDoList) -> Result<(), ParseError> {
-        use Command::*;
-        if let AstNode::MdlCommand { command, args } = node {
-            // TODO: Iterate through `args` when we eventually need to do a
-            // post order traversal on the Ast
-            // In which case, make the `node` argument mutable, then replace
-            // each `expression` with its resulting value
-            match command {
-                Push | Pop | Display => todo.push_op(command, vec![], None),
-                Save => todo.push_op(command, args.to_vec(), None),
-                _ => unimplemented!(),
-            }
-
-
-            Ok(())
-        } else {
-            // TODO: Change this when the Ast becomes more complex and has expressions
-            unreachable!()
-        }
-    }
-
+pub fn file(filename: &str) -> Result<(), ParseError> {
+    let file = fs::read_to_string(filename).expect("Error reading file!");
+    let nodes = ast::parse(&file).expect("Failed while performing parsing!");
+    analyze_nodes(&nodes)?;
+    Ok(())
 }
+
+fn analyze_nodes(nodes: &[AstNode]) -> Result<(), ParseError> {
+    let mut todo = ToDoList::default();
+    for node in nodes {
+        analyze(node, &mut todo)?;
+    }
+    dbg!(&todo);
+    Ok(())
+}
+
+fn analyze(node: &AstNode, todo: &mut ToDoList) -> Result<(), ParseError> {
+    use Command::*;
+    if let AstNode::MdlCommand { command, args } = node {
+        // TODO: Iterate through `args` when we eventually need to do a
+        // post order traversal on the Ast
+        // In which case, make the `node` argument mutable, then replace
+        // each `expression` with its resulting value
+        match command {
+            Push | Pop | Display => todo.push_op(command, vec![], None),
+            Save => todo.push_op(command, args.to_vec(), None),
+            _ => unimplemented!(),
+        }
+
+
+        Ok(())
+    } else {
+        // TODO: Change this when the Ast becomes more complex and has expressions
+        unreachable!()
+    }
+}
+
 
 #[cfg(test)]
 mod tests {
@@ -88,7 +86,7 @@ save foo.bar
 ";
         let nodes = ast::parse(&text).expect("Failed while performing parsing!");
         dbg!(&nodes);
-        MDLParser::analyze_nodes(&nodes[..])?;
+        analyze_nodes(&nodes[..])?;
         Ok(())
     }
 
@@ -96,7 +94,7 @@ save foo.bar
     fn mdl_analyze() -> Result<(), ParseError> {
         let nodes = ast::parse(&get_mdl()).unwrap();
         dbg!(&nodes);
-        MDLParser::analyze_nodes(&nodes)?;
+        analyze_nodes(&nodes)?;
         Ok(())
     }
 }
