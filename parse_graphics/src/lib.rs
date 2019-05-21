@@ -1,11 +1,11 @@
 pub mod ast;
-pub use ast::{Command, Axis, AstNode};
+pub use ast::{AstNode, Axis, Command};
 use pest_derive::*;
 
 use lib_graphics::Shine;
-use std::fs;
 use std::collections::HashMap;
 use std::default::Default;
+use std::fs;
 
 type SymbolTable<'a> = HashMap<&'a str, Vec<AstNode>>;
 #[derive(Debug)]
@@ -43,7 +43,6 @@ impl<'a> Default for ToDoList<'a> {
     }
 }
 
-
 #[derive(Parser)]
 #[grammar = "mdl.pest"]
 pub struct MDLParser;
@@ -77,19 +76,17 @@ impl MDLParser {
         let mut todo = ToDoList::default();
         for node in nodes {
             Self::analyze(node, &mut todo)?;
-
         }
         dbg!(&todo);
         Ok(())
     }
 
     fn analyze(node: &AstNode, todo: &mut ToDoList) -> Result<(), ParseError> {
-        if let AstNode::MdlCommand {command, args} = node {
+        if let AstNode::MdlCommand { command, args } = node {
             // TODO: Iterate through `args` when we eventually need to do a
             // post order traversal on the Ast
             // In which case, make the `node` argument mutable, then replace
             // each `expression` with its resulting value
-
 
             //todo.push_op(command, args);
             Ok(())
@@ -98,13 +95,12 @@ impl MDLParser {
             unreachable!()
         }
     }
-
 }
 
 #[cfg(test)]
 mod tests {
-    use std::path::PathBuf;
     use super::*;
+    use std::path::PathBuf;
 
     #[allow(dead_code)]
     fn get_mdl() -> String {

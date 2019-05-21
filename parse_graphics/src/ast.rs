@@ -1,6 +1,6 @@
-use pest::Parser;
 use pest::error::Error;
 use pest::iterators::Pair;
+use pest::Parser;
 use std::str::FromStr;
 
 use super::{MDLParser, Rule};
@@ -18,7 +18,7 @@ pub enum Command {
     Sphere,
     Torus,
     Line,
-    Constants
+    Constants,
 }
 
 #[derive(Clone, Debug)]
@@ -49,10 +49,7 @@ pub enum AstNode {
     Ident(String),
     Str(String),
     Axis(Axis),
-    MdlCommand {
-        command: Command,
-        args: Vec<AstNode>,
-    },
+    MdlCommand { command: Command, args: Vec<AstNode> },
 }
 #[derive(Debug)]
 pub struct AstIntoError;
@@ -60,7 +57,7 @@ pub struct AstIntoError;
 impl AstNode {
     pub fn is_expression(&self) -> bool {
         match *self {
-            AstNode::MdlCommand {..} => true,
+            AstNode::MdlCommand { .. } => true,
             _ => false,
         }
     }
@@ -89,68 +86,36 @@ fn node_from_statement(pair: Pair<Rule>) -> AstNode {
         Rule::statement => {
             node_from_statement(
                 // extract a match from the statement; never fails
-                pair.into_inner().next().unwrap()
+                pair.into_inner().next().unwrap(),
             )
         },
         // No args
-        Rule::push => AstNode::MdlCommand {
-            command: Command::Push,
-            args: vec![],
-        },
-        Rule::pop => AstNode::MdlCommand {
-            command: Command::Pop,
-            args: vec![],
-        },
-        Rule::display => AstNode::MdlCommand {
-            command: Command::Display,
-            args: vec![],
-        },
+        Rule::push => AstNode::MdlCommand { command: Command::Push, args: vec![] },
+        Rule::pop => AstNode::MdlCommand { command: Command::Pop, args: vec![] },
+        Rule::display => AstNode::MdlCommand { command: Command::Display, args: vec![] },
         // Has args
-        Rule::save => AstNode::MdlCommand {
-            command: Command::Save,
-            args: get_args(pair),
-        },
+        Rule::save => AstNode::MdlCommand { command: Command::Save, args: get_args(pair) },
         // Transformations
-        Rule::translate => AstNode::MdlCommand {
-            command: Command::Translate,
-            args: get_args(pair),
+        Rule::translate => {
+            AstNode::MdlCommand { command: Command::Translate, args: get_args(pair) }
         },
-        Rule::scale => AstNode::MdlCommand {
-            command: Command::Scale,
-            args: get_args(pair),
-        },
-        Rule::rotate => AstNode::MdlCommand {
-            command: Command::Rotate,
-            args: get_args(pair),
-        },
+        Rule::scale => AstNode::MdlCommand { command: Command::Scale, args: get_args(pair) },
+        Rule::rotate => AstNode::MdlCommand { command: Command::Rotate, args: get_args(pair) },
         // 3D objects
-        Rule::cuboid => AstNode::MdlCommand {
-            command: Command::Cuboid,
-            args: get_args(pair),
-        },
-        Rule::sphere => AstNode::MdlCommand {
-            command: Command::Sphere,
-            args: get_args(pair),
-        },
-        Rule::torus => AstNode::MdlCommand {
-            command: Command::Torus,
-            args: get_args(pair),
-        },
+        Rule::cuboid => AstNode::MdlCommand { command: Command::Cuboid, args: get_args(pair) },
+        Rule::sphere => AstNode::MdlCommand { command: Command::Sphere, args: get_args(pair) },
+        Rule::torus => AstNode::MdlCommand { command: Command::Torus, args: get_args(pair) },
         // others
-        Rule::line => AstNode::MdlCommand {
-            command: Command::Line,
-            args: get_args(pair),
-        },
-        Rule::constants => AstNode::MdlCommand {
-            command: Command::Constants,
-            args: get_args(pair),
+        Rule::line => AstNode::MdlCommand { command: Command::Line, args: get_args(pair) },
+        Rule::constants => {
+            AstNode::MdlCommand { command: Command::Constants, args: get_args(pair) }
         },
         // Primitives
-        Rule::float  => AstNode::Float(pair.as_str().parse::<f64>().unwrap()),
-        Rule::axis   => AstNode::Axis(pair.as_str().parse::<Axis>().unwrap()),
-        Rule::ident  => AstNode::Ident(pair.as_str().to_owned()),
+        Rule::float => AstNode::Float(pair.as_str().parse::<f64>().unwrap()),
+        Rule::axis => AstNode::Axis(pair.as_str().parse::<Axis>().unwrap()),
+        Rule::ident => AstNode::Ident(pair.as_str().to_owned()),
         Rule::string => AstNode::Str(pair.as_str().to_owned()),
-        _ => unimplemented!()
+        _ => unimplemented!(),
     }
 }
 
