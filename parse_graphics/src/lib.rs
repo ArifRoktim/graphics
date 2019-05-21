@@ -1,47 +1,10 @@
 pub mod ast;
+pub mod symtab;
+
 pub use ast::{AstNode, Axis, Command};
+pub use symtab::{Operation, ToDoList};
 use pest_derive::*;
-
-use lib_graphics::Shine;
-use std::collections::HashMap;
-use std::default::Default;
 use std::fs;
-
-type SymbolTable<'a> = HashMap<&'a str, Vec<AstNode>>;
-#[derive(Debug)]
-pub struct Operation {
-    pub command: Command,
-    pub args: Vec<AstNode>,
-    pub constants: Option<[Shine; 3]>,
-}
-impl Operation {
-    pub fn new(command: Command, args: Vec<AstNode>, constants: Option<[Shine; 3]>) -> Operation {
-        Operation { command, args, constants }
-    }
-}
-
-#[derive(Debug)]
-pub struct ToDoList<'a> {
-    pub ops: Vec<Operation>,
-    pub symbols: SymbolTable<'a>,
-}
-impl<'a> ToDoList<'a> {
-    pub fn push_op(
-        &mut self,
-        command: &Command,
-        args: Vec<AstNode>,
-        constants: Option<[Shine; 3]>,
-    ) {
-        self.ops.push(Operation::new(command.to_owned(), args, constants));
-    }
-}
-impl<'a> Default for ToDoList<'a> {
-    fn default() -> Self {
-        let ops = vec![];
-        let symbols: SymbolTable = HashMap::new();
-        ToDoList { ops, symbols }
-    }
-}
 
 #[derive(Parser)]
 #[grammar = "mdl.pest"]
@@ -82,19 +45,26 @@ impl MDLParser {
     }
 
     fn analyze(node: &AstNode, todo: &mut ToDoList) -> Result<(), ParseError> {
+        use Command::*;
         if let AstNode::MdlCommand { command, args } = node {
             // TODO: Iterate through `args` when we eventually need to do a
             // post order traversal on the Ast
             // In which case, make the `node` argument mutable, then replace
             // each `expression` with its resulting value
+            match command {
+                Push | Pop | Display => todo.push_op(command, vec![], None),
+                Save => todo.push_op(command, args.to_vec(), None),
+                _ => unimplemented!(),
+            }
 
-            //todo.push_op(command, args);
+
             Ok(())
         } else {
             // TODO: Change this when the Ast becomes more complex and has expressions
             unreachable!()
         }
     }
+
 }
 
 #[cfg(test)]
