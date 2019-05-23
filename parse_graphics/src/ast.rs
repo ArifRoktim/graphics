@@ -6,7 +6,7 @@ use std::str::FromStr;
 use super::{MDLParser, Rule};
 
 #[derive(Clone, Debug)]
-pub enum Command {
+pub enum ParseCommand {
     Push,
     Pop,
     Display,
@@ -21,7 +21,7 @@ pub enum Command {
     Constants,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Copy, Debug)]
 pub enum Axis {
     X,
     Y,
@@ -49,7 +49,7 @@ pub enum AstNode {
     Ident(String),
     Str(String),
     Axis(Axis),
-    MdlCommand { command: Command, args: Vec<AstNode> },
+    MdlCommand { command: ParseCommand, args: Vec<AstNode> },
 }
 #[derive(Debug)]
 pub struct AstIntoError;
@@ -90,25 +90,25 @@ fn node_from_statement(pair: Pair<Rule>) -> AstNode {
             )
         },
         // No args
-        Rule::push => AstNode::MdlCommand { command: Command::Push, args: vec![] },
-        Rule::pop => AstNode::MdlCommand { command: Command::Pop, args: vec![] },
-        Rule::display => AstNode::MdlCommand { command: Command::Display, args: vec![] },
+        Rule::push => AstNode::MdlCommand { command: ParseCommand::Push, args: vec![] },
+        Rule::pop => AstNode::MdlCommand { command: ParseCommand::Pop, args: vec![] },
+        Rule::display => AstNode::MdlCommand { command: ParseCommand::Display, args: vec![] },
         // Has args
-        Rule::save => AstNode::MdlCommand { command: Command::Save, args: get_args(pair) },
+        Rule::save => AstNode::MdlCommand { command: ParseCommand::Save, args: get_args(pair) },
         // Transformations
         Rule::translate => {
-            AstNode::MdlCommand { command: Command::Translate, args: get_args(pair) }
+            AstNode::MdlCommand { command: ParseCommand::Translate, args: get_args(pair) }
         },
-        Rule::scale => AstNode::MdlCommand { command: Command::Scale, args: get_args(pair) },
-        Rule::rotate => AstNode::MdlCommand { command: Command::Rotate, args: get_args(pair) },
+        Rule::scale => AstNode::MdlCommand { command: ParseCommand::Scale, args: get_args(pair) },
+        Rule::rotate => AstNode::MdlCommand { command: ParseCommand::Rotate, args: get_args(pair) },
         // 3D objects
-        Rule::cuboid => AstNode::MdlCommand { command: Command::Cuboid, args: get_args(pair) },
-        Rule::sphere => AstNode::MdlCommand { command: Command::Sphere, args: get_args(pair) },
-        Rule::torus => AstNode::MdlCommand { command: Command::Torus, args: get_args(pair) },
+        Rule::cuboid => AstNode::MdlCommand { command: ParseCommand::Cuboid, args: get_args(pair) },
+        Rule::sphere => AstNode::MdlCommand { command: ParseCommand::Sphere, args: get_args(pair) },
+        Rule::torus => AstNode::MdlCommand { command: ParseCommand::Torus, args: get_args(pair) },
         // others
-        Rule::line => AstNode::MdlCommand { command: Command::Line, args: get_args(pair) },
+        Rule::line => AstNode::MdlCommand { command: ParseCommand::Line, args: get_args(pair) },
         Rule::constants => {
-            AstNode::MdlCommand { command: Command::Constants, args: get_args(pair) }
+            AstNode::MdlCommand { command: ParseCommand::Constants, args: get_args(pair) }
         },
         // Primitives
         Rule::float => AstNode::Float(pair.as_str().parse::<f64>().unwrap()),

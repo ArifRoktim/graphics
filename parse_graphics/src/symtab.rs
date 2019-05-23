@@ -1,6 +1,6 @@
 use lib_graphics::Shine;
 use std::collections::HashMap;
-use super::{AstNode, Command};
+use super::{Axis, ParseError};
 
 #[derive(Debug)]
 pub enum Symbol {
@@ -9,17 +9,34 @@ pub enum Symbol {
     //Light, etc..
 }
 
+#[derive(Clone, Debug)]
+pub struct NOOP;
+
+#[derive(Clone, Debug)]
+pub enum Command {
+    Push(),
+    Pop(),
+    Display(),
+    Save(String),
+    Translate(f64, f64, f64),
+    Scale(f64, f64, f64),
+    Rotate(Axis, f64),
+    Cuboid(f64, f64, f64, f64, f64, f64),
+    Sphere(f64, f64, f64, f64),
+    Torus(f64, f64, f64, f64, f64),
+    Line(f64, f64, f64, f64, f64, f64),
+    Constants(NOOP),
+}
+
 type SymbolTable<'a> = HashMap<&'a str, Symbol>;
 #[derive(Debug)]
 pub struct Operation<'a> {
     pub command: Command,
-    // TODO: Instead, borrow a slice of `AstNode`s
-    pub args: Vec<AstNode>,
-    pub sym_name: Option<&'a str>,
+    pub light_const: Option<&'a str>,
 }
 impl<'a> Operation<'a> {
-    pub fn new(command: Command, args: Vec<AstNode>, sym_name: Option<&str>) -> Operation {
-        Operation { command, args, sym_name }
+    pub fn new(command: Command, light_const: Option<&str>) -> Operation {
+        Operation { command, light_const }
     }
 }
 
@@ -31,12 +48,13 @@ pub struct ToDoList<'a> {
 impl<'a> ToDoList<'a> {
     pub fn push_op(
         &mut self,
-        command: &Command,
-        args: Vec<AstNode>,
-        sym_name: Option<&'a str>,
-    ) {
-        let op = Operation::new(command.to_owned(), args, sym_name);
+        command: Command,
+        light_const: Option<&'a str>,
+    ) -> Result<(), ParseError>
+    {
+        let op = Operation::new(command, light_const);
         self.ops.push(op);
+        Ok(())
     }
 
     pub fn add_sym(&mut self, k: &'a str, v: Symbol) {

@@ -1,8 +1,8 @@
 pub mod ast;
 pub mod symtab;
 
-pub use ast::{AstNode, Axis, Command};
-pub use symtab::{Operation, ToDoList};
+pub use ast::{AstNode, Axis, ParseCommand};
+pub use symtab::{Command, Operation, ToDoList};
 use pest_derive::*;
 use std::fs;
 
@@ -44,26 +44,67 @@ fn analyze_nodes(nodes: &[AstNode]) -> Result<ToDoList, ParseError> {
 }
 
 fn analyze(node: &AstNode, todo: &mut ToDoList) -> Result<(), ParseError> {
-    use Command::*;
+    use AstNode as Node;
+    use Command as Cmd;
+    use ParseCommand as PCmd;
     if let AstNode::MdlCommand { command, args } = node {
         // TODO: Iterate through `args` when we eventually need to do a
         // post order traversal on the Ast
         // In which case, make the `node` argument mutable, then replace
         // each `expression` with its resulting value
         match command {
-            Push | Pop | Display => todo.push_op(command, vec![], None),
-            Save => todo.push_op(command, args.to_vec(), None),
-            // FIXME: Can take a knob
-            Translate | Scale => {
-                let args = args[..3].to_vec();
-                todo.push_op(command, args, None);
-                //dbg!(&args);
-            }
+            PCmd::Push => todo.push_op(Cmd::Push(), None),
+            PCmd::Pop => todo.push_op(Cmd::Pop(), None),
+            PCmd::Display => todo.push_op(Cmd::Display(), None),
+            PCmd::Save => {
+                if let Node::Str(file) = &args[0] {
+                    todo.push_op(Cmd::Save(file.to_owned()), None)
+                } else {
+                    Err(ParseError::SemanticError)
+                }
+            },
+            //// FIXME: Can take a knob
+            PCmd::Translate => {
+                let (x, y, z) = match args[..=3] {
+                    [Node::Float(x), Node::Float(y), Node::Float(z)] => {
+                        Ok((x, y, z))
+                    },
+                    _ => Err(ParseError::SemanticError)
+                }?;
+                todo.push_op(Cmd::Translate(x, y, z), None)
+            },
+            PCmd::Scale => {
+                let (x, y, z) = match args[..=3] {
+                    [Node::Float(x), Node::Float(y), Node::Float(z)] => {
+                        Ok((x, y, z))
+                    },
+                    _ => Err(ParseError::SemanticError)
+                }?;
+                todo.push_op(Cmd::Scale(x, y, z), None)
+            },
+            PCmd::Rotate => {
+                match *args.as_slice() {
+                    [Node::Axis(axis), Node::Float(degrees)] => {
+                        todo.push_op(Cmd::Rotate(axis, degrees), None)
+                    },
+                    _ => Err(ParseError::SemanticError)
+                }
+            },
+            // FIXME: Can take a coordinate system
+            //PCmd::Cuboid => {
+            //    //match *args.as_slice() {
+
+            //    //}
+            //    unimplemented!()
+            //}
+            //Translate | Scale => {
+            //    let args = args[..3].to_vec();
+            //    todo.push_op(command, args, None);
+            //    //dbg!(&args);
+            //}
             _ => unimplemented!(),
         }
 
-
-        Ok(())
     } else {
         // TODO: Change this when the Ast becomes more complex and has expressions
         unreachable!()
@@ -90,6 +131,9 @@ push
 pop
 save foo.bar
 move 2 5 1
+scale 1 2 3
+rotate x 20
+rotate z -12
 ";
         let nodes = ast::parse(&text).expect("Failed while performing parsing!");
         //dbg!(&nodes);
@@ -101,8 +145,8 @@ move 2 5 1
     #[test]
     fn mdl_analyze() -> Result<(), ParseError> {
         let nodes = ast::parse(&get_mdl()).unwrap();
-        dbg!(&nodes);
-        let todo = analyze_nodes(&nodes)?;
+        //dbg!(&nodes);
+        let todo = analyze_nodes(&nodes);
         dbg!(&todo);
         Ok(())
     }
