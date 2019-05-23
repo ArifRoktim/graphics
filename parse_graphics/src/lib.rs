@@ -28,11 +28,10 @@ impl From<ast::ParseAxisError> for ParseError {
     }
 }
 
-pub fn file(filename: &str) -> Result<(), ParseError> {
+pub fn file(filename: &str) -> Result<ToDoList, ParseError> {
     let file = fs::read_to_string(filename).expect("Error reading file!");
     let nodes = ast::parse(&file).expect("Failed while performing parsing!");
-    analyze_nodes(&nodes)?;
-    Ok(())
+    analyze_nodes(&nodes)
 }
 
 fn analyze_nodes(nodes: &[AstNode]) -> Result<ToDoList, ParseError> {
