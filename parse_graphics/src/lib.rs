@@ -2,10 +2,10 @@ pub mod ast;
 pub mod symtab;
 
 pub use ast::{AstNode, Axis, ParseCommand};
-pub use symtab::{Command, Operation, NOOP, Symbol, ToDoList};
 use lib_graphics::Shine;
 use pest_derive::*;
 use std::fs;
+pub use symtab::{Command, Operation, Symbol, ToDoList, NOOP};
 
 #[derive(Parser)]
 #[grammar = "mdl.pest"]
@@ -69,10 +69,8 @@ fn analyze(node: &AstNode, todo: &mut ToDoList) -> Result<(), ParseError> {
             //// FIXME: Can take a knob
             PCmd::Translate | PCmd::Scale => {
                 let (x, y, z) = match args[..3] {
-                    [Float(x), Float(y), Float(z)] => {
-                        Ok((x, y, z))
-                    },
-                    _ => Err(ParseError::SemanticError)
+                    [Float(x), Float(y), Float(z)] => Ok((x, y, z)),
+                    _ => Err(ParseError::SemanticError),
                 }?;
                 if let PCmd::Translate = command {
                     todo.push_op(Cmd::Translate(x, y, z), None)
@@ -83,10 +81,8 @@ fn analyze(node: &AstNode, todo: &mut ToDoList) -> Result<(), ParseError> {
 
             PCmd::Rotate => {
                 let (axis, degrees) = match args[..2] {
-                    [Axis(axis), Float(degrees)] => {
-                        Ok((axis, degrees))
-                    },
-                    _ => Err(ParseError::SemanticError)
+                    [Axis(axis), Float(degrees)] => Ok((axis, degrees)),
+                    _ => Err(ParseError::SemanticError),
                 }?;
                 todo.push_op(Cmd::Rotate(axis, degrees), None)
             },
@@ -102,8 +98,8 @@ fn analyze(node: &AstNode, todo: &mut ToDoList) -> Result<(), ParseError> {
                 let (x, y, z, h, w, d) = match args[start..end] {
                     [Float(x), Float(y), Float(z), Float(h), Float(w), Float(d)] => {
                         Ok((x, y, z, h, w, d))
-                    }
-                    _ => Err(ParseError::SemanticError)
+                    },
+                    _ => Err(ParseError::SemanticError),
                 }?;
                 todo.push_op(Cmd::Cuboid(x, y, z, h, w, d), lighting)
             },
@@ -117,10 +113,8 @@ fn analyze(node: &AstNode, todo: &mut ToDoList) -> Result<(), ParseError> {
                 };
                 let end = start + 4;
                 let (x, y, z, r) = match args[start..end] {
-                    [Float(x), Float(y), Float(z), Float(r)] => {
-                        Ok((x, y, z, r))
-                    }
-                    _ => Err(ParseError::SemanticError)
+                    [Float(x), Float(y), Float(z), Float(r)] => Ok((x, y, z, r)),
+                    _ => Err(ParseError::SemanticError),
                 }?;
                 todo.push_op(Cmd::Sphere(x, y, z, r), lighting)
             },
@@ -134,10 +128,8 @@ fn analyze(node: &AstNode, todo: &mut ToDoList) -> Result<(), ParseError> {
                 };
                 let end = start + 5;
                 let (x, y, z, r0, r1) = match args[start..end] {
-                    [Float(x), Float(y), Float(z), Float(r0), Float(r1)] => {
-                        Ok((x, y, z, r0, r1))
-                    }
-                    _ => Err(ParseError::SemanticError)
+                    [Float(x), Float(y), Float(z), Float(r0), Float(r1)] => Ok((x, y, z, r0, r1)),
+                    _ => Err(ParseError::SemanticError),
                 }?;
                 todo.push_op(Cmd::Torus(x, y, z, r0, r1), lighting)
             },
@@ -147,7 +139,7 @@ fn analyze(node: &AstNode, todo: &mut ToDoList) -> Result<(), ParseError> {
                     [Float(x0), Float(y0), Float(z0), Float(x1), Float(y1), Float(z1)] => {
                         Ok((x0, y0, z0, x1, y1, z1))
                     },
-                    _ => Err(ParseError::SemanticError)
+                    _ => Err(ParseError::SemanticError),
                 }?;
                 todo.push_op(Cmd::Line(x0, y0, z0, x1, y1, z1), None)
             },
@@ -155,35 +147,28 @@ fn analyze(node: &AstNode, todo: &mut ToDoList) -> Result<(), ParseError> {
             PCmd::Constants => {
                 let name = match &args[0] {
                     Ident(name) => Ok(name.to_owned()),
-                    _ => Err(ParseError::SemanticError)
+                    _ => Err(ParseError::SemanticError),
                 }?;
                 // Ambient (a[rgb]), diffuse (d[rgb]) and specular (s[rgb])
                 // lighting constants
                 let (ar, dr, sr, ag, dg, sg, ab, db, sb) = match args[1..10] {
-                    [
-                        Float(ar), Float(dr), Float(sr),
-                        Float(ag), Float(dg), Float(sg),
-                        Float(ab), Float(db), Float(sb)
-                    ] => {
+                    [Float(ar), Float(dr), Float(sr), Float(ag), Float(dg), Float(sg), Float(ab), Float(db), Float(sb)] => {
                         Ok((ar, dr, sr, ag, dg, sg, ab, db, sb))
-                    }
-                    _ => Err(ParseError::SemanticError)
+                    },
+                    _ => Err(ParseError::SemanticError),
                 }?;
                 let ambient = Shine::new(ar, ag, ab);
                 let diffuse = Shine::new(dr, dg, db);
                 let specular = Shine::new(sr, sg, sb);
                 let lighting = Symbol::Constant(ambient, diffuse, specular);
                 todo.add_sym(name, lighting)
-            }
-
+            },
         }
-
     } else {
         // TODO: Change this when the Ast becomes more complex and has expressions
         unreachable!()
     }
 }
-
 
 #[cfg(test)]
 mod tests {

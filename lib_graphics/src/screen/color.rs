@@ -115,8 +115,8 @@ impl Shine {
     }
 
     pub fn from_triple(s: &[f64; 9]) -> [Shine; 3] {
-        let ambient =    Shine::new(s[0], s[3], s[6]);
-        let diffuse =    Shine::new(s[1], s[4], s[7]);
+        let ambient = Shine::new(s[0], s[3], s[6]);
+        let diffuse = Shine::new(s[1], s[4], s[7]);
         let reflective = Shine::new(s[2], s[5], s[8]);
         [ambient, diffuse, reflective]
     }

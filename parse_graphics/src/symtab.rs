@@ -1,6 +1,6 @@
+use super::{Axis, ParseError};
 use lib_graphics::Shine;
 use std::collections::HashMap;
-use super::{Axis, ParseError};
 
 #[derive(Debug)]
 pub enum Symbol {
@@ -50,8 +50,7 @@ impl ToDoList {
         &mut self,
         command: Command,
         light_const: Option<String>,
-    ) -> Result<(), ParseError>
-    {
+    ) -> Result<(), ParseError> {
         let op = Operation::new(command, light_const);
         self.ops.push(op);
         Ok(())
