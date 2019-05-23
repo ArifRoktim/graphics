@@ -28,28 +28,28 @@ pub enum Command {
     Constants(NOOP),
 }
 
-type SymbolTable<'a> = HashMap<&'a str, Symbol>;
+type SymbolTable = HashMap<String, Symbol>;
 #[derive(Debug)]
-pub struct Operation<'a> {
+pub struct Operation {
     pub command: Command,
-    pub light_const: Option<&'a str>,
+    pub light_const: Option<String>,
 }
-impl<'a> Operation<'a> {
-    pub fn new(command: Command, light_const: Option<&str>) -> Operation {
+impl Operation {
+    pub fn new(command: Command, light_const: Option<String>) -> Operation {
         Operation { command, light_const }
     }
 }
 
 #[derive(Debug)]
-pub struct ToDoList<'a> {
-    pub ops: Vec<Operation<'a>>,
-    pub symbols: SymbolTable<'a>,
+pub struct ToDoList {
+    pub ops: Vec<Operation>,
+    pub symbols: SymbolTable,
 }
-impl<'a> ToDoList<'a> {
+impl ToDoList {
     pub fn push_op(
         &mut self,
         command: Command,
-        light_const: Option<&'a str>,
+        light_const: Option<String>,
     ) -> Result<(), ParseError>
     {
         let op = Operation::new(command, light_const);
@@ -57,11 +57,12 @@ impl<'a> ToDoList<'a> {
         Ok(())
     }
 
-    pub fn add_sym(&mut self, k: &'a str, v: Symbol) {
+    pub fn add_sym(&mut self, k: String, v: Symbol) -> Result<(), ParseError> {
         self.symbols.insert(k, v);
+        Ok(())
     }
 }
-impl<'a> Default for ToDoList<'a> {
+impl Default for ToDoList {
     fn default() -> Self {
         let ops = vec![];
         let symbols: SymbolTable = HashMap::new();

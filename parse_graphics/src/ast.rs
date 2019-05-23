@@ -54,15 +54,6 @@ pub enum AstNode {
 #[derive(Debug)]
 pub struct AstIntoError;
 
-impl AstNode {
-    pub fn is_expression(&self) -> bool {
-        match *self {
-            AstNode::MdlCommand { .. } => true,
-            _ => false,
-        }
-    }
-}
-
 pub fn parse(source: &str) -> Result<Vec<AstNode>, Error<Rule>> {
     let mut ast: Vec<AstNode> = vec![];
 
