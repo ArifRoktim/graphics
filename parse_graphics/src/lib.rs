@@ -34,13 +34,13 @@ pub fn file(filename: &str) -> Result<(), ParseError> {
     Ok(())
 }
 
-fn analyze_nodes(nodes: &[AstNode]) -> Result<(), ParseError> {
+fn analyze_nodes(nodes: &[AstNode]) -> Result<ToDoList, ParseError> {
     let mut todo = ToDoList::default();
     for node in nodes {
         analyze(node, &mut todo)?;
     }
-    dbg!(&todo);
-    Ok(())
+    //dbg!(&todo);
+    Ok(todo)
 }
 
 fn analyze(node: &AstNode, todo: &mut ToDoList) -> Result<(), ParseError> {
@@ -53,6 +53,12 @@ fn analyze(node: &AstNode, todo: &mut ToDoList) -> Result<(), ParseError> {
         match command {
             Push | Pop | Display => todo.push_op(command, vec![], None),
             Save => todo.push_op(command, args.to_vec(), None),
+            // FIXME: Can take a knob
+            Translate | Scale => {
+                let args = args[..3].to_vec();
+                todo.push_op(command, args, None);
+                //dbg!(&args);
+            }
             _ => unimplemented!(),
         }
 
@@ -83,10 +89,12 @@ mod tests {
 push
 pop
 save foo.bar
+move 2 5 1
 ";
         let nodes = ast::parse(&text).expect("Failed while performing parsing!");
-        dbg!(&nodes);
-        analyze_nodes(&nodes[..])?;
+        //dbg!(&nodes);
+        let todo = analyze_nodes(&nodes)?;
+        dbg!(&todo);
         Ok(())
     }
 
@@ -94,7 +102,8 @@ save foo.bar
     fn mdl_analyze() -> Result<(), ParseError> {
         let nodes = ast::parse(&get_mdl()).unwrap();
         dbg!(&nodes);
-        analyze_nodes(&nodes)?;
+        let todo = analyze_nodes(&nodes)?;
+        dbg!(&todo);
         Ok(())
     }
 }
