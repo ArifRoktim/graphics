@@ -1,5 +1,5 @@
 use super::{Axis, ParseError};
-use lib_graphics::{draw, matrix::MatrixMult, Matrix, Reflection, Screen, Shine, SquareMatrix};
+use lib_graphics::{draw, matrix::MatrixMult, Matrix, Reflection, Screen, SquareMatrix};
 use lib_graphics::{LINE_COLOR, STEPS_3D};
 use std::collections::HashMap;
 
@@ -62,6 +62,7 @@ impl ToDoList {
         Ok(())
     }
 
+    #[allow(clippy::many_single_char_names)]
     pub fn run(self, screen: &mut Screen, cstack: &mut Vec<SquareMatrix>) {
         use Command::*;
         //dbg!(&self);
