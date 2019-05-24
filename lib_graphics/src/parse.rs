@@ -41,7 +41,7 @@ pub fn parse_file(filename: &str, screen: &mut Screen, cstack: &mut Vec<SquareMa
             "move" => translate(cstack, iter.next()),
             "rotate" => rotate(cstack, iter.next()),
             "save" => save(screen, iter.next()),
-            "display" => display(screen),
+            "display" => screen.display(),
             "clear" => screen.clear(),
             "push" => {
                 // push a copy of the last item
@@ -253,19 +253,4 @@ fn save(screen: &Screen, args: Option<&str>) {
     let err_msg = "Save requires a file name!";
     let args = args.expect(err_msg);
     screen.write(args).unwrap();
-}
-
-fn display(screen: &Screen) {
-    // TODO: If `display` command doesn't exist/work, instead save the file and print its name
-    if let Ok(mut proc) = Command::new("display").stdin(Stdio::piped()).spawn() {
-        #[rustfmt::skip]
-        proc.stdin
-            .as_mut()
-            .unwrap()
-            .write_all(screen.to_string().as_bytes())
-            .unwrap();
-        proc.wait().unwrap();
-    } else {
-        eprintln!("Error running `display` command! Is Image Magick installed?");
-    }
 }

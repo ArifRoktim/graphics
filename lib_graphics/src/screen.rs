@@ -6,7 +6,7 @@ use std::fmt;
 use std::fs::{DirBuilder, File};
 use std::io::{self, prelude::*};
 use std::path::{Path, PathBuf};
-use std::process::Command;
+use std::process::{Command, Stdio};
 
 pub mod color;
 pub use color::{consts, Color, Shine};
@@ -63,6 +63,21 @@ impl Screen {
         }
 
         Ok(())
+    }
+
+    pub fn display(&self) {
+        // TODO: If `display` command doesn't exist/work, instead save the file and print its name
+        if let Ok(mut proc) = Command::new("display").stdin(Stdio::piped()).spawn() {
+            #[rustfmt::skip]
+            proc.stdin
+                .as_mut()
+                .unwrap()
+                .write_all(self.to_string().as_bytes())
+                .unwrap();
+            proc.wait().unwrap();
+        } else {
+            eprintln!("Error running `display` command! Is Image Magick installed?");
+        }
     }
 
     pub fn clear(&mut self) {
