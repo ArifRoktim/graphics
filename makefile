@@ -1,5 +1,5 @@
 # path to the script file to run
-S := scripts/lighting
+S := scripts/face.mdl
 
 .PHONY: all dev debug clear clean
 

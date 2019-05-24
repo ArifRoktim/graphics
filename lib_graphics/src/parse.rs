@@ -1,13 +1,9 @@
 use crate::draw::{self, Curve};
 use crate::matrix::{Matrix, MatrixMult, SquareMatrix};
-use crate::screen::{consts, Color, Screen};
-use crate::{STEPS_2D, STEPS_3D};
+use crate::screen::Screen;
+use crate::{LINE_COLOR, STEPS_2D, STEPS_3D};
 
 use std::fs;
-use std::io::prelude::*;
-use std::process::{Command, Stdio};
-
-const FOREGROUND: Color = consts::GREEN;
 
 pub fn parse_file(filename: &str, screen: &mut Screen, cstack: &mut Vec<SquareMatrix>) {
     let contents = match fs::read_to_string(filename) {
@@ -74,7 +70,7 @@ fn draw_line(edges: &mut Matrix, stack: &[SquareMatrix], screen: &mut Screen, ar
         [x0, y0, z0, x1, y1, z1] => {
             draw::add_edge(edges, x0, y0, z0, x1, y1, z1);
             stack.last().unwrap_or_default().mult(edges);
-            screen.draw_lines(edges, FOREGROUND);
+            screen.draw_lines(edges, LINE_COLOR);
         },
         _ => panic!(err_msg),
     }
@@ -92,7 +88,7 @@ fn circle(edges: &mut Matrix, stack: &[SquareMatrix], screen: &mut Screen, args:
         [cx, cy, cz, r] => {
             draw::add_circle(edges, cx, cy, cz, r, STEPS_2D);
             stack.last().unwrap_or_default().mult(edges);
-            screen.draw_lines(edges, FOREGROUND);
+            screen.draw_lines(edges, LINE_COLOR);
         },
         _ => panic!(err_msg),
     }
@@ -111,7 +107,7 @@ fn hermite(edges: &mut Matrix, stack: &[SquareMatrix], screen: &mut Screen, args
             let curve = Curve::Hermite { p0x, p0y, p1x, p1y, r0x, r0y, r1x, r1y };
             draw::add_curve(edges, &curve, STEPS_2D);
             stack.last().unwrap_or_default().mult(edges);
-            screen.draw_lines(edges, FOREGROUND);
+            screen.draw_lines(edges, LINE_COLOR);
         },
         _ => panic!(err_msg),
     }
@@ -130,7 +126,7 @@ fn bezier(edges: &mut Matrix, stack: &[SquareMatrix], screen: &mut Screen, args:
             let curve = Curve::Bezier { p0x, p0y, p1x, p1y, p2x, p2y, p3x, p3y };
             draw::add_curve(edges, &curve, STEPS_2D);
             stack.last().unwrap_or_default().mult(edges);
-            screen.draw_lines(edges, FOREGROUND);
+            screen.draw_lines(edges, LINE_COLOR);
         },
         _ => panic!(err_msg),
     }
@@ -153,7 +149,7 @@ fn draw_box(
         [x, y, z, width, height, depth] => {
             draw::add_box(polygons, x, y, z, width, height, depth);
             stack.last().unwrap_or_default().mult(polygons);
-            screen.draw_polygons(polygons, FOREGROUND);
+            screen.draw_polygons(polygons, LINE_COLOR);
         },
         _ => panic!(err_msg),
     }
@@ -171,7 +167,7 @@ fn sphere(polygons: &mut Matrix, stack: &[SquareMatrix], screen: &mut Screen, ar
         [cx, cy, cz, r] => {
             draw::add_sphere(polygons, cx, cy, cz, r, STEPS_3D);
             stack.last().unwrap_or_default().mult(polygons);
-            screen.draw_polygons(polygons, FOREGROUND);
+            screen.draw_polygons(polygons, LINE_COLOR);
         },
         _ => panic!(err_msg),
     }
@@ -189,7 +185,7 @@ fn torus(polygons: &mut Matrix, stack: &[SquareMatrix], screen: &mut Screen, arg
         [cx, cy, cz, minor_r, major_r] => {
             draw::add_torus(polygons, cx, cy, cz, minor_r, major_r, STEPS_3D);
             stack.last().unwrap_or_default().mult(polygons);
-            screen.draw_polygons(polygons, FOREGROUND);
+            screen.draw_polygons(polygons, LINE_COLOR);
         },
         _ => panic!(err_msg),
     }

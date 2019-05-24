@@ -1,10 +1,11 @@
 use super::{Axis, ParseError};
-use lib_graphics::Shine;
+use lib_graphics::{draw, matrix::MatrixMult, Matrix, Reflection, Screen, Shine, SquareMatrix};
+use lib_graphics::{LINE_COLOR, STEPS_3D};
 use std::collections::HashMap;
 
 #[derive(Debug)]
 pub enum Symbol {
-    Constant(Shine, Shine, Shine),
+    Constant(Reflection),
     //Knob,
     //Light, etc..
 }
@@ -60,7 +61,103 @@ impl ToDoList {
         self.symbols.insert(k, v);
         Ok(())
     }
+
+    pub fn run(self, screen: &mut Screen, cstack: &mut Vec<SquareMatrix>) {
+        use Command::*;
+        //dbg!(&self);
+        // Temporary edge/polygon matrix
+        let mut temp = Matrix::new(0);
+
+        for operation in &self.ops {
+            //dbg!(&operation);
+            // clear matrix for every operation
+            temp.clear();
+            let command = &operation.command;
+            // From a Option<String>, get the symbol with that name from the hashmap,
+            // and extract the reflection from the Constant
+            let light_const = operation.light_const
+                .as_ref()
+                .and_then(|s| self.symbols.get(s))
+                .map(|s|
+                     match s {
+                         Symbol::Constant(r) => r,
+                     }
+                );
+
+            match command {
+                Push() => {
+                    // push a copy of the last item
+                    let copy = cstack.last().unwrap_or_default().clone();
+                    cstack.push(copy);
+                },
+
+                Pop() => {
+                    cstack.pop();
+                    // Make sure that the stack is never empty
+                    if cstack.is_empty() {
+                        cstack.push(SquareMatrix::default());
+                    }
+                },
+
+                Display() => screen.display(),
+                Save(filename) => screen.write(&filename).unwrap(),
+
+                &Translate(x, y, z) => {
+                    let mut tr = SquareMatrix::new_translate(x, y, z);
+                    tr.apply_rcs(cstack);
+                    cstack.pop();
+                    cstack.push(tr);
+                },
+
+                &Scale(x, y, z) => {
+                    let mut tr = SquareMatrix::new_scale(x, y, z);
+                    tr.apply_rcs(cstack);
+                    cstack.pop();
+                    cstack.push(tr);
+                },
+
+                &Rotate(axis, degrees) => {
+                    let mut tr = match axis {
+                        Axis::X => SquareMatrix::new_rot_x(degrees),
+                        Axis::Y => SquareMatrix::new_rot_y(degrees),
+                        Axis::Z => SquareMatrix::new_rot_z(degrees),
+                    };
+                    tr.apply_rcs(cstack);
+                    cstack.pop();
+                    cstack.push(tr);
+                },
+
+                &Cuboid(x, y, z, h, w, d) => {
+                    draw::add_box(&mut temp, x, y, z, w, h, d);
+                    temp.apply_rcs(cstack);
+                    screen.draw_polygons(&temp, light_const);
+                },
+
+                &Sphere(x, y, z, r) => {
+                    draw::add_sphere(&mut temp, x, y, z, r, STEPS_3D);
+                    temp.apply_rcs(cstack);
+                    screen.draw_polygons(&temp, light_const);
+                }
+
+                &Torus(x, y, z, r0, r1) => {
+                    draw::add_torus(&mut temp, x, y, z, r0, r1, STEPS_3D);
+                    temp.apply_rcs(cstack);
+                    screen.draw_polygons(&temp, light_const);
+                }
+
+                &Line(x0, y0, z0, x1, y1, z1) => {
+                    draw::add_edge(&mut temp, x0, y0, z0, x1, y1, z1);
+                    temp.apply_rcs(cstack);
+                    screen.draw_lines(&temp, LINE_COLOR);
+                }
+
+                Constants(_) => {},
+
+            }
+        }
+    }
 }
+
 impl Default for ToDoList {
     fn default() -> Self {
         let ops = vec![];

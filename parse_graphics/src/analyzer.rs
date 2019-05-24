@@ -1,4 +1,4 @@
-use lib_graphics::Shine;
+use lib_graphics::{Reflection, Shine};
 use std::fs;
 
 use super::ast;
@@ -150,10 +150,12 @@ fn analyze(node: &AstNode, todo: &mut ToDoList) -> Result<(), ParseError> {
                     },
                     _ => Err(ParseError::SemanticError),
                 }?;
-                let ambient = Shine::new(ar, ag, ab);
-                let diffuse = Shine::new(dr, dg, db);
-                let specular = Shine::new(sr, sg, sb);
-                let lighting = Symbol::Constant(ambient, diffuse, specular);
+                let reflection = Reflection {
+                    ambient: Shine::new(ar, ag, ab),
+                    diffuse: Shine::new(dr, dg, db),
+                    specular: Shine::new(sr, sg, sb),
+                };
+                let lighting = Symbol::Constant(reflection);
                 todo.add_sym(name, lighting)
             },
         }

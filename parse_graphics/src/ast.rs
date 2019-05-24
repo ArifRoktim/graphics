@@ -21,6 +21,7 @@ pub enum ParseCommand {
     Constants,
 }
 
+// TODO: Move this enum to lib_graphics
 #[derive(Clone, Copy, Debug)]
 pub enum Axis {
     X,

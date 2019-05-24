@@ -9,7 +9,7 @@ use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 
 pub mod color;
-pub use color::{consts, Color, Shine};
+pub use color::{consts, Color, Reflection, Shine};
 
 type Pixel = (Color, f64);
 
@@ -213,14 +213,14 @@ impl Screen {
         }
     }
 
-    pub fn draw_polygons(&mut self, polygons: &Matrix, _c: Color) {
+    pub fn draw_polygons(&mut self, polygons: &Matrix, shine: Option<&Reflection>) {
         // Iterate over the edge list 3 points at a time
         for edge in polygons.m.chunks_exact(3) {
             // Get normal vector for backface culling
             let normal = Vector::calculate_normal(edge);
 
             if normal.z > 0.0 {
-                let c = Shine::get_shine(&normal);
+                let c = Shine::get_shine(&normal, shine);
                 self.scanline_convert(edge, c);
             }
         }

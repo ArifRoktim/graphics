@@ -55,6 +55,7 @@ name = "graphics"
 version = "0.1.0"
 dependencies = [
  "lib_graphics 0.1.0",
+ "parse_graphics 0.1.0",
 ]
 
 [[package]]

@@ -6,3 +6,4 @@ edition = "2018"
 
 [dependencies]
 lib_graphics = { path = "../lib_graphics" }
+parse_graphics = { path = "../parse_graphics" }

@@ -1,4 +1,4 @@
-use lib_graphics::{parse, Screen, IDENTITY};
+use lib_graphics::{Screen, IDENTITY};
 use std::{env, process};
 
 fn main() {
@@ -12,5 +12,13 @@ fn main() {
     let mut screen = Screen::default();
     let mut cstack = vec![IDENTITY];
 
-    parse::parse_file(filename, &mut screen, &mut cstack);
+    let todo = parse_graphics::file(filename);
+    match todo {
+        Ok(list) => {
+            //dbg!(&list);
+            list.run(&mut screen, &mut cstack);
+        }
+        Err(err) => panic!(err)
+    }
+    //parse::parse_file(filename, &mut screen, &mut cstack);
 }
