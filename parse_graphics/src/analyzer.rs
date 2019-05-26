@@ -173,8 +173,8 @@ mod tests {
     #[allow(dead_code)]
     fn get_mdl() -> String {
         let mut mdl_file = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-        mdl_file.push("tests/face.mdl");
-        fs::read_to_string(&mdl_file).expect("face.mdl missing!")
+        mdl_file.push("tests/debug.mdl");
+        fs::read_to_string(&mdl_file).expect("debug.mdl missing!")
     }
 
     #[test]
