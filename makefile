@@ -1,5 +1,5 @@
 # path to the script file to run
-S := scripts/face.mdl
+S := scripts/simple_anim.mdl
 
 .PHONY: all dev debug clear clean
 
