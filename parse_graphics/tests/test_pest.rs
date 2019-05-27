@@ -36,6 +36,7 @@ fn parse_float() {
 
     assert_eq!("1", as_str(MDLParser::parse(Rule::float, "1")));
     assert_eq!("-1", as_str(MDLParser::parse(Rule::float, "-1")));
+    assert_eq!("123", as_str(MDLParser::parse(Rule::float, "123")));
 
     assert_eq!("1.", as_str(MDLParser::parse(Rule::float, "1.")));
     assert_eq!("-1.", as_str(MDLParser::parse(Rule::float, "-1.")));

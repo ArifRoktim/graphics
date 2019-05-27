@@ -27,6 +27,9 @@ pub enum Command {
     Torus(f64, f64, f64, f64, f64),
     Line(f64, f64, f64, f64, f64, f64),
     Constants(NOOP),
+    Frames(u32),
+    Basename(String),
+    Vary(String, u32, u32, f64, f64),
 }
 
 type SymbolTable = HashMap<String, Symbol>;
@@ -34,10 +37,11 @@ type SymbolTable = HashMap<String, Symbol>;
 pub struct Operation {
     pub command: Command,
     pub light_const: Option<String>,
+    pub knob: Option<String>,
 }
 impl Operation {
-    pub fn new(command: Command, light_const: Option<String>) -> Operation {
-        Operation { command, light_const }
+    pub fn new(command: Command, light_const: Option<String>, knob: Option<String>) -> Operation {
+        Operation { command, light_const, knob }
     }
 }
 
@@ -51,8 +55,9 @@ impl ToDoList {
         &mut self,
         command: Command,
         light_const: Option<String>,
+        knob: Option<String>,
     ) -> Result<(), ParseError> {
-        let op = Operation::new(command, light_const);
+        let op = Operation::new(command, light_const, knob);
         self.ops.push(op);
         Ok(())
     }
@@ -74,7 +79,7 @@ impl ToDoList {
             // clear matrix for every operation
             temp.clear();
             let command = &operation.command;
-            // From a Option<String>, get the symbol with that name from the hashmap,
+            // From an Option<String>, get the symbol with that name from the hashmap,
             // and extract the reflection from the Constant
             let light_const = operation.light_const
                 .as_ref()
@@ -154,6 +159,7 @@ impl ToDoList {
 
                 Constants(_) => {},
 
+                _ => unimplemented!("{:?}", command),
             }
         }
     }

@@ -16,6 +16,9 @@ statement = {
     | torus
     | line
     | constants
+    | frames
+    | basename
+    | vary
 }
 
 push = { "push" }
@@ -34,11 +37,18 @@ torus =  { "torus"  ~ ident? ~ float{5} ~ ident? }
 line = { "line" ~ ident? ~ float{3} ~ ident? ~ float{3} ~ ident? }
 constants = { "constants" ~ ident ~ float{9} ~ float{3}? }
 
+// animation commands
+frames = { "frames" ~ whole }
+basename = { "basename" ~ string }
+vary = { "vary" ~ ident ~ whole{2} ~ float{2} }
+
 // atomics
 float = @{
     "-"? ~ ASCII_DIGIT+ ~ ("." ~ ASCII_DIGIT*)?
     | "-"? ~ "." ~ ASCII_DIGIT+
 }
+// Whole numbers from [0, std::u32::MAX]
+whole = @{ ASCII_DIGIT* }
 ident = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_" | ".")* }
 string = @{ ident }
 axis = @{ ^"x" | ^"y" | ^"z" }

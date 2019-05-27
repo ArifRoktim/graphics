@@ -19,6 +19,9 @@ pub enum ParseCommand {
     Torus,
     Line,
     Constants,
+    Frames,
+    Basename,
+    Vary,
 }
 
 // TODO: Move this enum to lib_graphics
@@ -44,9 +47,11 @@ impl FromStr for Axis {
     }
 }
 
+// TODO: Add a AstNode::new_mdl method
 #[derive(Clone, Debug)]
 pub enum AstNode {
     Float(f64),
+    Whole(u32),
     Ident(String),
     Str(String),
     Axis(Axis),
@@ -102,8 +107,15 @@ fn node_from_statement(pair: Pair<Rule>) -> AstNode {
         Rule::constants => {
             AstNode::MdlCommand { command: ParseCommand::Constants, args: get_args(pair) }
         },
+        // Animation
+        Rule::frames => AstNode::MdlCommand { command: ParseCommand::Frames, args: get_args(pair) },
+        Rule::basename => {
+            AstNode::MdlCommand { command: ParseCommand::Basename, args: get_args(pair) }
+        },
+        Rule::vary => AstNode::MdlCommand { command: ParseCommand::Vary, args: get_args(pair) },
         // Primitives
         Rule::float => AstNode::Float(pair.as_str().parse::<f64>().unwrap()),
+        Rule::whole => AstNode::Whole(pair.as_str().parse::<u32>().unwrap()),
         Rule::axis => AstNode::Axis(pair.as_str().parse::<Axis>().unwrap()),
         Rule::ident => AstNode::Ident(pair.as_str().to_owned()),
         Rule::string => AstNode::Str(pair.as_str().to_owned()),

@@ -48,27 +48,40 @@ fn analyze(node: &AstNode, todo: &mut ToDoList) -> Result<(), ParseError> {
         // In which case, make the `node` argument mutable, then replace
         // each `expression` with its resulting value
         match command {
-            PCmd::Push => todo.push_op(Cmd::Push(), None),
-            PCmd::Pop => todo.push_op(Cmd::Pop(), None),
-            PCmd::Display => todo.push_op(Cmd::Display(), None),
+            PCmd::Push => todo.push_op(Cmd::Push(), None, None),
+            PCmd::Pop => todo.push_op(Cmd::Pop(), None, None),
+            PCmd::Display => todo.push_op(Cmd::Display(), None, None),
             PCmd::Save => {
                 if let Str(file) = &args[0] {
-                    todo.push_op(Cmd::Save(file.to_owned()), None)
+                    todo.push_op(Cmd::Save(file.to_owned()), None, None)
                 } else {
                     Err(ParseError::SemanticError)
                 }
             },
 
-            //// FIXME: Can take a knob
             PCmd::Translate | PCmd::Scale => {
                 let (x, y, z) = match args[..3] {
                     [Float(x), Float(y), Float(z)] => Ok((x, y, z)),
                     _ => Err(ParseError::SemanticError),
                 }?;
+                // From an Option<AstNode>:
+                // If there is no 3rd arg, return Ok(None).
+                // Otherwise, if the arg is an AstNode::Ident, return the inner
+                //     string as an Ok(Option<String>),
+                // Else, the arg isn't an AstNode::Ident, so return an Err
+                let knob = args.get(3)
+                    .map(|s|
+                         match s {
+                             Ident(s) => Ok(s.to_owned()),
+                             _ => Err(ParseError::SemanticError),
+                         }
+                    )
+                    .transpose()?;
+
                 if let PCmd::Translate = command {
-                    todo.push_op(Cmd::Translate(x, y, z), None)
+                    todo.push_op(Cmd::Translate(x, y, z), None, knob)
                 } else {
-                    todo.push_op(Cmd::Scale(x, y, z), None)
+                    todo.push_op(Cmd::Scale(x, y, z), None, knob)
                 }
             },
 
@@ -77,7 +90,21 @@ fn analyze(node: &AstNode, todo: &mut ToDoList) -> Result<(), ParseError> {
                     [Axis(axis), Float(degrees)] => Ok((axis, degrees)),
                     _ => Err(ParseError::SemanticError),
                 }?;
-                todo.push_op(Cmd::Rotate(axis, degrees), None)
+                // From an Option<AstNode>:
+                // If there is no 3rd arg, return Ok(None).
+                // Otherwise, if the arg is an AstNode::Ident, return the inner
+                //     string as an Ok(Option<String>),
+                // Else, the arg isn't an AstNode::Ident, so return an Err
+                let knob = args.get(2)
+                    .map(|s|
+                         match s {
+                             Ident(s) => Ok(s.to_owned()),
+                             _ => Err(ParseError::SemanticError),
+                         }
+                    )
+                    .transpose()?;
+
+                todo.push_op(Cmd::Rotate(axis, degrees), None, knob)
             },
 
             PCmd::Cuboid => {
@@ -94,7 +121,7 @@ fn analyze(node: &AstNode, todo: &mut ToDoList) -> Result<(), ParseError> {
                     },
                     _ => Err(ParseError::SemanticError),
                 }?;
-                todo.push_op(Cmd::Cuboid(x, y, z, h, w, d), lighting)
+                todo.push_op(Cmd::Cuboid(x, y, z, h, w, d), lighting, None)
             },
 
             PCmd::Sphere => {
@@ -109,7 +136,7 @@ fn analyze(node: &AstNode, todo: &mut ToDoList) -> Result<(), ParseError> {
                     [Float(x), Float(y), Float(z), Float(r)] => Ok((x, y, z, r)),
                     _ => Err(ParseError::SemanticError),
                 }?;
-                todo.push_op(Cmd::Sphere(x, y, z, r), lighting)
+                todo.push_op(Cmd::Sphere(x, y, z, r), lighting, None)
             },
 
             PCmd::Torus => {
@@ -124,7 +151,7 @@ fn analyze(node: &AstNode, todo: &mut ToDoList) -> Result<(), ParseError> {
                     [Float(x), Float(y), Float(z), Float(r0), Float(r1)] => Ok((x, y, z, r0, r1)),
                     _ => Err(ParseError::SemanticError),
                 }?;
-                todo.push_op(Cmd::Torus(x, y, z, r0, r1), lighting)
+                todo.push_op(Cmd::Torus(x, y, z, r0, r1), lighting, None)
             },
 
             PCmd::Line => {
@@ -134,7 +161,7 @@ fn analyze(node: &AstNode, todo: &mut ToDoList) -> Result<(), ParseError> {
                     },
                     _ => Err(ParseError::SemanticError),
                 }?;
-                todo.push_op(Cmd::Line(x0, y0, z0, x1, y1, z1), None)
+                todo.push_op(Cmd::Line(x0, y0, z0, x1, y1, z1), None, None)
             },
 
             PCmd::Constants => {
@@ -158,6 +185,36 @@ fn analyze(node: &AstNode, todo: &mut ToDoList) -> Result<(), ParseError> {
                 let lighting = Symbol::Constant(reflection);
                 todo.add_sym(name, lighting)
             },
+            
+            // TODO: Push these operations into their own operations list
+            // TODO: to prevent having to traverse the op list more than once
+            // Animation
+            PCmd::Frames => {
+                if let Whole(n) = args[0] {
+                    todo.push_op(Cmd::Frames(n), None, None)
+                } else {
+                    Err(ParseError::SemanticError)
+                }
+            },
+
+            PCmd::Basename => {
+                if let Str(s) = &args[0] {
+                    todo.push_op(Cmd::Basename(s.to_owned()), None, None)
+                } else {
+                    Err(ParseError::SemanticError)
+                }
+            },
+
+            PCmd::Vary => {
+                let (knob, frame0, frame1, val0, val1) = match &args[..] {
+                    [Ident(knob), Whole(f0), Whole(f1), Float(v0), Float(v1)] => {
+                        Ok((knob.to_owned(), *f0, *f1, *v0, *v1))
+                    },
+                    _ => Err(ParseError::SemanticError),
+                }?;
+                todo.push_op(Cmd::Vary(knob, frame0, frame1, val0, val1), None, None)
+            },
+
         }
     } else {
         // TODO: Change this when the Ast becomes more complex and has expressions
