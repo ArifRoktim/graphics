@@ -6,7 +6,7 @@ use std::collections::HashMap;
 #[derive(Debug)]
 pub enum Symbol {
     Constant(Reflection),
-    //Knob,
+    Knob(f64),
     //Light, etc..
 }
 
@@ -67,12 +67,44 @@ impl ToDoList {
         Ok(())
     }
 
+    fn first_pass(&self) -> Option<(String, u32)> {
+        use Command::*;
+        let (mut basename, mut frames) = (None, None);
+        let mut vary = false;
+        for operation in &self.ops {
+            match &operation.command {
+                Basename(s) => basename = Some(s.to_owned()),
+                Frames(n) => frames = Some(*n),
+                Vary(..) => vary = true,
+                _ => {},
+            }
+        }
+        // If `vary` wasn't found, we're not animating
+        if ! vary {
+            None
+        }
+        // If `vary` was found but `frames` wasn't, user error
+        else if frames.is_none() {
+            // TODO: Move this check to semantic analyzer
+            panic!("`frames` command must also be given if `vary` command given!")
+        } else {
+            // Animation is a go. Set a default basename if applicable
+            let base = "gif";
+            let basename = basename.unwrap_or_else(|| {
+                println!("`basename` command not found. Using {} as a default", base);
+                String::from(base)
+            } );
+            Some((basename, frames.unwrap()))
+        }
+    }
+
     #[allow(clippy::many_single_char_names)]
     pub fn run(self, screen: &mut Screen, cstack: &mut Vec<SquareMatrix>) {
         use Command::*;
         //dbg!(&self);
         // Temporary edge/polygon matrix
         let mut temp = Matrix::new(0);
+
 
         for operation in &self.ops {
             //dbg!(&operation);
@@ -87,6 +119,7 @@ impl ToDoList {
                 .map(|s|
                      match s {
                          Symbol::Constant(r) => r,
+                         _ => unreachable!(),
                      }
                 );
 
@@ -157,12 +190,13 @@ impl ToDoList {
                     screen.draw_lines(&temp, LINE_COLOR);
                 }
 
-                Constants(_) => {},
+                Constants(_) | Frames(_) | Basename(_) | Vary(..) => {},
 
-                _ => unimplemented!("{:?}", command),
+                //_ => unimplemented!("{:?}", command),
             }
         }
     }
+
 }
 
 impl Default for ToDoList {
