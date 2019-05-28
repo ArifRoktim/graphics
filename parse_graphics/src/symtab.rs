@@ -67,7 +67,7 @@ impl ToDoList {
         Ok(())
     }
 
-    fn first_pass(&self) -> Option<(String, u32)> {
+    fn first_pass(&self) -> Option<(u32, String)> {
         use Command::*;
         let (mut basename, mut frames) = (None, None);
         let mut vary = false;
@@ -79,121 +79,202 @@ impl ToDoList {
                 _ => {},
             }
         }
+        // TODO: Move these checks to semantic analyzer
         // If `vary` wasn't found, we're not animating
         if ! vary {
             None
         }
         // If `vary` was found but `frames` wasn't, user error
         else if frames.is_none() {
-            // TODO: Move this check to semantic analyzer
             panic!("`frames` command must also be given if `vary` command given!")
         } else {
-            // Animation is a go. Set a default basename if applicable
+            // Let's animate. Set a default basename if applicable
             let base = "gif";
             let basename = basename.unwrap_or_else(|| {
                 println!("`basename` command not found. Using {} as a default", base);
                 String::from(base)
             } );
-            Some((basename, frames.unwrap()))
+            Some((frames.unwrap(), basename))
         }
     }
 
+    fn second_pass(&self, frames: u32) -> HashMap<(u32, String), f64> {
+        let mut knob_table = HashMap::new();
+        for operation in &self.ops {
+            if let Command::Vary(
+                knob, frame_start, frame_end, val_start, val_end
+            ) = &operation.command {
+                // TODO: Move these checks to semantic analyzer
+                if frame_start > frame_end || *frame_end > frames {
+                    panic!("Vary: start frame must be larger than end frame!
+                           Start: {}, End: {}", frame_start, frame_end);
+                }
+                let diff = (val_end - val_start) / f64::from(frame_end - frame_start);
+                let mut val = *val_start;
+                for frame in *frame_start..*frame_end {
+                    let key = (frame, knob.to_owned());
+                    knob_table.insert(key, val);
+                    val += diff;
+                }
+            }
+        }
+        knob_table
+    }
+
     #[allow(clippy::many_single_char_names)]
-    pub fn run(self, screen: &mut Screen, cstack: &mut Vec<SquareMatrix>) {
+    pub fn run(mut self, screen: &mut Screen, cstack: &mut Vec<SquareMatrix>) {
         use Command::*;
-        //dbg!(&self);
+
         // Temporary edge/polygon matrix
         let mut temp = Matrix::new(0);
 
+        // Check for animation code in script
+        let animation = self.first_pass();
+        // get the number of frames for first_pass, or default to 1 frame otherwise
+        let frames = animation.as_ref().map_or(1, |s| s.0);
+        // If animating, generate the knob table
+        let knob_table = animation.as_ref().map(|s| self.second_pass(s.0));
+        // extract basename, consuming `animation` in process
+        let basename = animation.map(|s| s.1);
 
-        for operation in &self.ops {
-            //dbg!(&operation);
-            // clear matrix for every operation
-            temp.clear();
-            let command = &operation.command;
-            // From an Option<String>, get the symbol with that name from the hashmap,
-            // and extract the reflection from the Constant
-            let light_const = operation.light_const
-                .as_ref()
-                .and_then(|s| self.symbols.get(s))
-                .map(|s|
-                     match s {
-                         Symbol::Constant(r) => r,
-                         _ => unreachable!(),
-                     }
-                );
+        for frame in 0..frames {
 
-            match command {
-                Push() => {
-                    // push a copy of the last item
-                    let copy = cstack.last().unwrap_or_default().clone();
-                    cstack.push(copy);
-                },
-
-                Pop() => {
-                    cstack.pop();
-                    // Make sure that the stack is never empty
-                    if cstack.is_empty() {
-                        cstack.push(SquareMatrix::default());
+            dbg!(&frame);
+            if let Some(knob_table) = &knob_table {
+                for (key, val) in &mut self.symbols.iter_mut() {
+                    if let Symbol::Knob(ref mut knob) = val {
+                        let knob_key = &(frame, key.to_owned());
+                        let knob_val = knob_table.get(knob_key).unwrap();
+                        *knob = *knob_val;
                     }
-                },
-
-                Display() => screen.display(),
-                Save(filename) => screen.write(&filename).unwrap(),
-
-                &Translate(x, y, z) => {
-                    let mut tr = SquareMatrix::new_translate(x, y, z);
-                    tr.apply_rcs(cstack);
-                    cstack.pop();
-                    cstack.push(tr);
-                },
-
-                &Scale(x, y, z) => {
-                    let mut tr = SquareMatrix::new_scale(x, y, z);
-                    tr.apply_rcs(cstack);
-                    cstack.pop();
-                    cstack.push(tr);
-                },
-
-                &Rotate(axis, degrees) => {
-                    let mut tr = match axis {
-                        Axis::X => SquareMatrix::new_rot_x(degrees),
-                        Axis::Y => SquareMatrix::new_rot_y(degrees),
-                        Axis::Z => SquareMatrix::new_rot_z(degrees),
-                    };
-                    tr.apply_rcs(cstack);
-                    cstack.pop();
-                    cstack.push(tr);
-                },
-
-                &Cuboid(x, y, z, h, w, d) => {
-                    draw::add_box(&mut temp, x, y, z, w, h, d);
-                    temp.apply_rcs(cstack);
-                    screen.draw_polygons(&temp, light_const);
-                },
-
-                &Sphere(x, y, z, r) => {
-                    draw::add_sphere(&mut temp, x, y, z, r, STEPS_3D);
-                    temp.apply_rcs(cstack);
-                    screen.draw_polygons(&temp, light_const);
                 }
-
-                &Torus(x, y, z, r0, r1) => {
-                    draw::add_torus(&mut temp, x, y, z, r0, r1, STEPS_3D);
-                    temp.apply_rcs(cstack);
-                    screen.draw_polygons(&temp, light_const);
-                }
-
-                &Line(x0, y0, z0, x1, y1, z1) => {
-                    draw::add_edge(&mut temp, x0, y0, z0, x1, y1, z1);
-                    temp.apply_rcs(cstack);
-                    screen.draw_lines(&temp, LINE_COLOR);
-                }
-
-                Constants(_) | Frames(_) | Basename(_) | Vary(..) => {},
-
-                //_ => unimplemented!("{:?}", command),
             }
+
+            for operation in &self.ops {
+                // clear matrix for every operation
+                temp.clear();
+                let command = &operation.command;
+                // From an Option<String>, get the symbol with that name from the hashmap,
+                // and extract the reflection from the Constant
+                let light_const = operation.light_const
+                    .as_ref()
+                    .and_then(|s| self.symbols.get(s))
+                    .map(|s|
+                         match s {
+                             Symbol::Constant(r) => r,
+                             _ => unreachable!(),
+                         }
+                    );
+                // ditto but for the knob
+                let knob = operation.knob
+                    .as_ref()
+                    .and_then(|s| self.symbols.get(s))
+                    .map(|s|
+                         match s {
+                             Symbol::Knob(k) => *k,
+                             _ => unreachable!(),
+                         }
+                    );
+
+                match command {
+                    Push() => {
+                        // push a copy of the last item
+                        let copy = cstack.last().unwrap_or_default().clone();
+                        cstack.push(copy);
+                    },
+
+                    Pop() => {
+                        cstack.pop();
+                        // Make sure that the stack is never empty
+                        if cstack.is_empty() {
+                            cstack.push(SquareMatrix::default());
+                        }
+                    },
+
+                    Display() => screen.display(),
+                    Save(filename) => screen.write(&[filename.as_str()]).unwrap(),
+
+                    &Translate(x, y, z) => {
+                        let (x, y, z) = match knob {
+                            Some(k) => (x * k, y * k, z * k),
+                            None => (x, y, z)
+                        };
+                        let mut tr = SquareMatrix::new_translate(x, y, z);
+                        tr.apply_rcs(cstack);
+                        cstack.pop();
+                        cstack.push(tr);
+                    },
+
+                    &Scale(x, y, z) => {
+                        let (x, y, z) = match knob {
+                            Some(k) => (x * k, y * k, z * k),
+                            None => (x, y, z)
+                        };
+                        let mut tr = SquareMatrix::new_scale(x, y, z);
+                        tr.apply_rcs(cstack);
+                        cstack.pop();
+                        cstack.push(tr);
+                    },
+
+                    &Rotate(axis, degrees) => {
+                        let degrees = match knob {
+                            Some(k) => degrees * k,
+                            None => degrees
+                        };
+                        let mut tr = match axis {
+                            Axis::X => SquareMatrix::new_rot_x(degrees),
+                            Axis::Y => SquareMatrix::new_rot_y(degrees),
+                            Axis::Z => SquareMatrix::new_rot_z(degrees),
+                        };
+                        tr.apply_rcs(cstack);
+                        cstack.pop();
+                        cstack.push(tr);
+                    },
+
+                    &Cuboid(x, y, z, h, w, d) => {
+                        draw::add_box(&mut temp, x, y, z, w, h, d);
+                        temp.apply_rcs(cstack);
+                        screen.draw_polygons(&temp, light_const);
+                    },
+
+                    &Sphere(x, y, z, r) => {
+                        draw::add_sphere(&mut temp, x, y, z, r, STEPS_3D);
+                        temp.apply_rcs(cstack);
+                        screen.draw_polygons(&temp, light_const);
+                    }
+
+                    &Torus(x, y, z, r0, r1) => {
+                        draw::add_torus(&mut temp, x, y, z, r0, r1, STEPS_3D);
+                        temp.apply_rcs(cstack);
+                        screen.draw_polygons(&temp, light_const);
+                    }
+
+                    &Line(x0, y0, z0, x1, y1, z1) => {
+                        draw::add_edge(&mut temp, x0, y0, z0, x1, y1, z1);
+                        temp.apply_rcs(cstack);
+                        screen.draw_lines(&temp, LINE_COLOR);
+                    }
+
+                    Constants(_) | Frames(_) | Basename(_) | Vary(..) => {},
+
+                    //_ => unimplemented!("{:?}", command),
+                }
+            }
+
+            // When animating, at the end of every frame:
+            if let Some(base) = &basename {
+
+                // Save the screen 
+                let file_name = format!("{:03}.png", frame);
+                let path = &[base.as_str(), file_name.as_str()][..];
+                screen.write(path).expect("Error writing file!");
+
+                // Reset the screen and coordinate systems
+                screen.clear();
+                cstack.clear();
+
+            }
+
         }
     }
 

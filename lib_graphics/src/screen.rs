@@ -28,15 +28,26 @@ impl Screen {
         file.write_all(self.to_string().as_bytes())
     }
 
-    pub fn write(&self, f: &str) -> io::Result<()> {
-        // Make sure output directory exists
+    pub fn write(&self, f: &[&str]) -> io::Result<()> {
         let mut path = PathBuf::from(PICTURE_DIR);
+        dbg!(&path);
+
+        // Separate f into the file name and its parent(s)
+        let last = f.len() - 1;
+        let parents = &f[..last];
+        let file_name = f[last];
+        for parent in parents {
+            path.push(parent);
+        }
+        dbg!(&path);
+
+        // Make sure that output directory exists. Create it if not.
         DirBuilder::new().recursive(true).create(&path).unwrap_or_else(|e| {
             panic!("Failed to create image output directory: `{}/`\nError: {}", PICTURE_DIR, e)
         });
 
-        // Add given file name to path
-        path.push(f);
+        // Add file name to path
+        path.push(file_name);
 
         // Save a copy of the original extension before we replace it
         let extension =
