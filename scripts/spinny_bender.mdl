@@ -1,0 +1,126 @@
+frames 100
+basename spin_bender
+
+constants bender 0.1 0.396 0.185 0.18725 0.74151 0.185 0.1745 0.69102 0.185
+constants fire 1 1 1 0.01175 0.04136 0.626959 0.01175 0.04136 0.626959
+
+push
+move 250 200 0
+scale 0.9 0.9 0.9
+rotate z 360 dizzy
+rotate x -10
+rotate y 35
+
+// body {{{1
+// cylinder body {{{2
+push
+scale 1 10 1
+torus bender 0 0 0 10 70
+pop
+
+// body head plate {{{2
+push
+move 0 100 0
+scale 1 0.3 1
+rotate z 90
+sphere bender 0 0 0 70
+pop
+
+// head {{{2
+push
+move 0 175 0
+// below mouth {{{3
+torus bender 0 -55 0 10 37
+// mouth  {{{3
+push
+scale 1.3 1.8 1
+torus bender 0 -20 -5 7 27
+pop
+// above mouth {{{3
+push
+scale 1 4 1
+torus bender 0 4.3 0 10 37
+pop
+// upper head {{{3
+push
+sphere bender 0 50 0 40
+sphere bender 0 89 0 10
+// antennae {{{4
+push
+move 0 100 0
+scale 0.4 7 0.4
+torus bender 0 0 0 4 10
+pop
+sphere bender 0 132 0 10
+// }}}4
+pop
+
+// }}}3
+// visor/eyes {{{3
+push
+move 0 40 53.5
+push
+move -35 -5 0
+rotate z 90
+box bender -35 0 0 70 40 20
+pop
+sphere bender -17.5 -20 0 17.5
+sphere bender 17.5 -20 0 17.5
+
+pop
+pop
+// left arm {{{2
+push
+move -105 0 0
+rotate z -45
+scale 1.75 25 1
+torus bender 0 0 0 4 10
+pop
+
+// right arm {{{2
+push
+move 105 0 0
+rotate z 45
+scale 1.75 25 1
+torus bender 0 0 0 4 10
+pop
+
+// left leg {{{2
+push
+move -35 -180 0
+scale 1.75 20 1
+torus bender 0 0 0 4 10
+pop
+
+// right leg {{{2
+push
+move 35 -180 0
+scale 1.75 20 1
+torus bender 0 0 0 4 10
+pop
+
+// fire {{{2
+push
+move 0 140 100
+scale 0.25 0.25 2
+move 0 0 30 movefire
+scale 2 2 2 createfire
+sphere fire 0 0 0 30
+pop
+// }}}2
+
+// }}}1
+
+// knobs
+vary dizzy 0 84 -0.10 0.10
+vary dizzy 85 99 0.10 -0.10
+
+vary createfire 0 40 0 1
+vary movefire 0 40 -1 1
+
+vary createfire 41 74 1 0
+vary movefire 41 74 1 4
+
+//display
+//save better_bender.png
+// vim:foldmethod=marker

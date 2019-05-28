@@ -2,6 +2,7 @@
 
 IMPORTANT TODO(S):
 * Remove all old frames from the directory when creating animations
+* Make error message for invalid frame start/end better
 
 New MDL commands to implement:
 * frames
