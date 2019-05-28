@@ -1,7 +1,9 @@
 use super::{Axis, ParseError};
 use lib_graphics::{draw, matrix::MatrixMult, Matrix, Reflection, Screen, SquareMatrix};
-use lib_graphics::{LINE_COLOR, STEPS_3D};
+use lib_graphics::{LINE_COLOR, PICTURE_DIR, STEPS_3D};
 use std::collections::HashMap;
+use std::path::PathBuf;
+use std::process::Command as SubProcess;
 
 #[derive(Debug)]
 pub enum Symbol {
@@ -291,7 +293,7 @@ impl ToDoList {
             if let Some(base) = &basename {
 
                 // Save the screen 
-                let file_name = format!("{:03}.png", frame);
+                let file_name = format!("{:03}.png", frame); // pad filename with 3 zeros
                 let path = &[base.as_str(), file_name.as_str()][..];
                 screen.write(path).expect("Error writing file!");
 
@@ -302,6 +304,24 @@ impl ToDoList {
             }
 
         }
+
+        // When animating, at the end of all frames, convert the images to a gif
+        if let Some(base) = &basename {
+            let pic_frames = format!("{}/{}/*", PICTURE_DIR, base);
+            let gif_name = format!("{}/{}.gif", PICTURE_DIR, base);
+            let convert = SubProcess::new("convert")
+                .arg("-delay")
+                .arg("1.7")
+                .arg(pic_frames)
+                .arg(gif_name)
+                .spawn();
+            match convert {
+                Ok(mut proc) => proc.wait().unwrap(),
+                Err(err) => panic!(err),
+            };
+
+        }
+
     }
 
 }
