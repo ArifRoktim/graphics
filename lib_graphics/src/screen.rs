@@ -30,7 +30,6 @@ impl Screen {
 
     pub fn write(&self, f: &[&str]) -> io::Result<()> {
         let mut path = PathBuf::from(PICTURE_DIR);
-        dbg!(&path);
 
         // Separate f into the file name and its parent(s)
         let last = f.len() - 1;
@@ -39,7 +38,6 @@ impl Screen {
         for parent in parents {
             path.push(parent);
         }
-        dbg!(&path);
 
         // Make sure that output directory exists. Create it if not.
         DirBuilder::new().recursive(true).create(&path).unwrap_or_else(|e| {

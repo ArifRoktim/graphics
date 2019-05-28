@@ -27,9 +27,9 @@ pub enum Command {
     Torus(f64, f64, f64, f64, f64),
     Line(f64, f64, f64, f64, f64, f64),
     Constants(NOOP),
-    Frames(u32),
+    Frames(usize),
     Basename(String),
-    Vary(String, u32, u32, f64, f64),
+    Vary(String, usize, usize, f64, f64),
 }
 
 type SymbolTable = HashMap<String, Symbol>;
@@ -67,7 +67,7 @@ impl ToDoList {
         Ok(())
     }
 
-    fn first_pass(&self) -> Option<(u32, String)> {
+    fn first_pass(&self) -> Option<(usize, String)> {
         use Command::*;
         let (mut basename, mut frames) = (None, None);
         let mut vary = false;
@@ -98,22 +98,20 @@ impl ToDoList {
         }
     }
 
-    fn second_pass(&self, frames: u32) -> HashMap<(u32, String), f64> {
-        let mut knob_table = HashMap::new();
+    fn second_pass(&self, frames: usize) -> Vec<HashMap<String, f64>> {
+        let mut knob_table = vec![HashMap::new(); frames];
         for operation in &self.ops {
             if let Command::Vary(
                 knob, frame_start, frame_end, val_start, val_end
             ) = &operation.command {
                 // TODO: Move these checks to semantic analyzer
-                if frame_start > frame_end || *frame_end > frames {
-                    panic!("Vary: start frame must be larger than end frame!
+                if frame_start > frame_end || *frame_end > frames { panic!("Vary: start frame must be larger than end frame!
                            Start: {}, End: {}", frame_start, frame_end);
                 }
-                let diff = (val_end - val_start) / f64::from(frame_end - frame_start);
+                let diff = (val_end - val_start) / (frame_end - frame_start) as f64;
                 let mut val = *val_start;
                 for frame in *frame_start..*frame_end {
-                    let key = (frame, knob.to_owned());
-                    knob_table.insert(key, val);
+                    knob_table[frame].insert(knob.to_owned(), val);
                     val += diff;
                 }
             }
@@ -124,6 +122,8 @@ impl ToDoList {
     #[allow(clippy::many_single_char_names)]
     pub fn run(mut self, screen: &mut Screen, cstack: &mut Vec<SquareMatrix>) {
         use Command::*;
+
+        //dbg!(&self.ops);
 
         // Temporary edge/polygon matrix
         let mut temp = Matrix::new(0);
@@ -138,16 +138,22 @@ impl ToDoList {
         let basename = animation.map(|s| s.1);
 
         for frame in 0..frames {
-
             dbg!(&frame);
+
             if let Some(knob_table) = &knob_table {
-                for (key, val) in &mut self.symbols.iter_mut() {
-                    if let Symbol::Knob(ref mut knob) = val {
-                        let knob_key = &(frame, key.to_owned());
-                        let knob_val = knob_table.get(knob_key).unwrap();
-                        *knob = *knob_val;
-                    }
+                for (knob, val) in knob_table[frame].iter() {
+                    let _ = self.add_sym(knob.to_owned(), Symbol::Knob(*val));
                 }
+
+
+                //for (key, val) in &mut self.symbols.iter_mut() {
+                //    if let Symbol::Knob(knob) = val {
+                //        let knob_key = &(frame, key.to_owned());
+                //        let knob_val = knob_table.get(knob_key).unwrap();
+                //        //*knob = *knob_val;
+                //        *val = Symbol::Knob
+                //    }
+                //}
             }
 
             for operation in &self.ops {
@@ -162,19 +168,39 @@ impl ToDoList {
                     .map(|s|
                          match s {
                              Symbol::Constant(r) => r,
-                             _ => unreachable!(),
+                             _ => panic!("Expected light constant!"),
                          }
                     );
+
                 // ditto but for the knob
-                let knob = operation.knob
-                    .as_ref()
-                    .and_then(|s| self.symbols.get(s))
-                    .map(|s|
-                         match s {
-                             Symbol::Knob(k) => *k,
-                             _ => unreachable!(),
-                         }
-                    );
+                //let knob = dbg!(operation.knob.as_ref());
+                //let knob = match knob {
+                //    Some(s) => Some(dbg!(self.symbols.get(s))),
+                //    None => None,
+                //};
+
+                //let knob = operation.knob
+                //    .as_ref()
+                //    .and_then(|s| self.symbols.get(s))
+                //    .map(|s|
+                //         match s {
+                //             Symbol::Knob(k) => *k,
+                //             _ => unreachable!(),
+                //         }
+                //    );
+
+                let knob = match &operation.knob {
+                    Some(k) => {
+                        let symbol = &self.symbols[k]; match symbol {
+                            Symbol::Knob(v) => Some(v),
+                            _ => panic!("Expected knob!")
+                        }
+                    },
+                    None => None,
+                };
+
+                //dbg!(&command);
+                //dbg!(&knob);
 
                 match command {
                     Push() => {

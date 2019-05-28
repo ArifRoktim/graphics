@@ -47,7 +47,7 @@ float = @{
     "-"? ~ ASCII_DIGIT+ ~ ("." ~ ASCII_DIGIT*)?
     | "-"? ~ "." ~ ASCII_DIGIT+
 }
-// Whole numbers from [0, std::u32::MAX]
+// Whole numbers from [0, std::usize::MAX]
 whole = @{ ASCII_DIGIT* }
 ident = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_" | ".")* }
 string = @{ ident }
