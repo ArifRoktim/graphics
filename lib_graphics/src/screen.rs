@@ -75,7 +75,6 @@ impl Screen {
             if let Err(error) = fs::remove_file(&ppm) {
                 eprint!("Error removing \"{:?}\": {}", ppm, error);
             }
-
         }
 
         Ok(())

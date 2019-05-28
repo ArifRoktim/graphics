@@ -2,14 +2,12 @@ use super::{Axis, ParseError};
 use lib_graphics::{draw, matrix::MatrixMult, Matrix, Reflection, Screen, SquareMatrix};
 use lib_graphics::{LINE_COLOR, PICTURE_DIR, STEPS_3D};
 use std::collections::HashMap;
-use std::path::PathBuf;
 use std::process::Command as SubProcess;
 
 #[derive(Debug)]
 pub enum Symbol {
     Constant(Reflection),
     Knob(f64),
-    //Light, etc..
 }
 
 #[derive(Clone, Debug)]
@@ -83,7 +81,7 @@ impl ToDoList {
         }
         // TODO: Move these checks to semantic analyzer
         // If `vary` wasn't found, we're not animating
-        if ! vary {
+        if !vary {
             None
         }
         // If `vary` was found but `frames` wasn't, user error
@@ -95,7 +93,7 @@ impl ToDoList {
             let basename = basename.unwrap_or_else(|| {
                 println!("`basename` command not found. Using {} as a default", base);
                 String::from(base)
-            } );
+            });
             Some((frames.unwrap(), basename))
         }
     }
@@ -103,15 +101,20 @@ impl ToDoList {
     fn second_pass(&self, frames: usize) -> Vec<HashMap<String, f64>> {
         let mut knob_table = vec![HashMap::new(); frames];
         for operation in &self.ops {
-            if let Command::Vary(
-                knob, frame_start, frame_end, val_start, val_end
-            ) = &operation.command {
+            if let Command::Vary(knob, frame_start, frame_end, val_start, val_end) =
+                &operation.command
+            {
                 // TODO: Move these checks to semantic analyzer
-                if frame_start > frame_end || *frame_end > frames { panic!("Vary: start frame must be larger than end frame!
-                           Start: {}, End: {}", frame_start, frame_end);
+                if frame_start > frame_end || *frame_end > frames {
+                    panic!(
+                        "Vary: start frame must be larger than end frame!
+                           Start: {}, End: {}",
+                        frame_start, frame_end
+                    );
                 }
                 let diff = (val_end - val_start) / (frame_end - frame_start) as f64;
                 let mut val = *val_start;
+                #[allow(clippy::needless_range_loop)]
                 for frame in *frame_start..*frame_end {
                     knob_table[frame].insert(knob.to_owned(), val);
                     val += diff;
@@ -124,8 +127,6 @@ impl ToDoList {
     #[allow(clippy::many_single_char_names)]
     pub fn run(mut self, screen: &mut Screen, cstack: &mut Vec<SquareMatrix>) {
         use Command::*;
-
-        //dbg!(&self.ops);
 
         // Temporary edge/polygon matrix
         let mut temp = Matrix::new(0);
@@ -146,63 +147,36 @@ impl ToDoList {
                 for (knob, val) in knob_table[frame].iter() {
                     let _ = self.add_sym(knob.to_owned(), Symbol::Knob(*val));
                 }
-
-
-                //for (key, val) in &mut self.symbols.iter_mut() {
-                //    if let Symbol::Knob(knob) = val {
-                //        let knob_key = &(frame, key.to_owned());
-                //        let knob_val = knob_table.get(knob_key).unwrap();
-                //        //*knob = *knob_val;
-                //        *val = Symbol::Knob
-                //    }
-                //}
             }
 
             for operation in &self.ops {
                 // clear matrix for every operation
                 temp.clear();
                 let command = &operation.command;
+
                 // From an Option<String>, get the symbol with that name from the hashmap,
                 // and extract the reflection from the Constant
-                let light_const = operation.light_const
+                let light_const = operation
+                    .light_const
                     .as_ref()
+                    // TODO: Use self.symbols[s] instead to panic when symbol isnt found
                     .and_then(|s| self.symbols.get(s))
-                    .map(|s|
-                         match s {
-                             Symbol::Constant(r) => r,
-                             _ => panic!("Expected light constant!"),
-                         }
-                    );
+                    .map(|s| match s {
+                        Symbol::Constant(r) => r,
+                        _ => panic!("Expected light constant!"),
+                    });
 
                 // ditto but for the knob
-                //let knob = dbg!(operation.knob.as_ref());
-                //let knob = match knob {
-                //    Some(s) => Some(dbg!(self.symbols.get(s))),
-                //    None => None,
-                //};
-
-                //let knob = operation.knob
-                //    .as_ref()
-                //    .and_then(|s| self.symbols.get(s))
-                //    .map(|s|
-                //         match s {
-                //             Symbol::Knob(k) => *k,
-                //             _ => unreachable!(),
-                //         }
-                //    );
-
                 let knob = match &operation.knob {
                     Some(k) => {
-                        let symbol = &self.symbols[k]; match symbol {
+                        let symbol = &self.symbols[k];
+                        match symbol {
                             Symbol::Knob(v) => Some(v),
-                            _ => panic!("Expected knob!")
+                            _ => panic!("Expected knob!"),
                         }
                     },
                     None => None,
                 };
-
-                //dbg!(&command);
-                //dbg!(&knob);
 
                 match command {
                     Push() => {
@@ -225,7 +199,7 @@ impl ToDoList {
                     &Translate(x, y, z) => {
                         let (x, y, z) = match knob {
                             Some(k) => (x * k, y * k, z * k),
-                            None => (x, y, z)
+                            None => (x, y, z),
                         };
                         let mut tr = SquareMatrix::new_translate(x, y, z);
                         tr.apply_rcs(cstack);
@@ -236,7 +210,7 @@ impl ToDoList {
                     &Scale(x, y, z) => {
                         let (x, y, z) = match knob {
                             Some(k) => (x * k, y * k, z * k),
-                            None => (x, y, z)
+                            None => (x, y, z),
                         };
                         let mut tr = SquareMatrix::new_scale(x, y, z);
                         tr.apply_rcs(cstack);
@@ -247,7 +221,7 @@ impl ToDoList {
                     &Rotate(axis, degrees) => {
                         let degrees = match knob {
                             Some(k) => degrees * k,
-                            None => degrees
+                            None => degrees,
                         };
                         let mut tr = match axis {
                             Axis::X => SquareMatrix::new_rot_x(degrees),
@@ -269,30 +243,28 @@ impl ToDoList {
                         draw::add_sphere(&mut temp, x, y, z, r, STEPS_3D);
                         temp.apply_rcs(cstack);
                         screen.draw_polygons(&temp, light_const);
-                    }
+                    },
 
                     &Torus(x, y, z, r0, r1) => {
                         draw::add_torus(&mut temp, x, y, z, r0, r1, STEPS_3D);
                         temp.apply_rcs(cstack);
                         screen.draw_polygons(&temp, light_const);
-                    }
+                    },
 
                     &Line(x0, y0, z0, x1, y1, z1) => {
                         draw::add_edge(&mut temp, x0, y0, z0, x1, y1, z1);
                         temp.apply_rcs(cstack);
                         screen.draw_lines(&temp, LINE_COLOR);
-                    }
+                    },
 
                     Constants(_) | Frames(_) | Basename(_) | Vary(..) => {},
-
                     //_ => unimplemented!("{:?}", command),
                 }
             }
 
             // When animating, at the end of every frame:
             if let Some(base) = &basename {
-
-                // Save the screen 
+                // Save the screen
                 let file_name = format!("{:03}.png", frame); // pad filename with 3 zeros
                 let path = &[base.as_str(), file_name.as_str()][..];
                 screen.write(path).expect("Error writing file!");
@@ -300,9 +272,7 @@ impl ToDoList {
                 // Reset the screen and coordinate systems
                 screen.clear();
                 cstack.clear();
-
             }
-
         }
 
         // When animating, at the end of all frames, convert the images to a gif
@@ -319,11 +289,8 @@ impl ToDoList {
                 Ok(mut proc) => proc.wait().unwrap(),
                 Err(err) => panic!(err),
             };
-
         }
-
     }
-
 }
 
 impl Default for ToDoList {

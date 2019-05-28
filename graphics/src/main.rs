@@ -14,11 +14,7 @@ fn main() {
 
     let todo = parse_graphics::file(filename);
     match todo {
-        Ok(list) => {
-            //dbg!(&list);
-            list.run(&mut screen, &mut cstack);
-        }
-        Err(err) => panic!(err)
+        Ok(list) => list.run(&mut screen, &mut cstack),
+        Err(err) => panic!(err),
     }
-    //parse::parse_file(filename, &mut screen, &mut cstack);
 }

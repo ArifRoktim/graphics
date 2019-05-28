@@ -33,7 +33,6 @@ fn analyze_nodes(nodes: &[AstNode]) -> Result<ToDoList, ParseError> {
     for node in nodes {
         analyze(node, &mut todo)?;
     }
-    //dbg!(&todo);
     Ok(todo)
 }
 
@@ -69,13 +68,12 @@ fn analyze(node: &AstNode, todo: &mut ToDoList) -> Result<(), ParseError> {
                 // Otherwise, if the arg is an AstNode::Ident, return the inner
                 //     string as an Ok(Option<String>),
                 // Else, the arg isn't an AstNode::Ident, so return an Err
-                let knob = args.get(3)
-                    .map(|s|
-                         match s {
-                             Ident(s) => Ok(s.to_owned()),
-                             _ => Err(ParseError::SemanticError),
-                         }
-                    )
+                let knob = args
+                    .get(3)
+                    .map(|s| match s {
+                        Ident(s) => Ok(s.to_owned()),
+                        _ => Err(ParseError::SemanticError),
+                    })
                     .transpose()?;
 
                 if let PCmd::Translate = command {
@@ -95,13 +93,12 @@ fn analyze(node: &AstNode, todo: &mut ToDoList) -> Result<(), ParseError> {
                 // Otherwise, if the arg is an AstNode::Ident, return the inner
                 //     string as an Ok(Option<String>),
                 // Else, the arg isn't an AstNode::Ident, so return an Err
-                let knob = args.get(2)
-                    .map(|s|
-                         match s {
-                             Ident(s) => Ok(s.to_owned()),
-                             _ => Err(ParseError::SemanticError),
-                         }
-                    )
+                let knob = args
+                    .get(2)
+                    .map(|s| match s {
+                        Ident(s) => Ok(s.to_owned()),
+                        _ => Err(ParseError::SemanticError),
+                    })
                     .transpose()?;
 
                 todo.push_op(Cmd::Rotate(axis, degrees), None, knob)
@@ -185,7 +182,7 @@ fn analyze(node: &AstNode, todo: &mut ToDoList) -> Result<(), ParseError> {
                 let lighting = Symbol::Constant(reflection);
                 todo.add_sym(name, lighting)
             },
-            
+
             // TODO: Push these operations into their own operations list
             // TODO: to prevent having to traverse the op list more than once
             // Animation
@@ -214,7 +211,6 @@ fn analyze(node: &AstNode, todo: &mut ToDoList) -> Result<(), ParseError> {
                 }?;
                 todo.push_op(Cmd::Vary(knob, frame0, frame1, val0, val1), None, None)
             },
-
         }
     } else {
         // TODO: Change this when the Ast becomes more complex and has expressions
@@ -227,7 +223,6 @@ mod tests {
     use super::*;
     use std::path::PathBuf;
 
-    #[allow(dead_code)]
     fn get_mdl() -> String {
         let mut mdl_file = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
         mdl_file.push("tests/debug.mdl");

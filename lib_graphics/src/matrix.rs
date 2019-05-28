@@ -59,7 +59,8 @@ pub trait MatrixMult {
     }
 
     fn apply_rcs(&mut self, stack: &[SquareMatrix])
-    where Self: std::marker::Sized
+    where
+        Self: std::marker::Sized,
     {
         stack.last().unwrap_or_default().mult(self);
     }
@@ -234,7 +235,6 @@ impl SquareMatrix {
         ];
         SquareMatrix::from(m)
     }
-
 }
 
 impl MatrixMult for SquareMatrix {
