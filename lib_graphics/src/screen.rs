@@ -3,7 +3,7 @@ use crate::vector::Vector;
 use crate::{PICTURE_DIR, PIXELS, XRES, YRES};
 use std::f64;
 use std::fmt;
-use std::fs::{DirBuilder, File};
+use std::fs::{self, DirBuilder, File};
 use std::io::{self, prelude::*};
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
@@ -57,11 +57,13 @@ impl Screen {
         self.write_ppm(&path)?;
 
         // If the file originally had an extension, use imagemagick to convert it
+        // then remove the ppm file
         if let Some(extension) = extension {
             let ppm = path.as_path().to_owned();
             path.set_extension(extension);
 
-            if let Ok(mut proc) = Command::new("convert").arg(ppm).arg(path).spawn() {
+            // convert the file
+            if let Ok(mut proc) = Command::new("convert").arg(&ppm).arg(path).spawn() {
                 proc.wait().unwrap();
             } else {
                 eprintln!(
@@ -69,6 +71,11 @@ impl Screen {
                      Is Image Magick installed?"
                 );
             }
+            // remove the ppm file
+            if let Err(error) = fs::remove_file(&ppm) {
+                eprint!("Error removing \"{:?}\": {}", ppm, error);
+            }
+
         }
 
         Ok(())
