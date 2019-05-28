@@ -282,11 +282,14 @@ impl ToDoList {
             let convert = SubProcess::new("convert")
                 .arg("-delay")
                 .arg("1.7")
-                .arg(pic_frames)
-                .arg(gif_name)
+                .arg(&pic_frames)
+                .arg(&gif_name)
                 .spawn();
             match convert {
-                Ok(mut proc) => proc.wait().unwrap(),
+                Ok(mut proc) => {
+                    println!("Making gif: {}", &gif_name);
+                    proc.wait().unwrap();
+                },
                 Err(err) => panic!(err),
             };
         }

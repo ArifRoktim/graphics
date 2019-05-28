@@ -1,5 +1,8 @@
 # w11\_mdl\_animation
 
+IMPORTANT TODO(S):
+* Remove all old frames from the directory when creating animations
+
 New MDL commands to implement:
 * frames
   * set the number of frames
