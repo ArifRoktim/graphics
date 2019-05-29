@@ -24,6 +24,40 @@ pub enum ParseCommand {
     Vary,
 }
 
+impl From<&Rule> for ParseCommand {
+    fn from(r: &Rule) -> ParseCommand {
+        use Rule::*;
+        use ParseCommand as Pcmd;
+        match r {
+            push => Pcmd::Push,
+            pop => Pcmd::Pop,
+            display => Pcmd::Display,
+            save => Pcmd::Save,
+            translate => Pcmd::Translate,
+            scale => Pcmd::Scale,
+            rotate => Pcmd::Rotate,
+            cuboid => Pcmd::Cuboid,
+            sphere => Pcmd::Sphere,
+            torus => Pcmd::Torus,
+            line => Pcmd::Line,
+            constants => Pcmd::Constants,
+            frames => Pcmd::Frames,
+            basename => Pcmd::Basename,
+            vary => Pcmd::Vary,
+
+            // Statements that are handled by `node_from_statement`
+            // Primitve `Rule`s aren't converted to `ParseCommand`s
+            float | whole | axis | ident | string => {
+                panic!("{:?} is not a command!", r)
+            },
+            // TODO: Might add expressions to language later
+            statement => panic!("Parse error!"),
+            // These are silent or already unwrapped
+            EOI | program | WHITESPACE | COMMENT => unreachable!(),
+        }
+    }
+}
+
 // TODO: Move this enum to lib_graphics
 #[derive(Clone, Copy, Debug)]
 pub enum Axis {
@@ -86,40 +120,16 @@ fn node_from_statement(pair: Pair<Rule>) -> AstNode {
                 pair.into_inner().next().unwrap(),
             )
         },
-        // No args
-        Rule::push => AstNode::MdlCommand { command: ParseCommand::Push, args: vec![] },
-        Rule::pop => AstNode::MdlCommand { command: ParseCommand::Pop, args: vec![] },
-        Rule::display => AstNode::MdlCommand { command: ParseCommand::Display, args: vec![] },
-        // Has args
-        Rule::save => AstNode::MdlCommand { command: ParseCommand::Save, args: get_args(pair) },
-        // Transformations
-        Rule::translate => {
-            AstNode::MdlCommand { command: ParseCommand::Translate, args: get_args(pair) }
-        },
-        Rule::scale => AstNode::MdlCommand { command: ParseCommand::Scale, args: get_args(pair) },
-        Rule::rotate => AstNode::MdlCommand { command: ParseCommand::Rotate, args: get_args(pair) },
-        // 3D objects
-        Rule::cuboid => AstNode::MdlCommand { command: ParseCommand::Cuboid, args: get_args(pair) },
-        Rule::sphere => AstNode::MdlCommand { command: ParseCommand::Sphere, args: get_args(pair) },
-        Rule::torus => AstNode::MdlCommand { command: ParseCommand::Torus, args: get_args(pair) },
-        // others
-        Rule::line => AstNode::MdlCommand { command: ParseCommand::Line, args: get_args(pair) },
-        Rule::constants => {
-            AstNode::MdlCommand { command: ParseCommand::Constants, args: get_args(pair) }
-        },
-        // Animation
-        Rule::frames => AstNode::MdlCommand { command: ParseCommand::Frames, args: get_args(pair) },
-        Rule::basename => {
-            AstNode::MdlCommand { command: ParseCommand::Basename, args: get_args(pair) }
-        },
-        Rule::vary => AstNode::MdlCommand { command: ParseCommand::Vary, args: get_args(pair) },
         // Primitives
         Rule::float => AstNode::Float(pair.as_str().parse::<f64>().unwrap()),
         Rule::whole => AstNode::Whole(pair.as_str().parse::<usize>().unwrap()),
         Rule::axis => AstNode::Axis(pair.as_str().parse::<Axis>().unwrap()),
         Rule::ident => AstNode::Ident(pair.as_str().to_owned()),
         Rule::string => AstNode::Str(pair.as_str().to_owned()),
-        _ => unimplemented!(),
+        // These are silent or already unwrapped
+        Rule::EOI | Rule::program | Rule::WHITESPACE | Rule::COMMENT => unreachable!(),
+        // Commands
+        rule => AstNode::MdlCommand { command: ParseCommand::from(&rule), args: get_args(pair) },
     }
 }
 
