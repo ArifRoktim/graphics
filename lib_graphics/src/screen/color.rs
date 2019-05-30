@@ -122,9 +122,10 @@ impl Shine {
     }
 
     pub fn get_shine(normal: &Vector, shine: Option<&Reflection>) -> Color {
-        let light = LIGHT_POS.normalized();
-        let view = VIEW_VECTOR.normalized();
-        let normal = normal.normalized();
+        let light = Vector::normalized(&LIGHT_POS);
+        let view = Vector::normalized(&VIEW_VECTOR);
+        let normal = Vector::normalized(normal);
+
 
         let ambient = shine.map(|s| &s.ambient).unwrap_or(&AMBIENT_REFLECT);
         let diffuse = shine.map(|s| &s.diffuse).unwrap_or(&DIFFUSE_REFLECT);

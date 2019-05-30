@@ -13,7 +13,12 @@ impl Vector {
         Vector { x, y, z }
     }
 
-    // TODO: Choose more distinguishing names for these two methods
+    pub fn normalized(v: &Vector) -> Vector {
+        let mut new = v.clone();
+        new.normalize();
+        new
+    }
+
     pub fn normalize(&mut self) {
         let magnitude = (self.x.powi(2) + self.y.powi(2) + self.z.powi(2)).sqrt();
         self.x /= magnitude;
@@ -21,29 +26,26 @@ impl Vector {
         self.z /= magnitude;
     }
 
-    pub fn normalized(&self) -> Vector {
-        let mut new = self.clone();
-        new.normalize();
-        new
-    }
-
     pub fn dot_product(&self, other: &Vector) -> f64 {
         self.x * other.x + self.y * other.y + self.z * other.z
     }
 
     #[rustfmt::skip]
+    pub fn cross_product(&self, other: &Vector) -> Vector {
+        Vector::new(
+            self.y * other.z - self.z * other.y,
+            self.z * other.x - self.x * other.z,
+            self.x * other.y - self.y * other.x,
+        )
+    }
+
     pub fn calculate_normal(triangle: &[[f64; COLS]]) -> Vector {
         assert_eq!(3, triangle.len(), "Triangles must have 3 points!");
 
         let a = Vector::from(&triangle[1][..3]) - &Vector::from(&triangle[0][..3]);
         let b = Vector::from(&triangle[2][..3]) - &Vector::from(&triangle[0][..3]);
 
-        // TODO: Write a cross product method
-        Vector::new(
-            a.y * b.z - a.z * b.y,
-            a.z * b.x - a.x * b.z,
-            a.x * b.y - a.y * b.x,
-        )
+        a.cross_product(&b)
     }
 }
 
