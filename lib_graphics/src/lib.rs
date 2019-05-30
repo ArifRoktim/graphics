@@ -1,23 +1,19 @@
 pub mod draw;
 pub mod matrix;
-//pub mod parse;
 pub mod screen;
 pub mod vector;
-
 pub use matrix::{Matrix, SquareMatrix, IDENTITY};
-// TODO: Import `consts` as `color_consts`
-pub use screen::{consts, Color, Reflection, Screen, Shine};
+pub use screen::{color, Color, Reflection, Screen, Shine};
 pub use vector::Vector;
 
+use color::consts;
+// static/consts exports
 pub const PICTURE_DIR: &str = "out";
-
 // TODO: These should be properties of the screen.
 pub const XRES: usize = 500;
 pub const YRES: usize = 500;
 pub const PIXELS: usize = XRES * YRES;
 pub const LINE_COLOR: Color = consts::BLACK;
-
-// TODO: These could be passed as arguments to parse::parse_file()
 pub const STEPS_2D: usize = 100;
 pub const STEPS_3D: usize = 100;
 
