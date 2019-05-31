@@ -158,7 +158,7 @@ pub fn gen_sphere(cx: f64, cy: f64, cz: f64, r: f64, steps: usize) -> Matrix {
     // TODO: Construct matrix with capacity of `steps * steps` OR
     // TODO: Mutably borrow from add_sphere
     // TODO: ditto for torus
-    let mut points = Matrix::new(0);
+    let mut points = Matrix::default();
 
     // For 0->2PI draw a semi circle that's rotated phi degrees along x axis
     for t_phi in 0..steps {
@@ -218,7 +218,7 @@ pub fn add_sphere(polygons: &mut Matrix, cx: f64, cy: f64, cz: f64, r: f64, step
 
 pub fn gen_torus(cx: f64, cy: f64, cz: f64, minor_r: f64, major_r: f64, steps: usize) -> Matrix {
     // Matrix of the points of the surface of a sphere
-    let mut points = Matrix::new(0);
+    let mut points = Matrix::default();
 
     // For phi: 0->2PI, draw a circle of radius `minor_r` that is translated by
     // `major_r` in the x axis and rotated phi degrees in the y axis

@@ -15,9 +15,7 @@ pub const IDENTITY: SquareMatrix = SquareMatrix {
 // For the purposes of display and multiplication, this is switched.
 // Each point is then represented by a column and the rows correspond
 // to either all the x values, y values, z values, etc.
-pub trait MatrixMult {
-    // TODO: Make a RawMatrix trait for just these four methods
-    // TODO: Add a transpose method for RawMatrix and use it in the from methods
+pub trait RawMatrix {
     fn raw(&self) -> &[[f64; COLS]];
     fn raw_mut(&mut self) -> &mut [[f64; COLS]];
     fn cols(&self) -> usize {
@@ -26,8 +24,9 @@ pub trait MatrixMult {
     fn rows(&self) -> usize {
         self.raw().len()
     }
+}
 
-    // TODO: Make a seperate MatrixMult that is blanket implemented on RawMatrix
+pub trait MatrixMult: RawMatrix {
     // Modifies other matrix to be = self * other
     #[allow(clippy::needless_range_loop)]
     fn mult(&self, other: &mut MatrixMult) {
@@ -66,54 +65,9 @@ pub trait MatrixMult {
     }
 }
 
-#[derive(Debug, Clone)]
-pub struct Matrix {
-    pub m: Vec<[f64; COLS]>,
-}
+impl<T: RawMatrix> MatrixMult for T {}
 
-impl Matrix {
-    pub fn new(rows: usize) -> Matrix {
-        // TODO: Use Vec::with_capacity here
-        // TODO: Also write a seperate Matrix::with_capacity method
-        let mut m: Vec<[f64; COLS]> = Vec::new();
-        for _ in 0..rows {
-            m.push([0.0; COLS]);
-        }
-        Matrix { m }
-    }
-
-    pub fn clear(&mut self) {
-        self.m.clear();
-    }
-
-    pub fn push(&mut self, point: [f64; COLS]) {
-        self.m.push(point);
-    }
-}
-
-impl MatrixMult for Matrix {
-    fn raw(&self) -> &[[f64; COLS]] {
-        self.m.as_slice()
-    }
-
-    fn raw_mut(&mut self) -> &mut [[f64; COLS]] {
-        self.m.as_mut_slice()
-    }
-}
-
-impl From<&[[f64; COLS]]> for Matrix {
-    fn from(matrix: &[[f64; COLS]]) -> Matrix {
-        // TODO: Replace 0 with matrix.len()
-        let mut ret = Matrix::new(0);
-        for &row in matrix {
-            ret.m.push(row);
-        }
-        ret
-    }
-}
-
-// TODO: Blanked implement fmt::Display for RawMatrix
-impl fmt::Display for Matrix {
+impl fmt::Display for RawMatrix {
     // Print 2d array so that each point is a column
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         // precision of the floating point
@@ -129,7 +83,7 @@ impl fmt::Display for Matrix {
         let mut z = String::with_capacity(size);
         let mut one = String::with_capacity(size);
 
-        for row in &self.m {
+        for row in self.raw() {
             x.push_str(&format!("{: <width$.prec$} ", row[0], prec = prec, width = width));
             y.push_str(&format!("{: <width$.prec$} ", row[1], prec = prec, width = width));
             z.push_str(&format!("{: <width$.prec$} ", row[2], prec = prec, width = width));
@@ -139,7 +93,60 @@ impl fmt::Display for Matrix {
     }
 }
 
-// TODO: Implement Default for Matrix to be an empty matrix
+
+
+#[derive(Debug, Clone)]
+pub struct Matrix {
+    pub m: Vec<[f64; COLS]>,
+}
+
+impl Matrix {
+    pub fn new(rows: usize) -> Matrix {
+        let mut m: Vec<[f64; COLS]> = Vec::with_capacity(rows);
+        for _ in 0..rows {
+            m.push([0.0; COLS]);
+        }
+        Matrix { m }
+    }
+
+    pub fn with_capacity(rows: usize) -> Matrix {
+        Matrix{ m: Vec::with_capacity(rows) }
+    }
+
+    pub fn clear(&mut self) {
+        self.m.clear();
+    }
+
+    pub fn push(&mut self, point: [f64; COLS]) {
+        self.m.push(point);
+    }
+}
+
+impl RawMatrix for Matrix {
+    fn raw(&self) -> &[[f64; COLS]] {
+        self.m.as_slice()
+    }
+
+    fn raw_mut(&mut self) -> &mut [[f64; COLS]] {
+        self.m.as_mut_slice()
+    }
+}
+
+impl From<&[[f64; COLS]]> for Matrix {
+    fn from(matrix: &[[f64; COLS]]) -> Matrix {
+        let mut ret = Matrix::with_capacity(matrix.len());
+        for &row in matrix {
+            ret.m.push(row);
+        }
+        ret
+    }
+}
+
+impl Default for Matrix {
+    fn default() -> Matrix {
+        Matrix::new(0)
+    }
+}
 
 #[derive(Debug, Clone)]
 pub struct SquareMatrix {
@@ -237,7 +244,7 @@ impl SquareMatrix {
     }
 }
 
-impl MatrixMult for SquareMatrix {
+impl RawMatrix for SquareMatrix {
     fn raw(&self) -> &[[f64; COLS]] {
         &self.m
     }

@@ -129,7 +129,7 @@ impl ToDoList {
         use Command::*;
 
         // Temporary edge/polygon matrix
-        let mut temp = Matrix::new(0);
+        let mut temp = Matrix::default();
 
         // Check for animation code in script
         let animation = self.first_pass();
