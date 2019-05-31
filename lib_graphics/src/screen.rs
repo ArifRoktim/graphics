@@ -1,10 +1,11 @@
 use crate::matrix::{Matrix, COLS};
 use crate::vector::Vector;
-use crate::{PICTURE_DIR, PIXELS, XRES, YRES};
+use crate::{PICTURE_DIR, XRES, YRES};
 use std::f64;
 use std::fmt;
 use std::fs::{self, DirBuilder, File};
 use std::io::{self, prelude::*};
+use std::mem;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 
@@ -81,7 +82,6 @@ impl Screen {
     }
 
     pub fn display(&self) {
-        // TODO: If `display` command doesn't exist/work, instead save the file and print its name
         if let Ok(mut proc) = Command::new("display").stdin(Stdio::piped()).spawn() {
             #[rustfmt::skip]
             proc.stdin
@@ -91,7 +91,10 @@ impl Screen {
                 .unwrap();
             proc.wait().unwrap();
         } else {
-            eprintln!("Error running `display` command! Is Image Magick installed?");
+            eprintln!("Error running `display` command! Saving file instead.");
+            let name = "pic.png";
+            self.write(&[name]).unwrap();
+            eprintln!("Saved to `{}/{}`", PICTURE_DIR, name);
         }
     }
 
@@ -305,8 +308,9 @@ impl Screen {
 
 impl fmt::Display for Screen {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        // TODO: Use std::mem::size_of_val instead of manually calculating size
-        let size: usize = PIXELS * 3 * 4 + YRES + 50;
+        let header = mem::size_of_val("P3 {} {} 255\n{}");
+        let row = XRES * mem::size_of_val(&(Color::new(255, 255, 255).to_string() + " ")) + 1;
+        let size = header + YRES * row;
         let mut contents = String::with_capacity(size);
         for row in self.pixels.iter() {
             for (color, _) in row.iter() {
