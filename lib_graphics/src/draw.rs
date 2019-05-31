@@ -65,6 +65,15 @@ impl Curve {
     }
 }
 
+fn reserve(points: &mut Matrix, size: usize) {
+    let additional = if size >= points.m.len() {
+        size - points.m.len()
+    } else {
+        0
+    };
+    points.m.reserve(additional);
+}
+
 fn add_point(edges: &mut Matrix, x: f64, y: f64, z: f64) {
     let point = [x, y, z, 1.0];
     edges.push(point);
@@ -153,13 +162,8 @@ pub fn add_box(polygons: &mut Matrix, x: f64, y: f64, z: f64, width: f64, height
     add_polygon(polygons, (x, y1, z), (x, y1, z1), (x1, y1, z1));
 }
 
-pub fn gen_sphere(cx: f64, cy: f64, cz: f64, r: f64, steps: usize) -> Matrix {
+pub fn gen_sphere(points: &mut Matrix, cx: f64, cy: f64, cz: f64, r: f64, steps: usize) {
     // Matrix of the points of the surface of a sphere
-    // TODO: Construct matrix with capacity of `steps * steps` OR
-    // TODO: Mutably borrow from add_sphere
-    // TODO: ditto for torus
-    let mut points = Matrix::default();
-
     // For 0->2PI draw a semi circle that's rotated phi degrees along x axis
     for t_phi in 0..steps {
         let phi = t_phi as f64 / steps as f64;
@@ -179,12 +183,19 @@ pub fn gen_sphere(cx: f64, cy: f64, cz: f64, r: f64, steps: usize) -> Matrix {
             points.push(point);
         }
     }
-
-    points
 }
 
-pub fn add_sphere(polygons: &mut Matrix, cx: f64, cy: f64, cz: f64, r: f64, steps: usize) {
-    let points = gen_sphere(cx, cy, cz, r, steps);
+pub fn add_sphere(
+    polygons: &mut Matrix,
+    points: &mut Matrix,
+    cx: f64,
+    cy: f64,
+    cz: f64,
+    r: f64,
+    steps: usize
+) {
+    reserve(points, steps * (steps + 1));
+    gen_sphere(points, cx, cy, cz, r, steps);
 
     let end = steps;
     let steps = steps + 1;
@@ -216,10 +227,15 @@ pub fn add_sphere(polygons: &mut Matrix, cx: f64, cy: f64, cz: f64, r: f64, step
     }
 }
 
-pub fn gen_torus(cx: f64, cy: f64, cz: f64, minor_r: f64, major_r: f64, steps: usize) -> Matrix {
-    // Matrix of the points of the surface of a sphere
-    let mut points = Matrix::default();
-
+pub fn gen_torus(
+    points: &mut Matrix,
+    cx: f64,
+    cy: f64,
+    cz: f64,
+    minor_r: f64,
+    major_r: f64,
+    steps: usize
+) {
     // For phi: 0->2PI, draw a circle of radius `minor_r` that is translated by
     // `major_r` in the x axis and rotated phi degrees in the y axis
     for t_phi in 0..steps {
@@ -240,12 +256,12 @@ pub fn gen_torus(cx: f64, cy: f64, cz: f64, minor_r: f64, major_r: f64, steps: u
             points.push(point);
         }
     }
-
-    points
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn add_torus(
     polygons: &mut Matrix,
+    points: &mut Matrix,
     cx: f64,
     cy: f64,
     cz: f64,
@@ -253,7 +269,8 @@ pub fn add_torus(
     major_r: f64,
     steps: usize,
 ) {
-    let points = gen_torus(cx, cy, cz, minor_r, major_r, steps);
+    reserve(points, steps * steps);
+    gen_torus(points, cx, cy, cz, minor_r, major_r, steps);
 
     let end = steps;
 

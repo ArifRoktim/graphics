@@ -129,7 +129,9 @@ impl ToDoList {
         use Command::*;
 
         // Temporary edge/polygon matrix
-        let mut temp = Matrix::default();
+        let mut draw = Matrix::default();
+        // Temporary point matrix used for sphere and torus
+        let mut points = Matrix::default();
 
         // Check for animation code in script
         let animation = self.first_pass();
@@ -151,7 +153,8 @@ impl ToDoList {
 
             for operation in &self.ops {
                 // clear matrix for every operation
-                temp.clear();
+                draw.clear();
+                points.clear();
                 let command = &operation.command;
 
                 // From an Option<String>, get the symbol with that name from the hashmap,
@@ -234,27 +237,27 @@ impl ToDoList {
                     },
 
                     &Cuboid(x, y, z, h, w, d) => {
-                        draw::add_box(&mut temp, x, y, z, w, h, d);
-                        temp.apply_rcs(cstack);
-                        screen.draw_polygons(&temp, light_const);
+                        draw::add_box(&mut draw, x, y, z, w, h, d);
+                        draw.apply_rcs(cstack);
+                        screen.draw_polygons(&draw, light_const);
                     },
 
                     &Sphere(x, y, z, r) => {
-                        draw::add_sphere(&mut temp, x, y, z, r, STEPS_3D);
-                        temp.apply_rcs(cstack);
-                        screen.draw_polygons(&temp, light_const);
+                        draw::add_sphere(&mut draw, &mut points, x, y, z, r, STEPS_3D);
+                        draw.apply_rcs(cstack);
+                        screen.draw_polygons(&draw, light_const);
                     },
 
                     &Torus(x, y, z, r0, r1) => {
-                        draw::add_torus(&mut temp, x, y, z, r0, r1, STEPS_3D);
-                        temp.apply_rcs(cstack);
-                        screen.draw_polygons(&temp, light_const);
+                        draw::add_torus(&mut draw, &mut points, x, y, z, r0, r1, STEPS_3D);
+                        draw.apply_rcs(cstack);
+                        screen.draw_polygons(&draw, light_const);
                     },
 
                     &Line(x0, y0, z0, x1, y1, z1) => {
-                        draw::add_edge(&mut temp, x0, y0, z0, x1, y1, z1);
-                        temp.apply_rcs(cstack);
-                        screen.draw_lines(&temp, LINE_COLOR);
+                        draw::add_edge(&mut draw, x0, y0, z0, x1, y1, z1);
+                        draw.apply_rcs(cstack);
+                        screen.draw_lines(&draw, LINE_COLOR);
                     },
 
                     Constants(_) | Frames(_) | Basename(_) | Vary(..) => {},
