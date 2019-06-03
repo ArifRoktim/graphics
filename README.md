@@ -1,40 +1,42 @@
-# w11\_mdl\_animation
+# w12\_final
+Members: Arif Roktim  
+Team Name: K***rust***y Krab
 
-IMPORTANT TODO(S):
-* Remove all old frames from the directory when creating animations
-* Make error message for invalid frame start/end better
+## Features to implement
+The goal of this project is to implement as many features as we want.  
+So I'm going to list features that I want to implement in decreasing order of importance,
+moving on to the next feature only when the current one is done
+___
 
-New MDL commands to implement:
-* frames
-  * set the number of frames
-* basename
-  * sets the basename for animation file saving
-* vary
-  * vary the values for a knob between 2 values in a set range of frames
+### Existing MDL Commands/features:
+- [ ] Add the `light` command for MDL; loop through all the lights for diffuse and specular
+- [ ] Implement the `mesh` command to load .obj files
+- [ ] Implement `set`, then `saveknobs`, then `tween`;
 
-Animation Features:
+### Time to up my parser game:
+- [ ] Add ability to reference variables (and do arithmetic on them). Useful for `vary`
 
-The key animation commands are frames, basename and vary. You should proceed with animation code in 3 steps:
-* Go through the operations list and look for any of the three animation commands
-  * Set frames and basename
-  * Handle errors as needed
-* Go through the operations list a second time and look for the vary command
-  * Populate a table that has an entry for each frame, and in each frame it has a value for each knob
-    * When completed, the table should contain the correctly set values for each knob (perform the varying calculation)
-    * In c, there is a struct vary\_node defined in parser.h
-    * In python, you could use a dictionary/list combination
-    * Handle errors as needed
-* Perform the normal drawing steps, with the following additions if animation code is present
-  * Look at the table of knob values (set in the second step) and set each knob in the symbol table to the appropriate value.
-  * Run the normal commands
-  * At the end of the loop, save the current screen to a file, the file should have the basename followed by a number, so that animate will work correctly.
-    * I suggest you put all the animation frames in a subdirectory, so just append a directory name to the basename when saving files
-  * When you are done with each frame loop, don't forget to reset the screen, origin stack and any other pieces of data that are specific to a given frame
+Example use cases:
+We have a script file with 100 frames. And the following vary commands:
+```
+vary biggenator 0 49 0 1
+vary biggenator 50 99 1 0
+```
+If we want to halve the number of frames, we'd have to manually change `[0, 49]` and `[50, 99]` to `[0,24]` and `[25, 49]`.  
+Very annoying. The following would be nice:
+```
+vary biggenator 0 (frames // 2 - 1) 0 1
+vary biggenator (frames // 2) (frames - 1) 1 0
+```
+The `//` operator is integer division in this example. Also, all expressions would have to be in parentheses.  
+For example, to rotate either less or more, based on number of frames:
+```
+vary spinMeRightRound 0 30 0 (frames)
+```
 
-Once you have all the files created, you can generate the animation using imagemagick's animate and convert commands:
-* animate
-  * Will display multiple single image files in succession as a single animation, with a default frame rate of 100 frames per second, by using the -delay option, you can change the fps ( -delay x will set the frame rate to 100/x fps )
-  * $ animate -delay 1.7 animations/orb\*
-* Convert can, like animate, take a number of frames and animate them, but instead of displaying the animation, it will combine them into a single animated gif file. Note that the only image format that can use animation is gif.
-  * $ convert -delay 10 animations/orb* orb.gif will create a single animated gif called orb.gif
-  * In python and c, I've included a make\_animation function in display.c/py that will generate the animation for you.
+### Shading:
+- [ ] Gouraud shading
+- [ ] Phong shading
+
+### Additions/changes to MDL:
+- [ ] Use `vary` to move lights
