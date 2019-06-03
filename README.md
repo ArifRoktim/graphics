@@ -2,18 +2,14 @@
 Members: Arif Roktim  
 Team Name: K***rust***y Krab
 
-## Features to implement
-The goal of this project is to implement as many features as we want.  
-So I'm going to list features that I want to implement in decreasing order of importance,
-moving on to the next feature only when the current one is done
-___
+## Features to implement in descending order of importance
 
 ### Existing MDL Commands/features:
-- [ ] Add the `light` command for MDL; loop through all the lights for diffuse and specular
-- [ ] Implement the `mesh` command to load .obj files
-- [ ] Implement `set`, then `saveknobs`, then `tween`;
+- [ ] Add `light` command; loop through all the lights
+- [ ] Add `mesh` command
+- [ ] Add `set`, `saveknobs`, and `tween` commands
 
-### Time to up my parser game:
+### Time to up my compiler game:
 - [ ] Add ability to reference variables (and do arithmetic on them). Useful for `vary`
 
 Example use cases:
