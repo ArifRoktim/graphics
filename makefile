@@ -5,9 +5,11 @@ S := scripts/simple_anim.mdl
 
 all:
 	cargo run --release $(S)
+	@./.animate.sh $(S)
 
 dev:
 	cargo run $(S)
+	@./.animate.sh $(S)
 
 debug:
 	RUST_BACKTRACE=1 cargo run $(S)
