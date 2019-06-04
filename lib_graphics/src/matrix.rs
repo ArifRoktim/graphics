@@ -93,8 +93,6 @@ impl fmt::Display for RawMatrix {
     }
 }
 
-
-
 #[derive(Debug, Clone)]
 pub struct Matrix {
     pub m: Vec<[f64; COLS]>,
@@ -110,7 +108,7 @@ impl Matrix {
     }
 
     pub fn with_capacity(rows: usize) -> Matrix {
-        Matrix{ m: Vec::with_capacity(rows) }
+        Matrix { m: Vec::with_capacity(rows) }
     }
 
     pub fn clear(&mut self) {

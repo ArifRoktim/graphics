@@ -26,8 +26,8 @@ pub enum ParseCommand {
 
 impl From<&Rule> for ParseCommand {
     fn from(r: &Rule) -> ParseCommand {
-        use Rule::*;
         use ParseCommand as Pcmd;
+        use Rule::*;
         match r {
             push => Pcmd::Push,
             pop => Pcmd::Pop,
@@ -47,9 +47,7 @@ impl From<&Rule> for ParseCommand {
 
             // Statements that are handled by `node_from_statement`
             // Primitve `Rule`s aren't converted to `ParseCommand`s
-            float | whole | axis | ident | string => {
-                panic!("{:?} is not a command!", r)
-            },
+            float | whole | axis | ident | string => panic!("{:?} is not a command!", r),
             // TODO: Might add expressions to language later
             statement => panic!("Parse error!"),
             // These are silent or already unwrapped

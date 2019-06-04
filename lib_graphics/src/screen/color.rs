@@ -126,7 +126,6 @@ impl Shine {
         let view = Vector::normalized(&VIEW_VECTOR);
         let normal = Vector::normalized(normal);
 
-
         let ambient = shine.map(|s| &s.ambient).unwrap_or(&AMBIENT_REFLECT);
         let diffuse = shine.map(|s| &s.diffuse).unwrap_or(&DIFFUSE_REFLECT);
         let specular = shine.map(|s| &s.specular).unwrap_or(&SPECULAR_REFLECT);

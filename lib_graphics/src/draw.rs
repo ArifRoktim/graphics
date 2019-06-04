@@ -66,11 +66,7 @@ impl Curve {
 }
 
 fn reserve(points: &mut Matrix, size: usize) {
-    let additional = if size >= points.m.len() {
-        size - points.m.len()
-    } else {
-        0
-    };
+    let additional = if size >= points.m.len() { size - points.m.len() } else { 0 };
     points.m.reserve(additional);
 }
 
@@ -192,7 +188,7 @@ pub fn add_sphere(
     cy: f64,
     cz: f64,
     r: f64,
-    steps: usize
+    steps: usize,
 ) {
     reserve(points, steps * (steps + 1));
     gen_sphere(points, cx, cy, cz, r, steps);
@@ -234,7 +230,7 @@ pub fn gen_torus(
     cz: f64,
     minor_r: f64,
     major_r: f64,
-    steps: usize
+    steps: usize,
 ) {
     // For phi: 0->2PI, draw a circle of radius `minor_r` that is translated by
     // `major_r` in the x axis and rotated phi degrees in the y axis
