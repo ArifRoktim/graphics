@@ -1,5 +1,5 @@
 use crate::matrix::{Matrix, COLS};
-use crate::vector::Vector;
+use crate::{Light, Vector};
 use crate::{PICTURE_DIR, XRES, YRES};
 use std::f64;
 use std::fmt;
@@ -231,14 +231,14 @@ impl Screen {
         }
     }
 
-    pub fn draw_polygons(&mut self, polygons: &Matrix, shine: Option<&Reflection>) {
+    pub fn draw_polygons(&mut self, polygons: &Matrix, shine: Option<&Reflection>, light: Option<&Light>) {
         // Iterate over the edge list 3 points at a time
         for edge in polygons.m.chunks_exact(3) {
             // Get normal vector for backface culling
             let normal = Vector::calculate_normal(edge);
 
             if normal.z > 0.0 {
-                let c = Shine::get_shine(&normal, shine);
+                let c = Shine::get_shine(&normal, shine, light);
                 self.scanline_convert(edge, c);
             }
         }
