@@ -1,4 +1,4 @@
-use super::{Axis, ParseError};
+use super::{Axis, Command, ParseError};
 use lib_graphics::{draw, matrix::MatrixMult, Matrix, Reflection, Screen, SquareMatrix};
 use lib_graphics::{LINE_COLOR, PICTURE_DIR, STEPS_3D};
 use std::collections::HashMap;
@@ -8,28 +8,6 @@ use std::process::Command as SubProcess;
 pub enum Symbol {
     Constant(Reflection),
     Knob(f64),
-}
-
-#[derive(Clone, Debug)]
-pub struct NOOP;
-
-#[derive(Clone, Debug)]
-pub enum Command {
-    Push(),
-    Pop(),
-    Display(),
-    Save(String),
-    Translate(f64, f64, f64),
-    Scale(f64, f64, f64),
-    Rotate(Axis, f64),
-    Cuboid(f64, f64, f64, f64, f64, f64),
-    Sphere(f64, f64, f64, f64),
-    Torus(f64, f64, f64, f64, f64),
-    Line(f64, f64, f64, f64, f64, f64),
-    Constants(NOOP),
-    Frames(usize),
-    Basename(String),
-    Vary(String, usize, usize, f64, f64),
 }
 
 type SymbolTable = HashMap<String, Symbol>;

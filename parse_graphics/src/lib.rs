@@ -1,12 +1,12 @@
 pub mod analyzer;
 pub mod ast;
-pub mod symtab;
+pub mod todo;
 
-pub use analyzer::{file, ParseError};
+pub use analyzer::{Command, file, NOOP, ParseError};
 pub use ast::{AstIntoError, AstNode, Axis, ParseAxisError, ParseCommand};
-pub use symtab::{Command, Operation, Symbol, ToDoList, NOOP};
+pub use todo::{Operation, Symbol, ToDoList};
 
-use pest_derive::*;
+use pest_derive::Parser;
 #[derive(Parser)]
 #[grammar = "mdl.pest"]
 pub struct MDLParser;

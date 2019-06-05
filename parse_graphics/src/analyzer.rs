@@ -1,9 +1,30 @@
 use lib_graphics::{Reflection, Shine};
 use std::fs;
 
-use super::ast;
-use super::{AstIntoError, AstNode, ParseAxisError, ParseCommand};
-use super::{Command, Symbol, ToDoList};
+use super::ast::{self, AstIntoError, AstNode, Axis, ParseAxisError, ParseCommand};
+use super::todo::{Symbol, ToDoList};
+
+#[derive(Clone, Debug)]
+pub enum Command {
+    Push(),
+    Pop(),
+    Display(),
+    Save(String),
+    Translate(f64, f64, f64),
+    Scale(f64, f64, f64),
+    Rotate(Axis, f64),
+    Cuboid(f64, f64, f64, f64, f64, f64),
+    Sphere(f64, f64, f64, f64),
+    Torus(f64, f64, f64, f64, f64),
+    Line(f64, f64, f64, f64, f64, f64),
+    Constants(NOOP),
+    Frames(usize),
+    Basename(String),
+    Vary(String, usize, usize, f64, f64),
+}
+
+#[derive(Clone, Debug)]
+pub struct NOOP;
 
 #[derive(Debug)]
 pub enum ParseError {
