@@ -1,11 +1,8 @@
 use crate::{Light, Vector};
-use crate::{
-    AMBIENT_LIGHT, AMBIENT_REFLECT, DIFFUSE_REFLECT, LIGHT, SPECULAR_EXP,
-    SPECULAR_REFLECT, VIEW_VECTOR,
-};
+use crate::{AMBIENT_LIGHT, SPECULAR_EXP, VIEW_VECTOR};
 use std::f64;
 use std::fmt;
-use std::ops::{Add, Mul};
+use std::ops::{Add, AddAssign, Mul};
 
 pub mod consts {
     use super::Color;
@@ -28,13 +25,6 @@ pub struct Color {
     pub blue: u8,
 }
 
-#[derive(Debug)]
-pub struct Reflection {
-    pub ambient: Shine,
-    pub diffuse: Shine,
-    pub specular: Shine,
-}
-
 impl Color {
     pub const fn new(r: u8, g: u8, b: u8) -> Color {
         Color { red: r, green: g, blue: b }
@@ -50,6 +40,15 @@ impl Color {
 impl fmt::Display for Color {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{} {} {} ", self.red, self.green, self.blue)
+    }
+}
+
+// TODO: Replace multiple `impl` blocks by using `Borrow<T>` trait
+impl AddAssign for Color {
+    fn add_assign(&mut self, rhs: Color) {
+        self.red = self.red.saturating_add(rhs.red);
+        self.green = self.green.saturating_add(rhs.green);
+        self.blue = self.blue.saturating_add(rhs.blue);
     }
 }
 
@@ -129,37 +128,52 @@ impl Shine {
         [ambient, diffuse, reflective]
     }
 
-    pub fn get_shine(normal: &Vector, shine: Option<&Reflection>, light: Option<&Light>) -> Color {
-        let ambient_r = shine.map(|s| &s.ambient).unwrap_or(&AMBIENT_REFLECT);
-        let diffuse_r = shine.map(|s| &s.diffuse).unwrap_or(&DIFFUSE_REFLECT);
-        let specular_r = shine.map(|s| &s.specular).unwrap_or(&SPECULAR_REFLECT);
-        let light = light.unwrap_or(&LIGHT);
+    pub fn get_shine(normal: &Vector, reflect: &Reflection, lights: &[Light]) -> Color {
+        assert_ne!(0, lights.len(), "Must have at least 1 light!");
 
-        let light = Light::new(Vector::normalized(&light.pos), light.color.clone());
         let view_v = Vector::normalized(&VIEW_VECTOR);
         let normal_v = Vector::normalized(normal);
 
-        &Shine::get_ambient(ambient_r)
-            + &Shine::get_diffuse(&normal_v, &light, diffuse_r)
-            + &Shine::get_specular(&normal_v, &light, &view_v, specular_r)
+        Shine::get_ambient(&reflect.ambient)
+            + &Shine::get_diffuse(&normal_v, lights, &reflect.diffuse)
+            + &Shine::get_specular(&normal_v, lights, &view_v, &reflect.specular)
     }
 
     fn get_ambient(reflect: &Shine) -> Color {
         AMBIENT_LIGHT * reflect
     }
 
-    fn get_diffuse(normal_v: &Vector, light: &Light, reflect: &Shine) -> Color {
-        light.color * reflect * (normal_v.dot_product(&light.pos))
+    fn get_diffuse(normal_v: &Vector, lights: &[Light], reflect: &Shine) -> Color {
+        //light.color * reflect * (normal_v.dot_product(&light.pos));
+        let mut diffuse = Color::default();
+        for light in lights {
+            diffuse += light.color * light.pos.dot_product(normal_v);
+        }
+        diffuse * reflect
     }
 
-    fn get_specular(normal_v: &Vector, light: &Light, view_v: &Vector, reflect: &Shine)
-    -> Color {
-        let reflected = normal_v * 2. * light.pos.dot_product(normal_v) - &light.pos;
-        let angle = match reflected.dot_product(&view_v) {
-            neg if neg < 0. => 0.,
-            others => others.powi(SPECULAR_EXP),
-        };
-        light.color * reflect * angle
+    fn get_specular(
+        normal_v: &Vector,
+        lights: &[Light],
+        view_v: &Vector,
+        reflect: &Shine,
+    ) -> Color {
+        //let reflected = normal_v * 2. * light.pos.dot_product(normal_v) - &light.pos;
+        //let angle = match reflected.dot_product(&view_v) {
+        //    neg if neg < 0. => 0.,
+        //    others => others.powi(SPECULAR_EXP),
+        //};
+        //light.color * reflect * angle;
+        let mut specular = Color::default();
+        for light in lights {
+            let reflected = normal_v * 2. * light.pos.dot_product(normal_v) - &light.pos;
+            let angle = match reflected.dot_product(&view_v) {
+                neg if neg < 0. => 0.,
+                others => others.powi(SPECULAR_EXP),
+            };
+            specular += light.color * angle;
+        }
+        specular * reflect
     }
 }
 
@@ -168,5 +182,18 @@ fn as_u8(f: f64) -> u8 {
         0
     } else {
         f as u8
+    }
+}
+
+#[derive(Debug)]
+pub struct Reflection {
+    pub ambient: Shine,
+    pub diffuse: Shine,
+    pub specular: Shine,
+}
+
+impl Reflection {
+    pub const fn new(ambient: Shine, diffuse: Shine, specular: Shine) -> Reflection {
+        Reflection { ambient, diffuse, specular }
     }
 }

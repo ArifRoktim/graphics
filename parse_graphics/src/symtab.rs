@@ -181,6 +181,9 @@ impl ToDoList {
                     None => None,
                 };
 
+                // TODO: Change this to use `light` mdl command
+                let lights = None;
+
                 match command {
                     Push() => {
                         // push a copy of the last item
@@ -239,19 +242,19 @@ impl ToDoList {
                     &Cuboid(x, y, z, h, w, d) => {
                         draw::add_box(&mut draw, x, y, z, w, h, d);
                         draw.apply_rcs(cstack);
-                        screen.draw_polygons(&draw, light_const);
+                        screen.draw_polygons(&draw, light_const, lights);
                     },
 
                     &Sphere(x, y, z, r) => {
                         draw::add_sphere(&mut draw, &mut points, x, y, z, r, STEPS_3D);
                         draw.apply_rcs(cstack);
-                        screen.draw_polygons(&draw, light_const);
+                        screen.draw_polygons(&draw, light_const, lights);
                     },
 
                     &Torus(x, y, z, r0, r1) => {
                         draw::add_torus(&mut draw, &mut points, x, y, z, r0, r1, STEPS_3D);
                         draw.apply_rcs(cstack);
-                        screen.draw_polygons(&draw, light_const);
+                        screen.draw_polygons(&draw, light_const, lights);
                     },
 
                     &Line(x0, y0, z0, x1, y1, z1) => {

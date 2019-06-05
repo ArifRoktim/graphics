@@ -21,12 +21,15 @@ pub const STEPS_3D: usize = 100;
 // TODO: These will be replaced with user inputed lighting values via the script
 pub const SPECULAR_EXP: i32 = 8;
 pub static AMBIENT_LIGHT: Color = Color::new(50, 50, 50);
-pub static LIGHT: Light = Light::new(Vector::new(0.5, 0.75, 1.), consts::WHITE);
+pub const LIGHT: Light = Light::new(Vector::new(0.5, 0.75, 1.), consts::WHITE);
 pub static VIEW_VECTOR: Vector = Vector::new(0., 0., 1.);
-pub static AMBIENT_REFLECT: Shine = Shine::new(0.1, 0.1, 0.1);
-pub static DIFFUSE_REFLECT: Shine = Shine::new(0.5, 0.5, 0.5);
-pub static SPECULAR_REFLECT: Shine = Shine::new(0.5, 0.5, 0.5);
+pub static REFLECT: Reflection = Reflection::new(
+    Shine::new(0.1, 0.1, 0.1), // Ambient
+    Shine::new(0.5, 0.5, 0.5), // Diffuse
+    Shine::new(0.5, 0.5, 0.5), // Specular
+);
 
+#[derive(Debug, Clone)]
 pub struct Light {
     pub pos: Vector,
     pub color: Color,

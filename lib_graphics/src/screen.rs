@@ -1,6 +1,6 @@
 use crate::matrix::{Matrix, COLS};
 use crate::{Light, Vector};
-use crate::{PICTURE_DIR, XRES, YRES};
+use crate::{LIGHT, PICTURE_DIR, REFLECT, XRES, YRES};
 use std::f64;
 use std::fmt;
 use std::fs::{self, DirBuilder, File};
@@ -231,14 +231,29 @@ impl Screen {
         }
     }
 
-    pub fn draw_polygons(&mut self, polygons: &Matrix, shine: Option<&Reflection>, light: Option<&Light>) {
+    pub fn draw_polygons(
+        &mut self,
+        polygons: &Matrix,
+        reflect: Option<&Reflection>,
+        lights: Option<&mut [Light]>,
+    ) {
+        // If `reflect` and `lights` aren't provided, use the defaults
+        let reflect = reflect.unwrap_or(&REFLECT);
+        let default_light = &mut [LIGHT];
+        let lights = lights.unwrap_or(default_light);
+
+        // Normalize all the light positions
+        for light in lights.iter_mut() {
+            light.pos.normalize();
+        }
+
         // Iterate over the edge list 3 points at a time
         for edge in polygons.m.chunks_exact(3) {
             // Get normal vector for backface culling
             let normal = Vector::calculate_normal(edge);
 
             if normal.z > 0.0 {
-                let c = Shine::get_shine(&normal, shine, light);
+                let c = Shine::get_shine(&normal, reflect, lights);
                 self.scanline_convert(edge, c);
             }
         }
