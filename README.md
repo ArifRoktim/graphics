@@ -5,7 +5,7 @@ Team Name: K***rust***y Krab
 ## Features to implement in descending order of importance
 
 ### Existing MDL Commands/features:
-- [ ] Add `light` command; loop through all the lights
+- [x] Add `light` command; loop through all the lights
 - [ ] Add `mesh` command
 - [ ] Add `set`, `saveknobs`, and `tween` commands
 
