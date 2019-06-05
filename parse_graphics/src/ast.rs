@@ -1,8 +1,8 @@
+use super::{MDLParser, Rule};
 use pest::error::Error;
 use pest::iterators::Pair;
 use pest::Parser;
 use std::str::FromStr;
-use super::{MDLParser, Rule};
 
 #[derive(Clone, Debug)]
 pub enum ParseCommand {
@@ -21,6 +21,7 @@ pub enum ParseCommand {
     Frames,
     Basename,
     Vary,
+    Light,
 }
 
 impl From<&Rule> for ParseCommand {
@@ -43,10 +44,11 @@ impl From<&Rule> for ParseCommand {
             frames => Pcmd::Frames,
             basename => Pcmd::Basename,
             vary => Pcmd::Vary,
+            light => Pcmd::Light,
 
             // Statements that are handled by `node_from_statement`
             // Primitve `Rule`s aren't converted to `ParseCommand`s
-            float | whole | axis | ident | string => panic!("{:?} is not a command!", r),
+            float | whole | byte | axis | ident | string => panic!("{:?} is not a command!", r),
             // TODO: Might add expressions to language later
             statement => panic!("Parse error!"),
             // These are silent or already unwrapped
@@ -83,6 +85,7 @@ impl FromStr for Axis {
 pub enum AstNode {
     Float(f64),
     Whole(usize),
+    Byte(u8),
     Ident(String),
     Str(String),
     Axis(Axis),
@@ -120,6 +123,7 @@ fn node_from_statement(pair: Pair<Rule>) -> AstNode {
         // Primitives
         Rule::float => AstNode::Float(pair.as_str().parse::<f64>().unwrap()),
         Rule::whole => AstNode::Whole(pair.as_str().parse::<usize>().unwrap()),
+        Rule::byte => AstNode::Byte(pair.as_str().parse::<u8>().unwrap()),
         Rule::axis => AstNode::Axis(pair.as_str().parse::<Axis>().unwrap()),
         Rule::ident => AstNode::Ident(pair.as_str().to_owned()),
         Rule::string => AstNode::Str(pair.as_str().to_owned()),

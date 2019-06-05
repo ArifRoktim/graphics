@@ -235,12 +235,11 @@ impl Screen {
         &mut self,
         polygons: &Matrix,
         reflect: Option<&Reflection>,
-        lights: Option<&mut [Light]>,
+        lights: Option<&Vec<Light>>,
     ) {
         // If `reflect` and `lights` aren't provided, use the defaults
         let reflect = reflect.unwrap_or(&REFLECT);
-        let default_light = &mut [LIGHT];
-        let lights = lights.unwrap_or(default_light);
+        let mut lights = lights.cloned().unwrap_or_else(|| vec![LIGHT]);
 
         // Normalize all the light positions
         for light in lights.iter_mut() {
@@ -253,7 +252,7 @@ impl Screen {
             let normal = Vector::calculate_normal(edge);
 
             if normal.z > 0.0 {
-                let c = Shine::get_shine(&normal, reflect, lights);
+                let c = Shine::get_shine(&normal, reflect, lights.as_slice());
                 self.scanline_convert(edge, c);
             }
         }

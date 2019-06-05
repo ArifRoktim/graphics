@@ -1,16 +1,20 @@
 use super::{Axis, Command, ParseError};
-use lib_graphics::{draw, matrix::MatrixMult, Matrix, Reflection, Screen, SquareMatrix};
+use lib_graphics::{draw, Light, Matrix, MatrixMult, Reflection, Screen, SquareMatrix};
 use lib_graphics::{LINE_COLOR, PICTURE_DIR, STEPS_3D};
 use std::collections::HashMap;
 use std::process::Command as SubProcess;
+
+// Key to use for accessing the Lights list in symbol table/hashmap
+const LIGHTS_SYMBOL: &str = "LIGHTS";
 
 #[derive(Debug)]
 pub enum Symbol {
     Constant(Reflection),
     Knob(f64),
+    // Lights will be accessed with the `LIGHTS_SYMBOL` key in the hashmap
+    Lights(Vec<Light>),
 }
 
-type SymbolTable = HashMap<String, Symbol>;
 #[derive(Debug)]
 pub struct Operation {
     pub command: Command,
@@ -26,7 +30,7 @@ impl Operation {
 #[derive(Debug)]
 pub struct ToDoList {
     pub ops: Vec<Operation>,
-    pub symbols: SymbolTable,
+    pub symbols: HashMap<String, Symbol>,
 }
 impl ToDoList {
     pub fn push_op(
@@ -43,6 +47,31 @@ impl ToDoList {
     pub fn add_sym(&mut self, k: String, v: Symbol) -> Result<(), ParseError> {
         self.symbols.insert(k, v);
         Ok(())
+    }
+
+    pub fn add_light(&mut self, light: Light) -> Result<(), ParseError> {
+        // If no lights in symbol table yet, create a new vector for the lights
+        let lights = self
+            .symbols
+            .entry(LIGHTS_SYMBOL.to_owned())
+            .or_insert_with(|| Symbol::Lights(Vec::with_capacity(1)));
+        // The symbol should be a `Symbol::Lights`. Extract the vec and push
+        if let Symbol::Lights(lights) = lights {
+            lights.push(light);
+            Ok(())
+        } else {
+            Err(ParseError::SemanticError)
+        }
+    }
+
+    pub fn get_lights(&self) -> Option<&Vec<Light>> {
+        self.symbols.get(LIGHTS_SYMBOL).map(|l| {
+            if let Symbol::Lights(lights) = l {
+                lights
+            } else {
+                unreachable!()
+            }
+        })
     }
 
     fn first_pass(&self) -> Option<(usize, String)> {
@@ -129,6 +158,9 @@ impl ToDoList {
                 }
             }
 
+            // Get the list of light sources
+            let lights = self.get_lights();
+
             for operation in &self.ops {
                 // clear matrix for every operation
                 draw.clear();
@@ -158,9 +190,6 @@ impl ToDoList {
                     },
                     None => None,
                 };
-
-                // TODO: Change this to use `light` mdl command
-                let lights = None;
 
                 match command {
                     Push() => {
@@ -241,7 +270,7 @@ impl ToDoList {
                         screen.draw_lines(&draw, LINE_COLOR);
                     },
 
-                    Constants(_) | Frames(_) | Basename(_) | Vary(..) => {},
+                    Constants(_) | Frames(_) | Basename(_) | Vary(..) | Light(..) => {},
                     //_ => unimplemented!("{:?}", command),
                 }
             }
@@ -283,7 +312,7 @@ impl ToDoList {
 impl Default for ToDoList {
     fn default() -> Self {
         let ops = vec![];
-        let symbols: SymbolTable = HashMap::new();
+        let symbols = HashMap::new();
         ToDoList { ops, symbols }
     }
 }

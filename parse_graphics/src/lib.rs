@@ -2,7 +2,7 @@ pub mod analyzer;
 pub mod ast;
 pub mod todo;
 
-pub use analyzer::{Command, file, NOOP, ParseError};
+pub use analyzer::{file, Command, ParseError, NOOP};
 pub use ast::{AstIntoError, AstNode, Axis, ParseAxisError, ParseCommand};
 pub use todo::{Operation, Symbol, ToDoList};
 

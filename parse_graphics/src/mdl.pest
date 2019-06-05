@@ -19,28 +19,36 @@ statement = {
     | frames
     | basename
     | vary
+    | light
 }
 
+// Stack commands
 push = { "push" }
 pop = { "pop" }
+
+// Misc. commands
 display = { "display" }
 save = { "save" ~ string }
 
+// Transformations
 translate = { "move"  ~ float{3} ~ ident? }
 scale =     { "scale" ~ float{3} ~ ident? }
 rotate =    { "rotate" ~ axis ~ float ~ ident? }
 
+// Drawing commands
 cuboid = { "box"    ~ ident? ~ float{6} ~ ident? }
 sphere = { "sphere" ~ ident? ~ float{4} ~ ident? }
 torus =  { "torus"  ~ ident? ~ float{5} ~ ident? }
-
 line = { "line" ~ ident? ~ float{3} ~ ident? ~ float{3} ~ ident? }
-constants = { "constants" ~ ident ~ float{9} ~ float{3}? }
 
 // animation commands
 frames = { "frames" ~ whole }
 basename = { "basename" ~ string }
 vary = { "vary" ~ ident ~ whole{2} ~ float{2} }
+
+// lighting commands
+constants = { "constants" ~ ident ~ float{9} ~ float{3}? }
+light = { "light" ~ byte{3} ~ float{3} }
 
 // atomics
 float = @{
@@ -49,6 +57,8 @@ float = @{
 }
 // Whole numbers from [0, std::usize::MAX]
 whole = @{ ASCII_DIGIT* }
+// Whole numbers from [0, 256)
+byte = @{ whole }
 ident = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_" | ".")* }
 string = @{ ident }
 axis = @{ ^"x" | ^"y" | ^"z" }

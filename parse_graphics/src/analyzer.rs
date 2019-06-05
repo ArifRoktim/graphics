@@ -1,4 +1,4 @@
-use lib_graphics::{Reflection, Shine};
+use lib_graphics::{Color, Light, Reflection, Shine, Vector};
 use std::fs;
 
 use super::ast::{self, AstIntoError, AstNode, Axis, ParseAxisError, ParseCommand};
@@ -21,6 +21,7 @@ pub enum Command {
     Frames(usize),
     Basename(String),
     Vary(String, usize, usize, f64, f64),
+    Light(f64, f64, f64, f64, f64, f64),
 }
 
 #[derive(Clone, Debug)]
@@ -231,6 +232,17 @@ fn analyze(node: &AstNode, todo: &mut ToDoList) -> Result<(), ParseError> {
                     _ => Err(ParseError::SemanticError),
                 }?;
                 todo.push_op(Cmd::Vary(knob, frame0, frame1, val0, val1), None, None)
+            },
+
+            PCmd::Light => {
+                let (r, g, b, x, y, z) = match args[..] {
+                    [Byte(r), Byte(g), Byte(b), Float(x), Float(y), Float(z)] => {
+                        Ok((r, g, b, x, y, z))
+                    },
+                    _ => Err(ParseError::SemanticError),
+                }?;
+                let light = Light::new(Vector::new(x, y, z), Color::new(r, g, b));
+                todo.add_light(light)
             },
         }
     } else {
