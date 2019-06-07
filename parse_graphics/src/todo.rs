@@ -44,9 +44,8 @@ impl ToDoList {
         Ok(())
     }
 
-    pub fn add_sym(&mut self, k: String, v: Symbol) -> Result<(), ParseError> {
+    pub fn add_sym(&mut self, k: String, v: Symbol) {
         self.symbols.insert(k, v);
-        Ok(())
     }
 
     pub fn add_light(&mut self, light: Light) -> Result<(), ParseError> {
@@ -154,7 +153,7 @@ impl ToDoList {
 
             if let Some(knob_table) = &knob_table {
                 for (knob, val) in knob_table[frame].iter() {
-                    let _ = self.add_sym(knob.to_owned(), Symbol::Knob(*val));
+                    self.add_sym(knob.to_owned(), Symbol::Knob(*val));
                 }
             }
 

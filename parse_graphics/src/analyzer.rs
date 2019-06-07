@@ -202,7 +202,8 @@ fn analyze(node: &AstNode, todo: &mut ToDoList) -> Result<(), ParseError> {
                     specular: Shine::new(sr, sg, sb),
                 };
                 let lighting = Symbol::Constant(reflection);
-                todo.add_sym(name, lighting)
+                todo.add_sym(name, lighting);
+                Ok(())
             },
 
             // TODO: Push these operations into their own operations list
