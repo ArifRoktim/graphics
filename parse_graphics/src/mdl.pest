@@ -1,4 +1,4 @@
-program = _{ SOI ~ "\n"* ~ (statement ~ "\n"+)* ~ statement? ~ EOI }
+program = _{ SOI ~ NEWLINE* ~ (statement ~ NEWLINE+)* ~ statement? ~ EOI }
 
 // Only ever matches with 1 pair
 statement = {
@@ -64,4 +64,4 @@ string = @{ ident }
 axis = @{ ^"x" | ^"y" | ^"z" }
 
 WHITESPACE = _{ " " }
-COMMENT = _{ "//" ~ (!"\n" ~ ANY)* }
+COMMENT = _{ "//" ~ (!NEWLINE ~ ANY)* }
