@@ -1,6 +1,6 @@
 use super::{Axis, Command, ParseError};
 use lib_graphics::{draw, Light, Matrix, MatrixMult, Reflection, Screen, SquareMatrix};
-use lib_graphics::{LINE_COLOR, PICTURE_DIR, STEPS_3D};
+use lib_graphics::PICTURE_DIR;
 use std::collections::HashMap;
 use std::process::Command as SubProcess;
 
@@ -48,14 +48,16 @@ impl ToDoList {
         self.symbols.insert(k, v);
     }
 
-    pub fn add_light(&mut self, light: Light) -> Result<(), ParseError> {
+    pub fn add_light(&mut self, mut light: Light) -> Result<(), ParseError> {
         // If no lights in symbol table yet, create a new vector for the lights
         let lights = self
             .symbols
             .entry(LIGHTS_SYMBOL.to_owned())
             .or_insert_with(|| Symbol::Lights(Vec::with_capacity(1)));
         // The symbol should be a `Symbol::Lights`. Extract the vec and push
+        // the light after normalizing its vector
         if let Symbol::Lights(lights) = lights {
+            light.pos.normalize();
             lights.push(light);
             Ok(())
         } else {
@@ -148,6 +150,10 @@ impl ToDoList {
         // extract basename, consuming `animation` in process
         let basename = animation.map(|s| s.1);
 
+        // Get the list of light sources
+        let lights = self.get_lights().cloned();
+        let lights = &lights.as_ref().map(|v| v.as_slice());
+
         for frame in 0..frames {
             dbg!(&frame);
 
@@ -156,9 +162,6 @@ impl ToDoList {
                     self.add_sym(knob.to_owned(), Symbol::Knob(*val));
                 }
             }
-
-            // Get the list of light sources
-            let lights = self.get_lights();
 
             for operation in &self.ops {
                 // clear matrix for every operation
@@ -252,13 +255,13 @@ impl ToDoList {
                     },
 
                     &Sphere(x, y, z, r) => {
-                        draw::add_sphere(&mut draw, &mut points, x, y, z, r, STEPS_3D);
+                        draw::add_sphere(&mut draw, &mut points, x, y, z, r, screen.steps_3d);
                         draw.apply_rcs(cstack);
                         screen.draw_polygons(&draw, light_const, lights);
                     },
 
                     &Torus(x, y, z, r0, r1) => {
-                        draw::add_torus(&mut draw, &mut points, x, y, z, r0, r1, STEPS_3D);
+                        draw::add_torus(&mut draw, &mut points, x, y, z, r0, r1, screen.steps_3d);
                         draw.apply_rcs(cstack);
                         screen.draw_polygons(&draw, light_const, lights);
                     },
@@ -266,7 +269,7 @@ impl ToDoList {
                     &Line(x0, y0, z0, x1, y1, z1) => {
                         draw::add_edge(&mut draw, x0, y0, z0, x1, y1, z1);
                         draw.apply_rcs(cstack);
-                        screen.draw_lines(&draw, LINE_COLOR);
+                        screen.draw_lines(&draw, screen.line_color);
                     },
 
                     Constants(_) | Frames(_) | Basename(_) | Vary(..) | Light(..) => {},

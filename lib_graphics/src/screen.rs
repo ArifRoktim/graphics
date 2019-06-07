@@ -1,13 +1,15 @@
 use crate::matrix::{Matrix, COLS};
 use crate::{Light, Vector};
-use crate::{LIGHT, PICTURE_DIR, REFLECT, XRES, YRES};
+use crate::PICTURE_DIR;
 use std::f64;
 use std::fmt;
 use std::fs::{self, DirBuilder, File};
 use std::io::{self, prelude::*};
 use std::mem;
+use std::ops::{Index, IndexMut};
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
+use std::slice::{ChunksExact, ChunksExactMut};
 
 pub mod color;
 pub use color::{consts, Color, Reflection, Shine};
@@ -15,13 +17,43 @@ pub use color::{consts, Color, Reflection, Shine};
 type Pixel = (Color, f64);
 
 pub struct Screen {
-    pub pixels: Box<[[Pixel; XRES]; YRES]>,
-    pub color: Color,
+    // Screen properties
+    pub pixels: Vec<Pixel>,
+    pub xres: usize,
+    pub yres: usize,
+    pub screen_color: Color,
+    pub line_color: Color,
+    pub steps_2d: usize,
+    pub steps_3d: usize,
+    pub specular_exp: i32,
+    pub view_vector: Vector,
+    pub ambient_light: Color,
+    // These are default values if light(s) or reflection(s) aren't provided
+    lights: Vec<Light>,
+    reflection: Reflection,
 }
 
 impl Screen {
     pub fn new(c: Color) -> Screen {
-        Screen { pixels: Box::new([[(c, f64::NEG_INFINITY); XRES]; YRES]), color: c }
+        let mut builder = ScreenBuilder::default();
+        builder.screen_color = c;
+        builder.create()
+    }
+
+    pub fn xres(&self) -> usize {
+        self.xres
+    }
+
+    pub fn yres(&self) -> usize {
+        self.yres
+    }
+
+    pub fn rows(&self) -> ChunksExact<Pixel> {
+        self.pixels.chunks_exact(self.xres)
+    }
+
+    pub fn rows_mut(&mut self) -> ChunksExactMut<Pixel> {
+        self.pixels.chunks_exact_mut(self.xres)
     }
 
     fn write_ppm(&self, f: &Path) -> io::Result<()> {
@@ -99,12 +131,12 @@ impl Screen {
     }
 
     pub fn clear(&mut self) {
-        self.fill(self.color);
+        self.fill(self.screen_color);
     }
 
     pub fn fill(&mut self, c: Color) {
-        for row in self.pixels.iter_mut() {
-            for (color, z) in row.iter_mut() {
+        for row in self.rows_mut() {
+            for (color, z) in row {
                 color.color(c);
                 *z = f64::NEG_INFINITY;
             }
@@ -113,14 +145,14 @@ impl Screen {
 
     pub fn plot(&mut self, px: i32, py: i32, z: f64, c: Color) {
         // Can't plot points outside the screen
-        if px < 0 || px >= (XRES as i32) || py < 0 || py >= (YRES as i32) {
+        if px < 0 || px >= (self.xres as i32) || py < 0 || py >= (self.yres as i32) {
             return;
         }
         // Cast the coordinates to `usize` and
         // make (0, 0) the bottom left corner instead of the top left corner
-        let (px, py) = (px as usize, YRES - 1 - (py as usize));
+        let (px, py) = (px as usize, self.yres - 1 - (py as usize));
         // Get the pixel and change its color and zbuffer values
-        let (color, zbuffer) = &mut self.pixels[py][px];
+        let (color, zbuffer) = &mut self[py][px];
         if z > *zbuffer {
             color.color(c);
             *zbuffer = z;
@@ -235,16 +267,12 @@ impl Screen {
         &mut self,
         polygons: &Matrix,
         reflect: Option<&Reflection>,
-        lights: Option<&Vec<Light>>,
+        lights: &Option<&[Light]>,
     ) {
         // If `reflect` and `lights` aren't provided, use the defaults
-        let reflect = reflect.unwrap_or(&REFLECT);
-        let mut lights = lights.cloned().unwrap_or_else(|| vec![LIGHT]);
-
-        // Normalize all the light positions
-        for light in lights.iter_mut() {
-            light.pos.normalize();
-        }
+        //let reflect = reflect.unwrap_or(&self.reflection);
+        //let default = self.lights.as_slice();
+        //let lights = lights.as_ref().unwrap_or(&default);
 
         // Iterate over the edge list 3 points at a time
         for edge in polygons.m.chunks_exact(3) {
@@ -252,7 +280,7 @@ impl Screen {
             let normal = Vector::calculate_normal(edge);
 
             if normal.z > 0.0 {
-                let c = Shine::get_shine(&normal, reflect, lights.as_slice());
+                let c = Shine::get_shine(&self, &normal, reflect, lights);
                 self.scanline_convert(edge, c);
             }
         }
@@ -323,21 +351,99 @@ impl Screen {
 impl fmt::Display for Screen {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let header = mem::size_of_val("P3 {} {} 255\n{}");
-        let row = XRES * mem::size_of_val(&(Color::new(255, 255, 255).to_string() + " ")) + 1;
-        let size = header + YRES * row;
+        let row = self.xres * mem::size_of_val(&(Color::new(255, 255, 255).to_string() + " ")) + 1;
+        let size = header + self.yres * row;
         let mut contents = String::with_capacity(size);
-        for row in self.pixels.iter() {
-            for (color, _) in row.iter() {
+        for row in self.rows() {
+            for (color, _) in row {
                 contents.push_str(&color.to_string());
             }
             contents.push_str("\n");
         }
-        write!(f, "P3 {} {} 255\n{}", XRES, YRES, contents)
+        write!(f, "P3 {} {} 255\n{}", self.xres, self.yres, contents)
     }
 }
 
 impl Default for Screen {
     fn default() -> Screen {
-        Self::new(Color::default())
+        ScreenBuilder::default().create()
+    }
+}
+
+impl Index<usize> for Screen {
+    type Output = [Pixel];
+
+    fn index(&self, index: usize) -> &[Pixel] {
+        let rows: Box<_> = self.rows().collect();
+        rows[index]
+    }
+}
+
+impl IndexMut<usize> for Screen {
+    fn index_mut(&mut self, index: usize) -> &mut [Pixel] {
+        let rows: Box<_> = self.rows_mut().collect();
+        rows[index]
+    }
+}
+
+pub struct ScreenBuilder {
+    // Screen properties
+    pub xres: usize,
+    pub yres: usize,
+    pub screen_color: Color,
+    pub line_color: Color,
+    pub steps_2d: usize,
+    pub steps_3d: usize,
+    pub specular_exp: i32,
+    pub view_vector: Vector,
+    pub ambient_light: Color,
+    // Default values
+    pub lights: Vec<Light>,
+    pub reflection: Reflection,
+}
+
+impl ScreenBuilder {
+    pub fn create(mut self) -> Screen {
+        // normalize the vectors
+        self.view_vector.normalize();
+        for light in &mut self.lights {
+            light.pos.normalize();
+        }
+        Screen {
+            pixels: vec![(self.screen_color, f64::NEG_INFINITY); self.xres * self.yres],
+            xres: self.xres,
+            yres: self.yres,
+            screen_color: self.screen_color,
+            line_color: self.line_color,
+            steps_2d: self.steps_2d,
+            steps_3d: self.steps_3d,
+            specular_exp: self.specular_exp,
+            ambient_light: self.ambient_light,
+            lights: self.lights,
+            view_vector: self.view_vector,
+            reflection: self.reflection
+        }
+    }
+}
+
+impl Default for ScreenBuilder {
+    fn default() -> ScreenBuilder {
+        ScreenBuilder {
+            xres: 500,
+            yres: 500,
+            screen_color: consts::BLACK,
+            line_color: consts::GREEN,
+            steps_2d: 100,
+            steps_3d: 100,
+            specular_exp: 4,
+            ambient_light: Color::new(50, 50, 50),
+            lights: vec![Light::new(Vector::new(0.5, 0.75, 1.), consts::WHITE)],
+            view_vector: Vector::new(0., 0., 1.),
+            reflection: Reflection::new(
+                Shine::new(0.1, 0.1, 0.1), // Ambient
+                Shine::new(0.5, 0.5, 0.5), // Diffuse
+                Shine::new(0.5, 0.5, 0.5), // Specular
+            )
+        }
     }
 }

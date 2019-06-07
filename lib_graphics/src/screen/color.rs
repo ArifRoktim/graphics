@@ -1,5 +1,4 @@
-use crate::{Light, Vector};
-use crate::{AMBIENT_LIGHT, SPECULAR_EXP, VIEW_VECTOR};
+use crate::{Light, Screen, Vector};
 use std::f64;
 use std::fmt;
 use std::ops::{Add, AddAssign, Mul};
@@ -128,23 +127,29 @@ impl Shine {
         [ambient, diffuse, reflective]
     }
 
-    pub fn get_shine(normal: &Vector, reflect: &Reflection, lights: &[Light]) -> Color {
+    pub fn get_shine(
+        screen: &Screen,
+        normal: &Vector,
+        reflect: Option<&Reflection>,
+        lights: &Option<&[Light]>,
+    ) -> Color {
+        // If `reflect` and `lights` aren't provided, use the defaults
+        let default = screen.lights.as_slice();
+        let lights = lights.as_ref().unwrap_or(&default);
         assert_ne!(0, lights.len(), "Must have at least 1 light!");
+        let reflect = reflect.unwrap_or(&screen.reflection);
 
-        let view_v = Vector::normalized(&VIEW_VECTOR);
         let normal_v = Vector::normalized(normal);
-
-        Shine::get_ambient(&reflect.ambient)
+        Shine::get_ambient(&screen.ambient_light, &reflect.ambient)
             + &Shine::get_diffuse(&normal_v, lights, &reflect.diffuse)
-            + &Shine::get_specular(&normal_v, lights, &view_v, &reflect.specular)
+            + &Shine::get_specular(&normal_v, lights, &screen.view_vector, &reflect.specular, screen.specular_exp)
     }
 
-    fn get_ambient(reflect: &Shine) -> Color {
-        AMBIENT_LIGHT * reflect
+    fn get_ambient(ambient_light: &Color, reflect: &Shine) -> Color {
+        ambient_light * reflect
     }
 
     fn get_diffuse(normal_v: &Vector, lights: &[Light], reflect: &Shine) -> Color {
-        //light.color * reflect * (normal_v.dot_product(&light.pos));
         let mut diffuse = Color::default();
         for light in lights {
             diffuse += light.color * light.pos.dot_product(normal_v);
@@ -157,6 +162,7 @@ impl Shine {
         lights: &[Light],
         view_v: &Vector,
         reflect: &Shine,
+        specular_exp: i32,
     ) -> Color {
         //let reflected = normal_v * 2. * light.pos.dot_product(normal_v) - &light.pos;
         //let angle = match reflected.dot_product(&view_v) {
@@ -169,7 +175,7 @@ impl Shine {
             let reflected = normal_v * 2. * light.pos.dot_product(normal_v) - &light.pos;
             let angle = match reflected.dot_product(&view_v) {
                 neg if neg < 0. => 0.,
-                others => others.powi(SPECULAR_EXP),
+                others => others.powi(specular_exp),
             };
             specular += light.color * angle;
         }
