@@ -4,15 +4,10 @@ use lib_graphics::PICTURE_DIR;
 use std::collections::HashMap;
 use std::process::Command as SubProcess;
 
-// Key to use for accessing the Lights list in symbol table/hashmap
-const LIGHTS_SYMBOL: &str = "LIGHTS";
-
 #[derive(Debug)]
 pub enum Symbol {
     Constant(Reflection),
     Knob(f64),
-    // Lights will be accessed with the `LIGHTS_SYMBOL` key in the hashmap
-    Lights(Vec<Light>),
 }
 
 #[derive(Debug)]
@@ -31,6 +26,7 @@ impl Operation {
 pub struct ToDoList {
     pub ops: Vec<Operation>,
     pub symbols: HashMap<String, Symbol>,
+    pub lights: Option<Vec<Light>>,
 }
 impl ToDoList {
     pub fn push_op(
@@ -49,30 +45,12 @@ impl ToDoList {
     }
 
     pub fn add_light(&mut self, mut light: Light) -> Result<(), ParseError> {
-        // If no lights in symbol table yet, create a new vector for the lights
-        let lights = self
-            .symbols
-            .entry(LIGHTS_SYMBOL.to_owned())
-            .or_insert_with(|| Symbol::Lights(Vec::with_capacity(1)));
-        // The symbol should be a `Symbol::Lights`. Extract the vec and push
-        // the light after normalizing its vector
-        if let Symbol::Lights(lights) = lights {
-            light.pos.normalize();
-            lights.push(light);
-            Ok(())
-        } else {
-            Err(ParseError::SemanticError)
-        }
-    }
-
-    pub fn get_lights(&self) -> Option<&Vec<Light>> {
-        self.symbols.get(LIGHTS_SYMBOL).map(|l| {
-            if let Symbol::Lights(lights) = l {
-                lights
-            } else {
-                unreachable!()
-            }
-        })
+        // push the light after normalizing its vector
+        light.pos.normalize();
+        // replace the None with a Some before pushing
+        self.lights.get_or_insert_with(|| Vec::with_capacity(1));
+        self.lights.as_mut().unwrap().push(light);
+        Ok(())
     }
 
     fn first_pass(&self) -> Option<(usize, String)> {
@@ -151,8 +129,8 @@ impl ToDoList {
         let basename = animation.map(|s| s.1);
 
         // Get the list of light sources
-        let lights = self.get_lights().cloned();
-        let lights = &lights.as_ref().map(|v| v.as_slice());
+        let lights = self.lights.as_ref().unwrap_or(&screen.lights).clone();
+        let lights = lights.as_slice();
 
         for frame in 0..frames {
             dbg!(&frame);
@@ -314,7 +292,8 @@ impl ToDoList {
 impl Default for ToDoList {
     fn default() -> Self {
         let ops = vec![];
+        let lights = None;
         let symbols = HashMap::new();
-        ToDoList { ops, symbols }
+        ToDoList { ops, symbols, lights }
     }
 }

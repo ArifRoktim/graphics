@@ -29,8 +29,8 @@ pub struct Screen {
     pub view_vector: Vector,
     pub ambient_light: Color,
     // These are default values if light(s) or reflection(s) aren't provided
-    lights: Vec<Light>,
-    reflection: Reflection,
+    pub lights: Vec<Light>,
+    pub reflection: Reflection,
 }
 
 impl Screen {
@@ -267,13 +267,8 @@ impl Screen {
         &mut self,
         polygons: &Matrix,
         reflect: Option<&Reflection>,
-        lights: &Option<&[Light]>,
+        lights: &[Light],
     ) {
-        // If `reflect` and `lights` aren't provided, use the defaults
-        //let reflect = reflect.unwrap_or(&self.reflection);
-        //let default = self.lights.as_slice();
-        //let lights = lights.as_ref().unwrap_or(&default);
-
         // Iterate over the edge list 3 points at a time
         for edge in polygons.m.chunks_exact(3) {
             // Get normal vector for backface culling

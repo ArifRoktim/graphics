@@ -131,21 +131,20 @@ impl Shine {
         screen: &Screen,
         normal: &Vector,
         reflect: Option<&Reflection>,
-        lights: &Option<&[Light]>,
+        lights: &[Light],
     ) -> Color {
-        // If `reflect` and `lights` aren't provided, use the defaults
-        let default = screen.lights.as_slice();
-        let lights = lights.as_ref().unwrap_or(&default);
-        assert_ne!(0, lights.len(), "Must have at least 1 light!");
+        assert!(!lights.is_empty(), "Must have at least 1 light!");
+
+        // If `reflect` isn't provided use the default
         let reflect = reflect.unwrap_or(&screen.reflection);
 
         let normal_v = Vector::normalized(normal);
-        Shine::get_ambient(&screen.ambient_light, &reflect.ambient)
+        Shine::get_ambient(screen.ambient_light, &reflect.ambient)
             + &Shine::get_diffuse(&normal_v, lights, &reflect.diffuse)
             + &Shine::get_specular(&normal_v, lights, &screen.view_vector, &reflect.specular, screen.specular_exp)
     }
 
-    fn get_ambient(ambient_light: &Color, reflect: &Shine) -> Color {
+    fn get_ambient(ambient_light: Color, reflect: &Shine) -> Color {
         ambient_light * reflect
     }
 
