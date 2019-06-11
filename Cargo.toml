@@ -1,6 +1,7 @@
 [workspace]
 members = [
+    "graphics",
     "lib_graphics",
     "parse_graphics",
-    "graphics",
+    "parse_obj",
 ]

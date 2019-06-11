@@ -1,0 +1,35 @@
+program = _{ SOI ~ NEWLINE* ~ (statement ~ NEWLINE+)* ~ statement? ~ EOI }
+
+// Only ever matches with 1 pair
+statement = {
+      vertex
+    | face
+    // Ignore these commands (for now?)
+    | group
+}
+
+vertex = { "v" ~ float{3} }
+face = { "f" ~ whole{3} }
+
+// ignored commands -- silent
+group = _{ "g" ~ SKIP }
+
+// atomics
+float = @{
+    // float part
+    (
+     "-"? ~ ASCII_DIGIT+ ~ ("." ~ ASCII_DIGIT*)?
+     | "-"? ~ "." ~ ASCII_DIGIT+
+    )
+    // scientific notation part
+    ~ ( ^"e" ~ ("+" | "-")? ~ whole )?
+}
+
+// Whole numbers from [0, std::usize::MAX]
+whole = @{ ASCII_DIGIT+ }
+
+// Consume everything until the end of the line
+SKIP = { (!NEWLINE ~ ANY)* }
+
+WHITESPACE = _{ " " }
+COMMENT = _{ "#" ~ (!NEWLINE ~ ANY)* }

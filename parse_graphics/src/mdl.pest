@@ -56,7 +56,7 @@ float = @{
     | "-"? ~ "." ~ ASCII_DIGIT+
 }
 // Whole numbers from [0, std::usize::MAX]
-whole = @{ ASCII_DIGIT* }
+whole = @{ ASCII_DIGIT+ }
 // Whole numbers from [0, 256)
 byte = @{ whole }
 ident = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_" | ".")* }

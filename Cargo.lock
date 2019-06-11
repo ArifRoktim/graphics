@@ -82,6 +82,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "parse_obj"
+version = "0.1.0"
+dependencies = [
+ "pest 2.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "pest_derive 2.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "pest"
 version = "2.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
