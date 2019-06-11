@@ -369,15 +369,17 @@ impl Index<usize> for Screen {
     type Output = [Pixel];
 
     fn index(&self, index: usize) -> &[Pixel] {
-        let rows: Box<_> = self.rows().collect();
-        rows[index]
+        let start = self.xres() * index;
+        let end = start + self.xres();
+        &self.pixels[start..end]
     }
 }
 
 impl IndexMut<usize> for Screen {
     fn index_mut(&mut self, index: usize) -> &mut [Pixel] {
-        let rows: Box<_> = self.rows_mut().collect();
-        rows[index]
+        let start = self.xres() * index;
+        let end = start + self.xres();
+        &mut self.pixels[start..end]
     }
 }
 
