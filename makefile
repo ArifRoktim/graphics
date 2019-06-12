@@ -1,5 +1,5 @@
 # path to the script file to run
-S := scripts/simple_anim.mdl
+S := scripts/torus_simple.mdl
 
 .PHONY: all dev debug clear clean
 
