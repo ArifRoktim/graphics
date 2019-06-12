@@ -1,0 +1,5 @@
+push
+move 250 150 0
+scale 70 70 70
+mesh :teapot.obj
+display

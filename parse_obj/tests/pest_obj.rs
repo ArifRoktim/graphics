@@ -1,21 +1,10 @@
-use parse_obj::{ObjParser, Rule};
+use parse_obj::{ast, ObjParser, Rule};
 use pest::error::Error;
 use pest::iterators::Pairs;
 use pest::Parser;
 
 use std::fs;
 use std::path::PathBuf;
-
-fn get_mdl(name: &str) -> String {
-    let mut mdl_file = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    mdl_file.push("tests/objects");
-    mdl_file.push(name);
-    fs::read_to_string(&mdl_file).expect("Error reading file!")
-}
-
-#[test]
-fn parse_obj_diamond() {
-}
 
 #[test]
 fn parse_float() {

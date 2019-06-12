@@ -20,6 +20,7 @@ statement = {
     | basename
     | vary
     | light
+    | mesh
 }
 
 // Stack commands
@@ -49,6 +50,8 @@ vary = { "vary" ~ ident ~ whole{2} ~ float{2} }
 // lighting commands
 constants = { "constants" ~ ident ~ float{9} ~ float{3}? }
 light = { "light" ~ byte{3} ~ float{3} }
+
+mesh = { "mesh" ~ ident? ~ ":" ~ string }
 
 // atomics
 float = @{

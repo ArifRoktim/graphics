@@ -22,6 +22,7 @@ pub enum Command {
     Basename(String),
     Vary(String, usize, usize, f64, f64),
     Light(f64, f64, f64, f64, f64, f64),
+    Mesh(String),
 }
 
 #[derive(Clone, Debug)]
@@ -244,6 +245,20 @@ fn analyze(node: &AstNode, todo: &mut ToDoList) -> Result<(), ParseError> {
                 }?;
                 let light = Light::new(Vector::new(x, y, z), Color::new(r, g, b));
                 todo.add_light(light)
+            },
+
+            PCmd::Mesh => {
+                let (lighting, mesh) = if let Ident(light) = &args[0] {
+                    (Some(light.to_owned()), 1)
+                } else {
+                    (None, 0)
+                };
+                let meshfile = if let Str(meshfile) = &args[mesh] {
+                    Ok(meshfile.to_owned())
+                } else {
+                    Err(ParseError::SemanticError)
+                }?;
+                todo.push_op(Cmd::Mesh(meshfile), lighting, None)
             },
         }
     } else {

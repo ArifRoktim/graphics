@@ -11,8 +11,8 @@ statement = {
 vertex = { "v" ~ float{3} }
 face = { "f" ~ whole{3} }
 
-// ignored commands -- silent
-group = _{ "g" ~ SKIP }
+// ignored commands
+group = { "g" ~ SKIP }
 
 // atomics
 float = @{
@@ -24,12 +24,11 @@ float = @{
     // scientific notation part
     ~ ( ^"e" ~ ("+" | "-")? ~ whole )?
 }
-
 // Whole numbers from [0, std::usize::MAX]
 whole = @{ ASCII_DIGIT+ }
 
 // Consume everything until the end of the line
-SKIP = { (!NEWLINE ~ ANY)* }
+SKIP = _{ (!NEWLINE ~ ANY)* }
 
 WHITESPACE = _{ " " }
 COMMENT = _{ "#" ~ (!NEWLINE ~ ANY)* }

@@ -6,8 +6,7 @@ Team Name: K***rust***y Krab
 
 ### Existing MDL Commands/features:
 - [x] Add `light` command; loop through all the lights
-- [ ] Add `mesh` command
-- [ ] Add `set`, `saveknobs`, and `tween` commands
+- [x] Add `mesh` command
 
 ### Time to up my compiler game:
 - [ ] Add ability to reference variables (and do arithmetic on them). Useful for `vary`
@@ -29,6 +28,9 @@ For example, to rotate either less or more, based on number of frames:
 ```
 vary spinMeRightRound 0 30 0 (frames)
 ```
+
+### Existing MDL Commands/features:
+- [ ] Add `set`, `saveknobs`, and `tween` commands
 
 ### Shading:
 - [ ] Gouraud shading

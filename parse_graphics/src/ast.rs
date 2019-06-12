@@ -22,6 +22,7 @@ pub enum ParseCommand {
     Basename,
     Vary,
     Light,
+    Mesh,
 }
 
 impl From<&Rule> for ParseCommand {
@@ -45,6 +46,7 @@ impl From<&Rule> for ParseCommand {
             basename => Pcmd::Basename,
             vary => Pcmd::Vary,
             light => Pcmd::Light,
+            mesh => Pcmd::Mesh,
 
             // Statements that are handled by `node_from_statement`
             // Primitve `Rule`s aren't converted to `ParseCommand`s
