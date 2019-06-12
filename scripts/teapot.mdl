@@ -1,5 +1,9 @@
+light 255 255 255 2 1.5 1
+constants cyan 0.1 0.396 .0297254 0.18725 0.74151 0.30829 0.1745 0.69102 0.306678
+
 push
 move 250 150 0
 scale 70 70 70
-mesh :teapot.obj
+mesh cyan :teapot.obj
 display
+save teapot.png

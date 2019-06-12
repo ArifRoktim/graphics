@@ -1,0 +1,30 @@
+frames 100
+basename teapot_colorful_moving
+
+// Primary colors
+light 255 000 000 0.00 2.00 1
+light 000 255 000 1.732 -1 1
+light 000 000 255 -1.732 -1 1
+// Secondary colors
+light 000 255 255 0.00 -4.00 1
+light 255 000 255 -3.464 2 1
+light 255 255 000 3.464 2 1
+
+push
+move 250 250 0
+move -20 20 0
+rotate z -45
+
+rotate x 360 spinner0
+rotate y 360 spinner1
+
+scale 65 65 65
+mesh :teapot.obj
+
+vary spinner0 0 99 0 1
+vary spinner1 0 99 2 0
+
+//vary fitter 0 24 0.7 1
+//vary fitter 25 49 1 0.7
+//vary fitter 50 74 0.7 1
+//vary fitter 75 99 1 0.7
