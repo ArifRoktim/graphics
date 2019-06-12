@@ -1,6 +1,6 @@
 use crate::matrix::{Matrix, COLS};
-use crate::{Light, Vector};
 use crate::PICTURE_DIR;
+use crate::{Light, Vector};
 use std::f64;
 use std::fmt;
 use std::fs::{self, DirBuilder, File};
@@ -418,7 +418,7 @@ impl ScreenBuilder {
             ambient_light: self.ambient_light,
             lights: self.lights,
             view_vector: self.view_vector,
-            reflection: self.reflection
+            reflection: self.reflection,
         }
     }
 }
@@ -440,7 +440,7 @@ impl Default for ScreenBuilder {
                 Shine::new(0.1, 0.1, 0.1), // Ambient
                 Shine::new(0.5, 0.5, 0.5), // Diffuse
                 Shine::new(0.5, 0.5, 0.5), // Specular
-            )
+            ),
         }
     }
 }

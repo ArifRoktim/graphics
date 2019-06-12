@@ -141,7 +141,13 @@ impl Shine {
         let normal_v = Vector::normalized(normal);
         Shine::get_ambient(screen.ambient_light, &reflect.ambient)
             + &Shine::get_diffuse(&normal_v, lights, &reflect.diffuse)
-            + &Shine::get_specular(&normal_v, lights, &screen.view_vector, &reflect.specular, screen.specular_exp)
+            + &Shine::get_specular(
+                &normal_v,
+                lights,
+                &screen.view_vector,
+                &reflect.specular,
+                screen.specular_exp,
+            )
     }
 
     fn get_ambient(ambient_light: Color, reflect: &Shine) -> Color {

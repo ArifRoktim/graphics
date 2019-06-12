@@ -33,7 +33,6 @@ fn parse_float() {
     assert_eq!("3.5e-6", as_str(ObjParser::parse(Rule::float, "3.5e-6")));
 }
 
-
 #[test]
 fn parse_vertex() {
     assert_eq!("v 1 2 3", as_str(ObjParser::parse(Rule::vertex, "v 1 2 3")));

@@ -1,6 +1,6 @@
 use super::{Axis, Command, ParseError};
-use lib_graphics::{draw, Light, Matrix, MatrixMult, Reflection, Screen, SquareMatrix};
 use lib_graphics::PICTURE_DIR;
+use lib_graphics::{draw, Light, Matrix, MatrixMult, Reflection, Screen, SquareMatrix};
 use parse_obj::ObjParser;
 use std::collections::HashMap;
 use std::fs;
@@ -193,17 +193,14 @@ impl ToDoList {
                     Save(filename) => screen.write(&[filename.as_str()]).unwrap(),
 
                     Mesh(filename) => {
-                        dbg!(&draw);
                         // get the file
                         let mut file = PathBuf::from("objects");
                         file.push(filename);
                         // read the file and parse it, adding to the polygon matrix
                         let file = fs::read_to_string(file).expect("Error reading mesh file!");
                         ObjParser::load(&mut draw, &file).expect("Error parsing mesh file!");
-                        dbg!(&draw);
                         // draw the polygon matrix
                         draw.apply_rcs(cstack);
-                        dbg!(&draw);
                         screen.draw_polygons(&draw, light_const, lights);
                     },
 
