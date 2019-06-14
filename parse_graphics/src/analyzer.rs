@@ -1,4 +1,6 @@
 use lib_graphics::{Color, Light, Reflection, Shine, Vector};
+use std::error::Error;
+use std::fmt::{self, Debug, Display};
 use std::fs;
 
 use super::ast::{self, AstIntoError, AstNode, Axis, ParseAxisError, ParseCommand};
@@ -32,8 +34,19 @@ pub struct NOOP;
 pub enum ParseError {
     AstIntoError,
     ParseError,
-    SemanticError,
+    SemanticError(String),
 }
+impl ParseError {
+    pub fn sem_error<T: Debug>(data: &T) -> ParseError {
+        ParseError::SemanticError(format!("{:?}", data))
+    }
+}
+impl Display for ParseError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
+impl Error for ParseError {}
 impl From<AstIntoError> for ParseError {
     fn from(_: AstIntoError) -> ParseError {
         ParseError::AstIntoError
@@ -64,6 +77,7 @@ fn analyze(node: &AstNode, todo: &mut ToDoList) -> Result<(), ParseError> {
     use AstNode::*;
     use Command as Cmd;
     use ParseCommand as PCmd;
+    use ParseError as PErr;
     if let AstNode::MdlCommand { command, args } = node {
         // TODO: Iterate through `args` when we eventually need to do a
         // post order traversal on the Ast
@@ -77,14 +91,14 @@ fn analyze(node: &AstNode, todo: &mut ToDoList) -> Result<(), ParseError> {
                 if let Str(file) = &args[0] {
                     todo.push_op(Cmd::Save(file.to_owned()), None, None)
                 } else {
-                    Err(ParseError::SemanticError)
+                    Err(PErr::sem_error(&node))
                 }
             },
 
             PCmd::Translate | PCmd::Scale => {
                 let (x, y, z) = match args[..3] {
-                    [Float(x), Float(y), Float(z)] => Ok((x, y, z)),
-                    _ => Err(ParseError::SemanticError),
+                    [Num(Float(x)), Num(Float(y)), Num(Float(z))] => Ok((x, y, z)),
+                    _ => Err(PErr::sem_error(&node)),
                 }?;
                 // From an Option<AstNode>:
                 // If there is no 3rd arg, return Ok(None).
@@ -95,7 +109,7 @@ fn analyze(node: &AstNode, todo: &mut ToDoList) -> Result<(), ParseError> {
                     .get(3)
                     .map(|s| match s {
                         Ident(s) => Ok(s.to_owned()),
-                        _ => Err(ParseError::SemanticError),
+                        _ => Err(PErr::sem_error(&node)),
                     })
                     .transpose()?;
 
@@ -108,8 +122,8 @@ fn analyze(node: &AstNode, todo: &mut ToDoList) -> Result<(), ParseError> {
 
             PCmd::Rotate => {
                 let (axis, degrees) = match args[..2] {
-                    [Axis(axis), Float(degrees)] => Ok((axis, degrees)),
-                    _ => Err(ParseError::SemanticError),
+                    [Axis(axis), Num(Float(degrees))] => Ok((axis, degrees)),
+                    _ => Err(PErr::sem_error(&node)),
                 }?;
                 // From an Option<AstNode>:
                 // If there is no 3rd arg, return Ok(None).
@@ -120,7 +134,7 @@ fn analyze(node: &AstNode, todo: &mut ToDoList) -> Result<(), ParseError> {
                     .get(2)
                     .map(|s| match s {
                         Ident(s) => Ok(s.to_owned()),
-                        _ => Err(ParseError::SemanticError),
+                        _ => Err(PErr::sem_error(&node)),
                     })
                     .transpose()?;
 
@@ -136,10 +150,10 @@ fn analyze(node: &AstNode, todo: &mut ToDoList) -> Result<(), ParseError> {
                 };
                 let end = start + 6;
                 let (x, y, z, h, w, d) = match args[start..end] {
-                    [Float(x), Float(y), Float(z), Float(h), Float(w), Float(d)] => {
+                    [Num(Float(x)), Num(Float(y)), Num(Float(z)), Num(Float(h)), Num(Float(w)), Num(Float(d))] => {
                         Ok((x, y, z, h, w, d))
                     },
-                    _ => Err(ParseError::SemanticError),
+                    _ => Err(PErr::sem_error(&node)),
                 }?;
                 todo.push_op(Cmd::Cuboid(x, y, z, h, w, d), lighting, None)
             },
@@ -153,8 +167,8 @@ fn analyze(node: &AstNode, todo: &mut ToDoList) -> Result<(), ParseError> {
                 };
                 let end = start + 4;
                 let (x, y, z, r) = match args[start..end] {
-                    [Float(x), Float(y), Float(z), Float(r)] => Ok((x, y, z, r)),
-                    _ => Err(ParseError::SemanticError),
+                    [Num(Float(x)), Num(Float(y)), Num(Float(z)), Num(Float(r))] => Ok((x, y, z, r)),
+                    _ => Err(PErr::sem_error(&node)),
                 }?;
                 todo.push_op(Cmd::Sphere(x, y, z, r), lighting, None)
             },
@@ -168,18 +182,18 @@ fn analyze(node: &AstNode, todo: &mut ToDoList) -> Result<(), ParseError> {
                 };
                 let end = start + 5;
                 let (x, y, z, r0, r1) = match args[start..end] {
-                    [Float(x), Float(y), Float(z), Float(r0), Float(r1)] => Ok((x, y, z, r0, r1)),
-                    _ => Err(ParseError::SemanticError),
+                    [Num(Float(x)), Num(Float(y)), Num(Float(z)), Num(Float(r0)), Num(Float(r1))] => Ok((x, y, z, r0, r1)),
+                    _ => Err(PErr::sem_error(&node)),
                 }?;
                 todo.push_op(Cmd::Torus(x, y, z, r0, r1), lighting, None)
             },
 
             PCmd::Line => {
                 let (x0, y0, z0, x1, y1, z1) = match args[..6] {
-                    [Float(x0), Float(y0), Float(z0), Float(x1), Float(y1), Float(z1)] => {
+                    [Num(Float(x0)), Num(Float(y0)), Num(Float(z0)), Num(Float(x1)), Num(Float(y1)), Num(Float(z1))] => {
                         Ok((x0, y0, z0, x1, y1, z1))
                     },
-                    _ => Err(ParseError::SemanticError),
+                    _ => Err(PErr::sem_error(&node)),
                 }?;
                 todo.push_op(Cmd::Line(x0, y0, z0, x1, y1, z1), None, None)
             },
@@ -187,15 +201,15 @@ fn analyze(node: &AstNode, todo: &mut ToDoList) -> Result<(), ParseError> {
             PCmd::Constants => {
                 let name = match &args[0] {
                     Ident(name) => Ok(name.to_owned()),
-                    _ => Err(ParseError::SemanticError),
+                    _ => Err(PErr::sem_error(&node)),
                 }?;
                 // Ambient (a[rgb]), diffuse (d[rgb]) and specular (s[rgb])
                 // lighting constants
                 let (ar, dr, sr, ag, dg, sg, ab, db, sb) = match args[1..10] {
-                    [Float(ar), Float(dr), Float(sr), Float(ag), Float(dg), Float(sg), Float(ab), Float(db), Float(sb)] => {
+                    [Num(Float(ar)), Num(Float(dr)), Num(Float(sr)), Num(Float(ag)), Num(Float(dg)), Num(Float(sg)), Num(Float(ab)), Num(Float(db)), Num(Float(sb))] => {
                         Ok((ar, dr, sr, ag, dg, sg, ab, db, sb))
                     },
-                    _ => Err(ParseError::SemanticError),
+                    _ => Err(PErr::sem_error(&node)),
                 }?;
                 let reflection = Reflection {
                     ambient: Shine::new(ar, ag, ab),
@@ -211,10 +225,10 @@ fn analyze(node: &AstNode, todo: &mut ToDoList) -> Result<(), ParseError> {
             // TODO: to prevent having to traverse the op list more than once
             // Animation
             PCmd::Frames => {
-                if let Whole(n) = args[0] {
+                if let Num(Whole(n)) = args[0] {
                     todo.push_op(Cmd::Frames(n), None, None)
                 } else {
-                    Err(ParseError::SemanticError)
+                    Err(PErr::sem_error(&node))
                 }
             },
 
@@ -222,26 +236,26 @@ fn analyze(node: &AstNode, todo: &mut ToDoList) -> Result<(), ParseError> {
                 if let Str(s) = &args[0] {
                     todo.push_op(Cmd::Basename(s.to_owned()), None, None)
                 } else {
-                    Err(ParseError::SemanticError)
+                    Err(PErr::sem_error(&node))
                 }
             },
 
             PCmd::Vary => {
                 let (knob, frame0, frame1, val0, val1) = match &args[..] {
-                    [Ident(knob), Whole(f0), Whole(f1), Float(v0), Float(v1)] => {
+                    [Ident(knob), Num(Whole(f0)), Num(Whole(f1)), Num(Float(v0)), Num(Float(v1))] => {
                         Ok((knob.to_owned(), *f0, *f1, *v0, *v1))
                     },
-                    _ => Err(ParseError::SemanticError),
+                    _ => Err(PErr::sem_error(&node)),
                 }?;
                 todo.push_op(Cmd::Vary(knob, frame0, frame1, val0, val1), None, None)
             },
 
             PCmd::Light => {
                 let (r, g, b, x, y, z) = match args[..] {
-                    [Byte(r), Byte(g), Byte(b), Float(x), Float(y), Float(z)] => {
+                    [Num(Byte(r)), Num(Byte(g)), Num(Byte(b)), Num(Float(x)), Num(Float(y)), Num(Float(z))] => {
                         Ok((r, g, b, x, y, z))
                     },
-                    _ => Err(ParseError::SemanticError),
+                    _ => Err(PErr::sem_error(&node)),
                 }?;
                 let light = Light::new(Vector::new(x, y, z), Color::new(r, g, b));
                 todo.add_light(light)
@@ -256,7 +270,7 @@ fn analyze(node: &AstNode, todo: &mut ToDoList) -> Result<(), ParseError> {
                 let meshfile = if let Str(meshfile) = &args[mesh] {
                     Ok(meshfile.to_owned())
                 } else {
-                    Err(ParseError::SemanticError)
+                    Err(PErr::sem_error(&node))
                 }?;
                 todo.push_op(Cmd::Mesh(meshfile), lighting, None)
             },

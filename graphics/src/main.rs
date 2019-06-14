@@ -1,7 +1,8 @@
 use lib_graphics::{Screen, IDENTITY};
 use std::{env, process};
+use std::error::Error;
 
-fn main() {
+fn main() -> Result<(), Box<dyn Error>> {
     let args: Vec<String> = env::args().collect();
     if args.len() < 2 {
         eprintln!("Not enough arguments! Provide a script file!");
@@ -12,9 +13,6 @@ fn main() {
     let mut screen = Screen::default();
     let mut cstack = vec![IDENTITY];
 
-    let todo = parse_graphics::file(filename);
-    match todo {
-        Ok(list) => list.run(&mut screen, &mut cstack),
-        Err(err) => panic!(err),
-    }
+    parse_graphics::file(filename)?.run(&mut screen, &mut cstack);
+    Ok(())
 }
