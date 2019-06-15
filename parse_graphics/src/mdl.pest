@@ -83,4 +83,4 @@ string = @{ ident }
 axis = @{ ^"x" | ^"y" | ^"z" }
 
 WHITESPACE = _{ " " }
-COMMENT = _{ "//" ~ (!NEWLINE ~ ANY)* }
+COMMENT = _{ "#" ~ (!NEWLINE ~ ANY)* }
