@@ -1,10 +1,9 @@
 use lib_graphics::{Color, Light, Reflection, Shine, Vector};
-use std::convert::{TryFrom, TryInto};
+use std::convert::TryInto;
 use std::error::Error;
 use std::fmt::{self, Debug, Display};
 use std::fs;
 use std::num::TryFromIntError;
-use std::usize;
 
 use super::ast::{
     self, AstIntoError, AstNode, Axis, Expression, Number, ParseAxisError, ParseCommand

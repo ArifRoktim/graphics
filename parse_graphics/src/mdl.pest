@@ -28,12 +28,12 @@ term = _{ number | expr }
 // TODO: add variables to expressions
 // term = _{ number | ident | expr }
 
-operation = _{ add | subtract | multiply | divide }
+operation = _{ add | subtract | multiply | intdivide | divide }
 add      = { "+" }
 subtract = { "-" }
 multiply = { "*" }
 divide   = { "/" }
-//intdivide = { "//" }
+intdivide = { "//" }
 //power    = { "^" }
 
 // Statements

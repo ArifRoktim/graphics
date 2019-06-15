@@ -1,6 +1,6 @@
 use super::{Axis, Command, ParseError};
 // TODO: Re-export these and instead import from super
-use crate::ast::{Expression, Number};
+use crate::ast::{Expression, Number, Operation as Op};
 use lib_graphics::PICTURE_DIR;
 use lib_graphics::{draw, Light, Matrix, MatrixMult, Reflection, Screen, SquareMatrix};
 use parse_obj::ObjParser;
@@ -12,9 +12,23 @@ use std::process::Command as SubProcess;
 
 fn evalb(expr: &Expression) -> Number {
     use Expression::*;
-    match expr {
-        Num(n) => n.to_owned(),
-        Action(..) => unimplemented!("Expression action not yet done!"),
+    use Op::*;
+    if let Num(n) = expr {
+        n.to_owned()
+    } else if let Action(lhs, op, rhs) = expr {
+        // recursive post order traversal of the Expression tree
+        let lhs = evalb(lhs);
+        let rhs = evalb(rhs);
+        match op {
+            Add => lhs + rhs,
+            Divide => lhs / rhs,
+            Multiply => lhs * rhs,
+            Subtract => lhs - rhs,
+            IntDivide => lhs.intdiv(rhs),
+        }
+    } else {
+        // Expression only has two variants, Num and Action
+        unreachable!();
     }
 }
 fn eval_f64(expr: &Expression) -> f64 {
@@ -76,7 +90,6 @@ impl ToDoList {
 
     fn first_pass(&self) -> Option<(usize, String)> {
         use Command::*;
-        use Expression::*;
 
         let (mut basename, mut frames) = (None, None);
         let mut vary = false;

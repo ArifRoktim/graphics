@@ -4,9 +4,10 @@ use pest::error::Error;
 use pest::iterators::{Pair, Pairs};
 use pest::Parser;
 use pest::prec_climber::*;
-use std::f64;
+use std::{f64, isize};
 use std::str::FromStr;
 use std::convert::{TryFrom, TryInto};
+use std::ops::{Add, Div, Mul, Sub};
 
 // TODO: Rename this to `ParseStatement`
 #[derive(Clone, Debug)]
@@ -54,7 +55,7 @@ impl From<&Rule> for ParseCommand {
             mesh => Pcmd::Mesh,
 
             // The following aren't commands
-            expr | add | subtract | multiply | divide | number
+            expr | add | subtract | multiply | divide | intdivide | number
                 // Primitve `Rule`s
                 | float | posint | negint | axis | ident | string
                 // These are silent
@@ -97,6 +98,7 @@ pub enum Operation {
     Subtract,
     Multiply,
     Divide,
+    IntDivide,
 }
 
 #[derive(Clone, Debug)]
@@ -105,6 +107,172 @@ pub enum Number {
     Int(isize),
     PosInt(usize),
 }
+
+// TODO: Macros would really make this way shorter
+impl Add for Number {
+    type Output = Self;
+    fn add(self, other: Self) -> Self {
+        use Number::*;
+        match self {
+            Float(l) => {
+                let r = match other {
+                    Float(r) => r,
+                    Int(r) => r as f64,
+                    PosInt(r) => r as f64,
+                };
+                Float(l + r)
+            },
+
+            Int(l) => {
+                match other {
+                    Float(r) => Float(l as f64 + r),
+                    Int(r) => Int(l + r),
+                    PosInt(r) => Int(l + isize::try_from(r).unwrap()),
+                }
+            },
+
+            PosInt(l) => {
+                match other {
+                    Float(r) => Float(l as f64 + r),
+                    Int(r) => Int(isize::try_from(l).unwrap() + r),
+                    PosInt(r) => PosInt(l + r),
+                }
+            },
+
+        }
+    }
+}
+impl Div for Number {
+    type Output = Self;
+    fn div(self, other: Self) -> Self {
+        use Number::*;
+        match self {
+            Float(l) => {
+                let r = match other {
+                    Float(r) => r,
+                    Int(r) => r as f64,
+                    PosInt(r) => r as f64,
+                };
+                Float(l / r)
+            },
+
+            Int(l) => {
+                match other {
+                    Float(r) => Float(l as f64 / r),
+                    Int(r) => Int(l / r),
+                    PosInt(r) => Int(l / isize::try_from(r).unwrap()),
+                }
+            },
+
+            PosInt(l) => {
+                match other {
+                    Float(r) => Float(l as f64 / r),
+                    Int(r) => Int(isize::try_from(l).unwrap() / r),
+                    PosInt(r) => PosInt(l / r),
+                }
+            },
+
+        }
+    }
+}
+impl Mul for Number {
+    type Output = Self;
+    fn mul(self, other: Self) -> Self {
+        use Number::*;
+        match self {
+            Float(l) => {
+                let r = match other {
+                    Float(r) => r,
+                    Int(r) => r as f64,
+                    PosInt(r) => r as f64,
+                };
+                Float(l * r)
+            },
+
+            Int(l) => {
+                match other {
+                    Float(r) => Float(l as f64 * r),
+                    Int(r) => Int(l * r),
+                    PosInt(r) => Int(l * isize::try_from(r).unwrap()),
+                }
+            },
+
+            PosInt(l) => {
+                match other {
+                    Float(r) => Float(l as f64 * r),
+                    Int(r) => Int(isize::try_from(l).unwrap() * r),
+                    PosInt(r) => PosInt(l * r),
+                }
+            },
+
+        }
+    }
+}
+impl Sub for Number {
+    type Output = Self;
+    fn sub(self, other: Self) -> Self {
+        use Number::*;
+        match self {
+            Float(l) => {
+                let r = match other {
+                    Float(r) => r,
+                    Int(r) => r as f64,
+                    PosInt(r) => r as f64,
+                };
+                Float(l - r)
+            },
+
+            Int(l) => {
+                match other {
+                    Float(r) => Float(l as f64 - r),
+                    Int(r) => Int(l - r),
+                    PosInt(r) => Int(l - isize::try_from(r).unwrap()),
+                }
+            },
+
+            PosInt(l) => {
+                match other {
+                    Float(r) => Float(l as f64 - r),
+                    Int(r) => Int(isize::try_from(l).unwrap() - r),
+                    PosInt(r) => PosInt(l - r),
+                }
+            },
+
+        }
+    }
+}
+impl Number {
+    pub fn intdiv(self, other: Self) -> Self {
+        use Number::*;
+        match self {
+            Float(l) => {
+                match other {
+                    Float(r) => Int((l / r) as isize),
+                    Int(r) => Int((l / r as f64) as isize),
+                    PosInt(r) => Int((l / r as f64) as isize),
+                }
+            },
+
+            Int(l) => {
+                match other {
+                    Float(r) => Int((l as f64 / r) as isize),
+                    Int(r) => Int(l / r),
+                    PosInt(r) => Int(l / isize::try_from(r).unwrap()),
+                }
+            },
+
+            PosInt(l) => {
+                match other {
+                    Float(r) => Int((l as f64 / r) as isize),
+                    Int(r) => Int(isize::try_from(l).unwrap() / r),
+                    PosInt(r) => PosInt(l / r),
+                }
+            },
+
+        }
+    }
+}
+
 impl<'i> TryFrom<Pair<'i, Rule>> for Number {
     type Error = AstIntoError;
     fn try_from(pair: Pair<Rule>) -> Result<Self, Self::Error> {
@@ -119,6 +287,7 @@ impl<'i> TryFrom<Pair<'i, Rule>> for Number {
         }
     }
 }
+
 impl TryFrom<Number> for usize {
     type Error = TryFromNumError;
     fn try_from(num: Number) -> Result<Self, Self::Error> {
@@ -135,6 +304,7 @@ impl TryFrom<&Number> for usize {
         }
     }
 }
+
 impl From<Number> for f64 {
     fn from(num: Number) -> f64 {
         Self::from(&num)
@@ -210,7 +380,7 @@ lazy_static! {
 
         PrecClimber::new(vec![
             Operator::new(add, Left) | Operator::new(subtract, Left),
-            Operator::new(multiply, Left) | Operator::new(divide, Left),
+            Operator::new(multiply, Left) | Operator::new(divide, Left) | Operator::new(intdivide, Left),
         ])
     };
 }
@@ -232,6 +402,7 @@ fn eval_expr(expr: Pairs<Rule>) -> Expression {
             Rule::subtract => Action(Box::new(lhs), Op::Subtract, Box::new(rhs)),
             Rule::multiply => Action(Box::new(lhs), Op::Multiply, Box::new(rhs)),
             Rule::divide => Action(Box::new(lhs), Op::Divide, Box::new(rhs)),
+            Rule::intdivide => Action(Box::new(lhs), Op::IntDivide, Box::new(rhs)),
             _ => unimplemented!()
         }
     )

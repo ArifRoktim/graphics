@@ -9,8 +9,8 @@ Team Name: K***rust***y Krab
 - [x] Add `mesh` command
 
 ### Time to up my compiler game:
+- [x] Do arithmetic on them expressions
 - [ ] Add ability to reference variables
-- [ ] Do arithmetic on them variables/literal numbers
 
 Useful for `vary`
 Example use cases:
