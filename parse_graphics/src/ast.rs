@@ -1,9 +1,12 @@
+use lazy_static::lazy_static;
 use super::{MDLParser, Rule};
 use pest::error::Error;
-use pest::iterators::Pair;
+use pest::iterators::{Pair, Pairs};
 use pest::Parser;
+use pest::prec_climber::*;
 use std::f64;
 use std::str::FromStr;
+use std::convert::{TryFrom, TryInto};
 
 // TODO: Rename this to `ParseStatement`
 #[derive(Clone, Debug)]
@@ -54,11 +57,11 @@ impl From<&Rule> for ParseCommand {
             expr | add | subtract | multiply | divide | number
                 // Primitve `Rule`s
                 | float | integer | axis | ident | string
+                // These are silent
+                | program | statement | term | operation | WHITESPACE | COMMENT 
                 // we don't parse the end of input
                 | EOI
                 => unreachable!("`{:?}` not a command!", r),
-            // These are silent
-            program | statement | term | operation | WHITESPACE | COMMENT => unreachable!(),
         }
     }
 }
@@ -99,7 +102,19 @@ pub enum Number {
     Float(f64),
     Integer(isize),
 }
-
+impl<'i> TryFrom<Pair<'i, Rule>> for Number {
+    type Error = AstIntoError;
+    fn try_from(pair: Pair<Rule>) -> Result<Self, Self::Error> {
+        use Number::*;
+        match pair.as_rule() {
+            // If the parser claims that a token is a float/integer,
+            // then str::parse will always succeed
+            Rule::float => Ok(Float(pair.as_str().parse().unwrap())),
+            Rule::integer => Ok(Integer(pair.as_str().parse().unwrap())),
+            _ => Err(AstIntoError)
+        }
+    }
+}
 impl From<&Number> for f64 {
     fn from(num: &Number) -> f64 {
         use Number::*;
@@ -110,6 +125,12 @@ impl From<&Number> for f64 {
     }
 }
 
+#[derive(Clone, Debug)]
+pub enum Expression {
+    Num(Number),
+    Action(Box<Expression>, Operation, Box<Expression>),
+}
+
 // TODO: Add a AstNode::new_mdl method
 #[derive(Clone, Debug)]
 pub enum AstNode {
@@ -117,6 +138,7 @@ pub enum AstNode {
     Ident(String),
     Str(String),
     Axis(Axis),
+    Expr(Expression),
     MdlCommand { command: ParseCommand, args: Vec<AstNode> },
 }
 #[derive(Debug)]
@@ -135,22 +157,61 @@ pub fn parse(source: &str) -> Result<Vec<AstNode>, Error<Rule>> {
     Ok(ast)
 }
 
+lazy_static! {
+    static ref PREC_CLIMBER: PrecClimber<Rule> = {
+        use Rule::*;
+        use Assoc::*;
+
+        PrecClimber::new(vec![
+            Operator::new(add, Left) | Operator::new(subtract, Left),
+            Operator::new(multiply, Left) | Operator::new(divide, Left),
+        ])
+    };
+}
+
+fn eval_expr(expr: Pairs<Rule>) -> Expression {
+    use Expression::*;
+    use Operation as Op;
+    PREC_CLIMBER.climb(
+        expr,
+        |pair: Pair<Rule>| match pair.as_rule() {
+            Rule::float | Rule::integer => {
+                Num(pair.try_into().unwrap())
+            },
+            Rule::expr => eval_expr(pair.into_inner()),
+            _ => unreachable!("{:?}", pair),
+        },
+        |lhs: Expression, op: Pair<Rule>, rhs: Expression| match op.as_rule() {
+            Rule::add => Action(Box::new(lhs), Op::Add, Box::new(rhs)),
+            Rule::subtract => Action(Box::new(lhs), Op::Subtract, Box::new(rhs)),
+            Rule::multiply => Action(Box::new(lhs), Op::Multiply, Box::new(rhs)),
+            Rule::divide => Action(Box::new(lhs), Op::Divide, Box::new(rhs)),
+            _ => unimplemented!()
+        }
+    )
+}
+
 fn node_from_statement(pair: Pair<Rule>) -> AstNode {
     use self::Axis as PAxis;
     use AstNode::*;
-    use Number::*;
 
     match pair.as_rule() {
         // Primitives
-        Rule::float => Num(Float(pair.as_str().parse().unwrap())),
-        Rule::integer => Num(Integer(pair.as_str().parse().unwrap())),
+        Rule::float | Rule::integer => Num(pair.try_into().unwrap()),
         Rule::axis => Axis(pair.as_str().parse::<PAxis>().unwrap()),
         Rule::ident => Ident(pair.as_str().to_owned()),
         Rule::string => Str(pair.as_str().to_owned()),
         // These are silent or already unwrapped
         Rule::EOI | Rule::program | Rule::statement | Rule::WHITESPACE | Rule::COMMENT => {
-            unreachable!()
+            unreachable!("`{:?}` can't be turned into a AstNode!", pair)
         },
+        // Recursion! =D
+        Rule::term => {
+            // terms can only have 1 pair in them, either a `number` or an `expr`
+            // therefore this unwrap will never panic
+            get_args(pair).pop().unwrap_or_else(|| unreachable!())
+        },
+        Rule::expr => Expr(eval_expr(pair.into_inner())),
         // Commands
         rule => AstNode::MdlCommand { command: ParseCommand::from(&rule), args: get_args(pair) },
     }

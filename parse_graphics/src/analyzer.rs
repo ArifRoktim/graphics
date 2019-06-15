@@ -41,7 +41,8 @@ pub enum ParseError {
 }
 impl ParseError {
     pub fn sem_error<T: Debug>(data: &T) -> ParseError {
-        ParseError::SemanticError(format!("{:?}", data))
+        // TODO FIXME: Fix this UGLY HIDEOUS HACK
+        ParseError::SemanticError(format!("{:#?}", data).replace("\n", "NEWLINE"))
     }
 }
 impl Display for ParseError {

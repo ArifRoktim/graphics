@@ -5,6 +5,7 @@ authors = ["Arif Roktim <aroktim@stuy.edu>"]
 edition = "2018"
 
 [dependencies]
+lazy_static = "1.3.0"
 pest = "2.1.1"
 pest_derive = "2.1.0"
 lib_graphics = { path = "../lib_graphics" }

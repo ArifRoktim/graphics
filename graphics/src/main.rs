@@ -13,6 +13,12 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut screen = Screen::default();
     let mut cstack = vec![IDENTITY];
 
-    parse_graphics::file(filename)?.run(&mut screen, &mut cstack);
+    //parse_graphics::file(filename)?.run(&mut screen, &mut cstack);
+    parse_graphics::file(filename)
+        // TODO FIXME: Fix this UGLY HIDEOUS HACK
+        .unwrap_or_else(|err| {
+            let err = err.to_string().replace("NEWLINE", "\n"); panic!("{}", err)
+        })
+        .run(&mut screen, &mut cstack);
     Ok(())
 }

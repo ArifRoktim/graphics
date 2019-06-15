@@ -33,6 +33,7 @@ add      = { "+" }
 subtract = { "-" }
 multiply = { "*" }
 divide   = { "/" }
+//intdivide = { "//" }
 //power    = { "^" }
 
 // Statements
