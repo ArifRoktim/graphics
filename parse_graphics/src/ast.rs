@@ -56,7 +56,7 @@ impl From<&Rule> for ParseCommand {
             // The following aren't commands
             expr | add | subtract | multiply | divide | number
                 // Primitve `Rule`s
-                | float | integer | axis | ident | string
+                | float | posint | negint | axis | ident | string
                 // These are silent
                 | program | statement | term | operation | WHITESPACE | COMMENT 
                 // we don't parse the end of input
@@ -100,7 +100,8 @@ pub enum Operation {
 #[derive(Clone, Debug)]
 pub enum Number {
     Float(f64),
-    Integer(isize),
+    Int(isize),
+    PosInt(usize),
 }
 impl<'i> TryFrom<Pair<'i, Rule>> for Number {
     type Error = AstIntoError;
@@ -110,7 +111,8 @@ impl<'i> TryFrom<Pair<'i, Rule>> for Number {
             // If the parser claims that a token is a float/integer,
             // then str::parse will always succeed
             Rule::float => Ok(Float(pair.as_str().parse().unwrap())),
-            Rule::integer => Ok(Integer(pair.as_str().parse().unwrap())),
+            Rule::posint => Ok(PosInt(pair.as_str().parse().unwrap())),
+            Rule::negint => Ok(Int(pair.as_str().parse().unwrap())),
             _ => Err(AstIntoError)
         }
     }
@@ -120,7 +122,8 @@ impl From<&Number> for f64 {
         use Number::*;
         match *num {
             Float(f) => f,
-            Integer(i) => i as f64,
+            PosInt(i) => i as f64,
+            Int(i) => i as f64,
         }
     }
 }
@@ -129,6 +132,26 @@ impl From<&Number> for f64 {
 pub enum Expression {
     Num(Number),
     Action(Box<Expression>, Operation, Box<Expression>),
+}
+impl From<&Number> for Expression {
+    fn from(num: &Number) -> Expression {
+        Expression::Num(num.clone())
+    }
+}
+impl From<Number> for Expression {
+    fn from(num: Number) -> Expression {
+        Expression::Num(num)
+    }
+}
+impl From<isize> for Expression {
+    fn from(num: isize) -> Expression {
+        Expression::Num(Number::Int(num))
+    }
+}
+impl From<usize> for Expression {
+    fn from(num: usize) -> Expression {
+        Expression::Num(Number::PosInt(num))
+    }
 }
 
 // TODO: Add a AstNode::new_mdl method
@@ -175,7 +198,7 @@ fn eval_expr(expr: Pairs<Rule>) -> Expression {
     PREC_CLIMBER.climb(
         expr,
         |pair: Pair<Rule>| match pair.as_rule() {
-            Rule::float | Rule::integer => {
+            Rule::float | Rule::negint | Rule::posint => {
                 Num(pair.try_into().unwrap())
             },
             Rule::expr => eval_expr(pair.into_inner()),
@@ -197,7 +220,7 @@ fn node_from_statement(pair: Pair<Rule>) -> AstNode {
 
     match pair.as_rule() {
         // Primitives
-        Rule::float | Rule::integer => Num(pair.try_into().unwrap()),
+        Rule::float | Rule::posint | Rule::negint => Num(pair.try_into().unwrap()),
         Rule::axis => Axis(pair.as_str().parse::<PAxis>().unwrap()),
         Rule::ident => Ident(pair.as_str().to_owned()),
         Rule::string => Str(pair.as_str().to_owned()),

@@ -62,20 +62,21 @@ basename = { "basename" ~ string }
 vary = { "vary" ~ ident ~ term{2} ~ term{2} }
 
 // lighting commands
-constants = { "constants" ~ ident ~ term{9} ~ term{3}? }
-light = { "light" ~ term{3} ~ term{3} }
+constants = { "constants" ~ ident ~ float{9} ~ term{3}? }
+light = { "light" ~ posint{3} ~ float{3} }
 
 mesh = { "mesh" ~ ident? ~ ":" ~ string }
 
 // numeric types and atomics
-number = _{ float | integer }
+number = _{ float | negint | posint }
 // floating point values
 float = @{
     "-"? ~ ASCII_DIGIT+ ~ "." ~ ASCII_DIGIT*
     | "-"? ~ "." ~ ASCII_DIGIT+
 }
 // Integer numbers
-integer = @{ "-"? ~ ASCII_DIGIT+ }
+negint = @{ "-" ~ ASCII_DIGIT+ }
+posint = @{ "+"? ~ ASCII_DIGIT+ }
 
 ident = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_" | ".")* }
 string = @{ ident }

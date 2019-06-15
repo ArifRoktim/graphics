@@ -6,7 +6,9 @@ use std::fs;
 use std::num::TryFromIntError;
 use std::usize;
 
-use super::ast::{self, AstIntoError, AstNode, Axis, Number, ParseAxisError, ParseCommand};
+use super::ast::{
+    self, AstIntoError, AstNode, Axis, Expression, Number, ParseAxisError, ParseCommand
+};
 use super::todo::{Symbol, ToDoList};
 
 #[derive(Clone, Debug)]
@@ -15,19 +17,19 @@ pub enum Command {
     Pop(),
     Display(),
     Save(String),
-    Translate(f64, f64, f64),
-    Scale(f64, f64, f64),
-    Rotate(Axis, f64),
-    Cuboid(f64, f64, f64, f64, f64, f64),
-    Sphere(f64, f64, f64, f64),
-    Torus(f64, f64, f64, f64, f64),
-    Line(f64, f64, f64, f64, f64, f64),
-    Constants(NOOP),
-    Frames(usize),
+    Translate(Expression, Expression, Expression),
+    Scale(Expression, Expression, Expression),
+    Rotate(Axis, Expression),
+    Cuboid(Expression, Expression, Expression, Expression, Expression, Expression),
+    Sphere(Expression, Expression, Expression, Expression),
+    Torus(Expression, Expression, Expression, Expression, Expression),
+    Line(Expression, Expression, Expression, Expression, Expression, Expression),
+    Frames(Expression),
     Basename(String),
-    Vary(String, usize, usize, f64, f64),
-    Light(f64, f64, f64, f64, f64, f64),
+    Vary(String, Expression, Expression, Expression, Expression),
     Mesh(String),
+    Constants(NOOP),
+    Light(NOOP),
 }
 
 #[derive(Clone, Debug)]
@@ -106,10 +108,14 @@ fn analyze(node: &AstNode, todo: &mut ToDoList) -> Result<(), ParseError> {
             },
 
             PCmd::Translate | PCmd::Scale => {
-                let (x, y, z) = match &args[..3] {
-                    [Num(x), Num(y), Num(z)] => Ok((x.into(), y.into(), z.into())),
-                    _ => Err(PErr::sem_error(&node)),
-                }?;
+                let mut terms: Vec<Expression> = args[..3].iter().map(|val| match val {
+                    Num(i) => Ok(i.into()),
+                    Expr(i) => Ok(i.clone()),
+                    _ => Err(PErr::sem_error(val)),
+                }).collect::<Result<_, _>>()?;
+                let z = terms.pop().unwrap();
+                let y = terms.pop().unwrap();
+                let x = terms.pop().unwrap();
                 // From an Option<AstNode>:
                 // If there is no 3rd arg, return Ok(None).
                 // Otherwise, if the arg is an AstNode::Ident, return the inner
@@ -131,8 +137,14 @@ fn analyze(node: &AstNode, todo: &mut ToDoList) -> Result<(), ParseError> {
             },
 
             PCmd::Rotate => {
-                let (axis, degrees) = match &args[..2] {
-                    [Axis(axis), Num(degrees)] => Ok((*axis, degrees.into())),
+                let axis = if let Axis(axis) = &args[0] {
+                    Ok(*axis)
+                } else {
+                    Err(PErr::sem_error(&node))
+                }?;
+                let degrees = match &args[1] {
+                    Num(degrees) => Ok(degrees.into()),
+                    Expr(degrees) => Ok(degrees.clone()),
                     _ => Err(PErr::sem_error(&node)),
                 }?;
                 // From an Option<AstNode>:
@@ -152,36 +164,44 @@ fn analyze(node: &AstNode, todo: &mut ToDoList) -> Result<(), ParseError> {
             },
 
             PCmd::Cuboid => {
-                // First argument can be either a lighting constant or a float
+                // First argument can be either a lighting constant or a term
                 let (lighting, start) = if let Ident(light) = &args[0] {
                     (Some(light.to_owned()), 1)
                 } else {
                     (None, 0)
                 };
                 let end = start + 6;
-                let (x, y, z, h, w, d) = match &args[start..end] {
-                    [Num(x), Num(y), Num(z), Num(h), Num(w), Num(d)] => {
-                        Ok((x.into(), y.into(), z.into(), h.into(), w.into(), d.into()))
-                    },
-                    _ => Err(PErr::sem_error(&node)),
-                }?;
+                let mut terms: Vec<Expression> = args[start..end].iter().map(|val| match val {
+                    Num(i) => Ok(i.into()),
+                    Expr(i) => Ok(i.clone()),
+                    _ => Err(PErr::sem_error(val)),
+                }).collect::<Result<_, _>>()?;
+                let d = terms.pop().unwrap();
+                let w = terms.pop().unwrap();
+                let h = terms.pop().unwrap();
+                let z = terms.pop().unwrap();
+                let y = terms.pop().unwrap();
+                let x = terms.pop().unwrap();
                 todo.push_op(Cmd::Cuboid(x, y, z, h, w, d), lighting, None)
             },
 
             PCmd::Sphere => {
-                // First argument can be either a lighting constant or a float
+                // First argument can be either a lighting constant or a term
                 let (lighting, start) = if let Ident(light) = &args[0] {
                     (Some(light.to_owned()), 1)
                 } else {
                     (None, 0)
                 };
                 let end = start + 4;
-                let (x, y, z, r) = match &args[start..end] {
-                    [Num(x), Num(y), Num(z), Num(r)] => {
-                        Ok((x.into(), y.into(), z.into(), r.into()))
-                    },
-                    _ => Err(PErr::sem_error(&node)),
-                }?;
+                let mut terms: Vec<Expression> = args[start..end].iter().map(|val| match val {
+                    Num(i) => Ok(i.into()),
+                    Expr(i) => Ok(i.clone()),
+                    _ => Err(PErr::sem_error(val)),
+                }).collect::<Result<_, _>>()?;
+                let r = terms.pop().unwrap();
+                let z = terms.pop().unwrap();
+                let y = terms.pop().unwrap();
+                let x = terms.pop().unwrap();
                 todo.push_op(Cmd::Sphere(x, y, z, r), lighting, None)
             },
 
@@ -193,22 +213,31 @@ fn analyze(node: &AstNode, todo: &mut ToDoList) -> Result<(), ParseError> {
                     (None, 0)
                 };
                 let end = start + 5;
-                let (x, y, z, r0, r1) = match &args[start..end] {
-                    [Num(x), Num(y), Num(z), Num(r0), Num(r1)] => {
-                        Ok((x.into(), y.into(), z.into(), r0.into(), r1.into()))
-                    },
-                    _ => Err(PErr::sem_error(&node)),
-                }?;
+                let mut terms: Vec<Expression> = args[start..end].iter().map(|val| match val {
+                    Num(i) => Ok(i.into()),
+                    Expr(i) => Ok(i.clone()),
+                    _ => Err(PErr::sem_error(val)),
+                }).collect::<Result<_, _>>()?;
+                let r1 = terms.pop().unwrap();
+                let r0 = terms.pop().unwrap();
+                let z = terms.pop().unwrap();
+                let y = terms.pop().unwrap();
+                let x = terms.pop().unwrap();
                 todo.push_op(Cmd::Torus(x, y, z, r0, r1), lighting, None)
             },
 
             PCmd::Line => {
-                let (x0, y0, z0, x1, y1, z1) = match &args[..6] {
-                    [Num(x0), Num(y0), Num(z0), Num(x1), Num(y1), Num(z1)] => {
-                        Ok((x0.into(), y0.into(), z0.into(), x1.into(), y1.into(), z1.into()))
-                    },
-                    _ => Err(PErr::sem_error(&node)),
-                }?;
+                let mut terms: Vec<Expression> = args[..6].iter().map(|val| match val {
+                    Num(i) => Ok(i.into()),
+                    Expr(i) => Ok(i.clone()),
+                    _ => Err(PErr::sem_error(val)),
+                }).collect::<Result<_, _>>()?;
+                let z1 = terms.pop().unwrap();
+                let y1 = terms.pop().unwrap();
+                let x1 = terms.pop().unwrap();
+                let z0 = terms.pop().unwrap();
+                let y0 = terms.pop().unwrap();
+                let x0 = terms.pop().unwrap();
                 todo.push_op(Cmd::Line(x0, y0, z0, x1, y1, z1), None, None)
             },
 
@@ -249,11 +278,12 @@ fn analyze(node: &AstNode, todo: &mut ToDoList) -> Result<(), ParseError> {
             // TODO: to prevent having to traverse the op list more than once
             // Animation
             PCmd::Frames => {
-                if let Num(Integer(n)) = args[0] {
-                    todo.push_op(Cmd::Frames(n.try_into()?), None, None)
-                } else {
-                    Err(PErr::sem_error(&node))
-                }
+                let frames = match &args[0] {
+                    Num(i) => Ok(i.into()),
+                    Expr(i) => Ok(i.clone()),
+                    _ => Err(PErr::sem_error(&node))
+                }?;
+                todo.push_op(Cmd::Frames(frames), None, None)
             },
 
             PCmd::Basename => {
@@ -265,25 +295,26 @@ fn analyze(node: &AstNode, todo: &mut ToDoList) -> Result<(), ParseError> {
             },
 
             PCmd::Vary => {
-                let (knob, frame0, frame1, val0, val1) = match &args[..] {
-                    [Ident(knob), Num(Integer(f0)), Num(Integer(f1)), Num(v0), Num(v1)] => {
-                        // TODO: use f0.try_into()
-                        Ok((
-                            knob.to_owned(),
-                            usize::try_from(*f0)?,
-                            usize::try_from(*f1)?,
-                            v0.into(),
-                            v1.into(),
-                        ))
-                    },
-                    _ => Err(PErr::sem_error(&node)),
+                let knob = if let Ident(knob) = &args[0] {
+                    Ok(knob.to_owned())
+                } else {
+                    Err(PErr::sem_error(&node))
                 }?;
+                let mut terms: Vec<Expression> = args[1..5].iter().map(|val| match val {
+                    Num(i) => Ok(i.into()),
+                    Expr(i) => Ok(i.clone()),
+                    _ => Err(PErr::sem_error(val)),
+                }).collect::<Result<_, _>>()?;
+                let val1 = terms.pop().unwrap();
+                let val0 = terms.pop().unwrap();
+                let frame1 = terms.pop().unwrap();
+                let frame0 = terms.pop().unwrap();
                 todo.push_op(Cmd::Vary(knob, frame0, frame1, val0, val1), None, None)
             },
 
             PCmd::Light => {
                 let (r, g, b) = match args[..3] {
-                    [Num(Integer(r)), Num(Integer(g)), Num(Integer(b))] => {
+                    [Num(PosInt(r)), Num(PosInt(g)), Num(PosInt(b))] => {
                         Ok((r.try_into()?, g.try_into()?, b.try_into()?))
                     },
                     _ => Err(PErr::sem_error(&node)),
