@@ -8,7 +8,7 @@ use std::num::TryFromIntError;
 use super::ast::{
     self, AstIntoError, AstNode, Axis, Expression, Number, ParseAxisError, ParseCommand
 };
-use super::todo::{Symbol, ToDoList};
+use super::todo::{Symbol, ToDoList, eval_usize};
 
 #[derive(Clone, Debug)]
 pub enum Command {
@@ -110,6 +110,7 @@ fn analyze(node: &AstNode, todo: &mut ToDoList) -> Result<(), ParseError> {
                 let mut terms: Vec<Expression> = args[..3].iter().map(|val| match val {
                     Num(i) => Ok(i.into()),
                     Expr(i) => Ok(i.clone()),
+                    Ident(s) => Ok(s.into()),
                     _ => Err(PErr::sem_error(val)),
                 }).collect::<Result<_, _>>()?;
                 let z = terms.pop().unwrap();
@@ -144,6 +145,7 @@ fn analyze(node: &AstNode, todo: &mut ToDoList) -> Result<(), ParseError> {
                 let degrees = match &args[1] {
                     Num(degrees) => Ok(degrees.into()),
                     Expr(degrees) => Ok(degrees.clone()),
+                    Ident(degrees) => Ok(degrees.into()),
                     _ => Err(PErr::sem_error(&node)),
                 }?;
                 // From an Option<AstNode>:
@@ -173,6 +175,7 @@ fn analyze(node: &AstNode, todo: &mut ToDoList) -> Result<(), ParseError> {
                 let mut terms: Vec<Expression> = args[start..end].iter().map(|val| match val {
                     Num(i) => Ok(i.into()),
                     Expr(i) => Ok(i.clone()),
+                    Ident(i) => Ok(i.into()),
                     _ => Err(PErr::sem_error(val)),
                 }).collect::<Result<_, _>>()?;
                 let d = terms.pop().unwrap();
@@ -195,6 +198,7 @@ fn analyze(node: &AstNode, todo: &mut ToDoList) -> Result<(), ParseError> {
                 let mut terms: Vec<Expression> = args[start..end].iter().map(|val| match val {
                     Num(i) => Ok(i.into()),
                     Expr(i) => Ok(i.clone()),
+                    Ident(i) => Ok(i.into()),
                     _ => Err(PErr::sem_error(val)),
                 }).collect::<Result<_, _>>()?;
                 let r = terms.pop().unwrap();
@@ -215,6 +219,7 @@ fn analyze(node: &AstNode, todo: &mut ToDoList) -> Result<(), ParseError> {
                 let mut terms: Vec<Expression> = args[start..end].iter().map(|val| match val {
                     Num(i) => Ok(i.into()),
                     Expr(i) => Ok(i.clone()),
+                    Ident(i) => Ok(i.into()),
                     _ => Err(PErr::sem_error(val)),
                 }).collect::<Result<_, _>>()?;
                 let r1 = terms.pop().unwrap();
@@ -229,6 +234,7 @@ fn analyze(node: &AstNode, todo: &mut ToDoList) -> Result<(), ParseError> {
                 let mut terms: Vec<Expression> = args[..6].iter().map(|val| match val {
                     Num(i) => Ok(i.into()),
                     Expr(i) => Ok(i.clone()),
+                    Ident(i) => Ok(i.into()),
                     _ => Err(PErr::sem_error(val)),
                 }).collect::<Result<_, _>>()?;
                 let z1 = terms.pop().unwrap();
@@ -280,8 +286,11 @@ fn analyze(node: &AstNode, todo: &mut ToDoList) -> Result<(), ParseError> {
                 let frames = match &args[0] {
                     Num(i) => Ok(i.into()),
                     Expr(i) => Ok(i.clone()),
+                    // Don't allow expressions for the frame command
+                    //Ident(i) => Ok(i.into()),
                     _ => Err(PErr::sem_error(&node))
                 }?;
+                todo.add_sym("FRAMES".into(), Symbol::Num(Number::PosInt(eval_usize(&frames, None))));
                 todo.push_op(Cmd::Frames(frames), None, None)
             },
 
@@ -302,6 +311,7 @@ fn analyze(node: &AstNode, todo: &mut ToDoList) -> Result<(), ParseError> {
                 let mut terms: Vec<Expression> = args[1..5].iter().map(|val| match val {
                     Num(i) => Ok(i.into()),
                     Expr(i) => Ok(i.clone()),
+                    Ident(i) => Ok(i.into()),
                     _ => Err(PErr::sem_error(val)),
                 }).collect::<Result<_, _>>()?;
                 let val1 = terms.pop().unwrap();

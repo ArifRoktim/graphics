@@ -325,6 +325,7 @@ impl From<&Number> for f64 {
 pub enum Expression {
     Num(Number),
     Action(Box<Expression>, Operation, Box<Expression>),
+    Var(String),
 }
 impl From<&Number> for Expression {
     fn from(num: &Number) -> Expression {
@@ -344,6 +345,11 @@ impl From<isize> for Expression {
 impl From<usize> for Expression {
     fn from(num: usize) -> Expression {
         Expression::Num(Number::PosInt(num))
+    }
+}
+impl From<&String> for Expression {
+    fn from(s: &String) -> Expression {
+        Expression::Var(s.to_owned())
     }
 }
 
@@ -394,6 +400,7 @@ fn eval_expr(expr: Pairs<Rule>) -> Expression {
             Rule::float | Rule::negint | Rule::posint => {
                 Num(pair.try_into().unwrap())
             },
+            Rule::ident => Var(pair.as_str().to_owned()),
             Rule::expr => eval_expr(pair.into_inner()),
             _ => unreachable!("{:?}", pair),
         },

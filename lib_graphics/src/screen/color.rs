@@ -108,7 +108,7 @@ impl Mul<f64> for Color {
     }
 }
 
-#[derive(Debug, Default)]
+#[derive(Clone, Debug, Default)]
 pub struct Shine {
     pub red: f64,
     pub green: f64,
@@ -196,7 +196,7 @@ fn as_u8(f: f64) -> u8 {
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct Reflection {
     pub ambient: Shine,
     pub diffuse: Shine,

@@ -9,16 +9,19 @@ use std::convert::TryInto;
 use std::fs;
 use std::path::PathBuf;
 use std::process::Command as SubProcess;
+use std::cell::RefCell;
 
-fn evalb(expr: &Expression) -> Number {
+type SymbolTable = RefCell<HashMap<String, Symbol>>;
+
+fn evalb(expr: &Expression, symtab: Option<&SymbolTable>) -> Number {
     use Expression::*;
     use Op::*;
     if let Num(n) = expr {
         n.to_owned()
     } else if let Action(lhs, op, rhs) = expr {
         // recursive post order traversal of the Expression tree
-        let lhs = evalb(lhs);
-        let rhs = evalb(rhs);
+        let lhs = evalb(lhs, symtab);
+        let rhs = evalb(rhs, symtab);
         match op {
             Add => lhs + rhs,
             Divide => lhs / rhs,
@@ -26,23 +29,36 @@ fn evalb(expr: &Expression) -> Number {
             Subtract => lhs - rhs,
             IntDivide => lhs.intdiv(rhs),
         }
+    } else if let Var(sym) = expr {
+        let sym = symtab
+            .expect("Need symbol table!")
+            .borrow()
+            .get(sym)
+            .cloned()
+            .unwrap_or_else(|| panic!("Variable `{:?}` is undefined!", sym));
+        if let Symbol::Num(n) = sym {
+            n
+        } else {
+            panic!("Variable must refer to a numerical value!")
+        }
     } else {
-        // Expression only has two variants, Num and Action
+        // Expression only has the variants, Num, Action, and Var
         unreachable!();
     }
 }
-fn eval_f64(expr: &Expression) -> f64 {
-    evalb(expr).into()
+pub fn eval_f64(expr: &Expression, symtab: Option<&SymbolTable>) -> f64 {
+    evalb(expr, symtab).into()
 }
-fn eval_usize(expr: &Expression) -> usize {
-    evalb(expr).try_into().unwrap()
+pub fn eval_usize(expr: &Expression, symtab: Option<&SymbolTable>) -> usize {
+    evalb(expr, symtab).try_into().unwrap()
 }
 
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub enum Symbol {
     Constant(Reflection),
     Knob(f64),
+    Num(Number),
 }
 
 #[derive(Debug)]
@@ -60,7 +76,7 @@ impl Operation {
 #[derive(Debug)]
 pub struct ToDoList {
     pub ops: Vec<Operation>,
-    pub symbols: HashMap<String, Symbol>,
+    pub symbols: SymbolTable,
     pub lights: Option<Vec<Light>>,
 }
 impl ToDoList {
@@ -75,8 +91,12 @@ impl ToDoList {
         Ok(())
     }
 
-    pub fn add_sym(&mut self, k: String, v: Symbol) {
-        self.symbols.insert(k, v);
+    pub fn add_sym(&self, k: String, v: Symbol) {
+        //self.symbols.insert(k, v);
+        self.symbols.borrow_mut().insert(k, v);
+    }
+    pub fn get_sym(&self, key: &str) -> Option<Symbol> {
+        self.symbols.borrow().get(key).cloned()
     }
 
     pub fn add_light(&mut self, mut light: Light) -> Result<(), ParseError> {
@@ -116,7 +136,7 @@ impl ToDoList {
                 println!("`basename` command not found. Using {} as a default", base);
                 String::from(base)
             });
-            let frames = eval_usize(&frames.unwrap());
+            let frames = eval_usize(&frames.unwrap(), Some(&self.symbols));
             Some((frames, basename))
         }
     }
@@ -128,13 +148,13 @@ impl ToDoList {
                 &operation.command
             {
                 // TODO: Learn to write macros to reduce verbosity
-                let frame_start: usize = eval_usize(frame_start);
-                let frame_end: usize = eval_usize(frame_end);
-                let val_start: f64 = eval_f64(val_start);
-                let val_end: f64 = eval_f64(val_end);
+                let frame_start: usize = eval_usize(frame_start, Some(&self.symbols));
+                let frame_end: usize = eval_usize(frame_end, Some(&self.symbols));
+                let val_start: f64 = eval_f64(val_start, Some(&self.symbols));
+                let val_end: f64 = eval_f64(val_end, Some(&self.symbols));
 
                 // TODO: Move these checks to semantic analyzer
-                if frame_start > frame_end || frame_end > frames {
+                if frame_start > frame_end || frame_end > (frames - 1) {
                     panic!(
                         "Vary: start frame must be larger than end frame!
                            Start: {}, End: {}",
@@ -154,13 +174,17 @@ impl ToDoList {
     }
 
     #[allow(clippy::many_single_char_names)]
-    pub fn run(mut self, screen: &mut Screen, cstack: &mut Vec<SquareMatrix>) {
+    pub fn run(self, screen: &mut Screen, cstack: &mut Vec<SquareMatrix>) {
         use Command::*;
 
         // Temporary edge/polygon matrix
         let mut draw = Matrix::default();
         // Temporary point matrix used for sphere and torus
         let mut points = Matrix::default();
+
+        // Add variables to symbol table
+        self.add_sym("XRES".into(), Symbol::Num(Number::PosInt(screen.xres)));
+        self.add_sym("YRES".into(), Symbol::Num(Number::PosInt(screen.yres)));
 
         // Check for animation code in script
         let animation = self.first_pass();
@@ -170,6 +194,16 @@ impl ToDoList {
         let knob_table = animation.as_ref().map(|s| self.second_pass(s.0));
         // extract basename, consuming `animation` in process
         let basename = animation.map(|s| s.1);
+
+        // first delete old output
+        if let Some(base) = &basename {
+            let mut path = PathBuf::from(PICTURE_DIR);
+            // gif dir
+            path.push(base);
+            dbg!(&path);
+            fs::remove_dir_all(&path).expect("Failed to remove previous image directory!");
+            dbg!(&path);
+        }
 
         // Get the list of light sources
         let lights = self.lights.as_ref().unwrap_or(&screen.lights).clone();
@@ -196,7 +230,7 @@ impl ToDoList {
                     .light_const
                     .as_ref()
                     // TODO: Use self.symbols[s] instead to panic when symbol isnt found
-                    .and_then(|s| self.symbols.get(s))
+                    .and_then(|s| self.get_sym(s))
                     .map(|s| match s {
                         Symbol::Constant(r) => r,
                         _ => panic!("Expected light constant!"),
@@ -205,7 +239,7 @@ impl ToDoList {
                 // ditto but for the knob
                 let knob = match &operation.knob {
                     Some(k) => {
-                        let symbol = &self.symbols[k];
+                        let symbol = self.get_sym(k).unwrap();
                         match symbol {
                             Symbol::Knob(v) => Some(v),
                             _ => panic!("Expected knob!"),
@@ -241,11 +275,11 @@ impl ToDoList {
                         ObjParser::load(&mut draw, &file).expect("Error parsing mesh file!");
                         // draw the polygon matrix
                         draw.apply_rcs(cstack);
-                        screen.draw_polygons(&draw, light_const, lights);
+                        screen.draw_polygons(&draw, light_const.as_ref(), lights);
                     },
 
                     Translate(x, y, z) => {
-                        let (x, y, z) = (eval_f64(x), eval_f64(y), eval_f64(z));
+                        let (x, y, z) = (eval_f64(x, Some(&self.symbols)), eval_f64(y, Some(&self.symbols)), eval_f64(z, Some(&self.symbols)));
                         let (x, y, z) = match knob {
                             Some(k) => (x * k, y * k, z * k),
                             None => (x, y, z),
@@ -257,7 +291,7 @@ impl ToDoList {
                     },
 
                     Scale(x, y, z) => {
-                        let (x, y, z) = (eval_f64(x), eval_f64(y), eval_f64(z));
+                        let (x, y, z) = (eval_f64(x, Some(&self.symbols)), eval_f64(y, Some(&self.symbols)), eval_f64(z, Some(&self.symbols)));
                         let (x, y, z) = match knob {
                             Some(k) => (x * k, y * k, z * k),
                             None => (x, y, z),
@@ -269,7 +303,7 @@ impl ToDoList {
                     },
 
                     Rotate(axis, degrees) => {
-                        let degrees = eval_f64(degrees);
+                        let degrees = eval_f64(degrees, Some(&self.symbols));
                         let degrees = match knob {
                             Some(k) => degrees * k,
                             None => degrees,
@@ -285,31 +319,31 @@ impl ToDoList {
                     },
 
                     Cuboid(x, y, z, h, w, d) => {
-                        let (x, y, z) = (eval_f64(x), eval_f64(y), eval_f64(z));
-                        let (h, w, d) = (eval_f64(h), eval_f64(w), eval_f64(d));
+                        let (x, y, z) = (eval_f64(x, Some(&self.symbols)), eval_f64(y, Some(&self.symbols)), eval_f64(z, Some(&self.symbols)));
+                        let (h, w, d) = (eval_f64(h, Some(&self.symbols)), eval_f64(w, Some(&self.symbols)), eval_f64(d, Some(&self.symbols)));
                         draw::add_box(&mut draw, x, y, z, w, h, d);
                         draw.apply_rcs(cstack);
-                        screen.draw_polygons(&draw, light_const, lights);
+                        screen.draw_polygons(&draw, light_const.as_ref(), lights);
                     },
 
                     Sphere(x, y, z, r) => {
-                        let (x, y, z, r) = (eval_f64(x), eval_f64(y), eval_f64(z), eval_f64(r));
+                        let (x, y, z, r) = (eval_f64(x, Some(&self.symbols)), eval_f64(y, Some(&self.symbols)), eval_f64(z, Some(&self.symbols)), eval_f64(r, Some(&self.symbols)));
                         draw::add_sphere(&mut draw, &mut points, x, y, z, r, screen.steps_3d);
                         draw.apply_rcs(cstack);
-                        screen.draw_polygons(&draw, light_const, lights);
+                        screen.draw_polygons(&draw, light_const.as_ref(), lights);
                     },
 
                     Torus(x, y, z, r0, r1) => {
-                        let (x, y, z) = (eval_f64(x), eval_f64(y), eval_f64(z));
-                        let (r0, r1) = (eval_f64(r0), eval_f64(r1));
+                        let (x, y, z) = (eval_f64(x, Some(&self.symbols)), eval_f64(y, Some(&self.symbols)), eval_f64(z, Some(&self.symbols)));
+                        let (r0, r1) = (eval_f64(r0, Some(&self.symbols)), eval_f64(r1, Some(&self.symbols)));
                         draw::add_torus(&mut draw, &mut points, x, y, z, r0, r1, screen.steps_3d);
                         draw.apply_rcs(cstack);
-                        screen.draw_polygons(&draw, light_const, lights);
+                        screen.draw_polygons(&draw, light_const.as_ref(), lights);
                     },
 
                     Line(x0, y0, z0, x1, y1, z1) => {
-                        let (x0, y0, z0) = (eval_f64(x0), eval_f64(y0), eval_f64(z0));
-                        let (x1, y1, z1) = (eval_f64(x1), eval_f64(y1), eval_f64(z1));
+                        let (x0, y0, z0) = (eval_f64(x0, Some(&self.symbols)), eval_f64(y0, Some(&self.symbols)), eval_f64(z0, Some(&self.symbols)));
+                        let (x1, y1, z1) = (eval_f64(x1, Some(&self.symbols)), eval_f64(y1, Some(&self.symbols)), eval_f64(z1, Some(&self.symbols)));
                         draw::add_edge(&mut draw, x0, y0, z0, x1, y1, z1);
                         draw.apply_rcs(cstack);
                         screen.draw_lines(&draw, screen.line_color);
@@ -358,7 +392,7 @@ impl Default for ToDoList {
     fn default() -> Self {
         let ops = vec![];
         let lights = None;
-        let symbols = HashMap::new();
+        let symbols = RefCell::new(HashMap::new());
         ToDoList { ops, symbols, lights }
     }
 }

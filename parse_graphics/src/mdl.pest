@@ -24,9 +24,9 @@ statement = _{
 }
 
 expr = { "(" ~ term ~ (operation ~ term)* ~ ")" }
-term = _{ number | expr }
+//term = _{ number | expr }
 // TODO: add variables to expressions
-// term = _{ number | ident | expr }
+term = _{ ident | number | expr }
 
 operation = _{ add | subtract | multiply | intdivide | divide }
 add      = { "+" }
