@@ -7,6 +7,7 @@ use parse_obj::ObjParser;
 use std::collections::HashMap;
 use std::convert::TryInto;
 use std::fs;
+use std::io::ErrorKind;
 use std::path::PathBuf;
 use std::process::Command as SubProcess;
 use std::cell::RefCell;
@@ -195,14 +196,18 @@ impl ToDoList {
         // extract basename, consuming `animation` in process
         let basename = animation.map(|s| s.1);
 
-        // first delete old output
+        // first delete old output frames
         if let Some(base) = &basename {
             let mut path = PathBuf::from(PICTURE_DIR);
             // gif dir
             path.push(base);
             dbg!(&path);
-            fs::remove_dir_all(&path).expect("Failed to remove previous image directory!");
-            dbg!(&path);
+            let status = fs::remove_dir_all(&path);
+            if let Err(e) = &status {
+                if e.kind() != ErrorKind::NotFound {
+                    status.unwrap();
+                }
+            }
         }
 
         // Get the list of light sources
