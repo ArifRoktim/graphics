@@ -62,8 +62,8 @@ basename = { "basename" ~ string }
 vary = { "vary" ~ ident ~ term{2} ~ term{2} }
 
 // lighting commands
-constants = { "constants" ~ ident ~ float{9} ~ term{3}? }
-light = { "light" ~ posint{3} ~ float{3} }
+constants = { "constants" ~ ident ~ number{9} }
+light = { "light" ~ posint{3} ~ number{3} }
 
 mesh = { "mesh" ~ ident? ~ ":" ~ string }
 
