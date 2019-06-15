@@ -3,11 +3,11 @@ constants shiny_teal 0.3 0.0 0.0 0.3 0.2 0.8 0.3 0.2 0.8
 constants dull_yellow 0.3 0.8 0.2 0.3 0.8 0.2 0. 0. 0.
 push
 # Demonstration of expression evaluation
-# Order of operations is respected
-# (250 + 1 / 2) => 250.5, so image is vertically centered
-# If we went from left to right,
-# (250 + 1 / 2) => 125.5, so image wouldn't be vertically centered
-move (0 + 250) (250 + 1 / 2) 0
+# Order of operations is respected:
+# (250 + 1.0 / 2) => 250.5, so image is vertically centered
+# If order of operations WASN'T respected, the above would evaluate to 125.5
+# so image wouldn't be vertically centered
+move (0 + 250) (250 + 1.0 / 2) 0
 sphere shiny_purple -100 150 0 80
 sphere shiny_teal 100 150 0 80
 push
@@ -21,4 +21,4 @@ rotate x 30
 scale 1 1 0.5
 torus dull_yellow 0 0 0 30 175
 display
-save face.png
+save expr.png

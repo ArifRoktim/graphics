@@ -1,4 +1,5 @@
-use lib_graphics::{Screen, IDENTITY};
+use lib_graphics::IDENTITY;
+use lib_graphics::screen::ScreenBuilder;
 use std::error::Error;
 use std::{env, process};
 
@@ -10,7 +11,15 @@ fn main() -> Result<(), Box<dyn Error>> {
     }
     let filename = &args[1];
 
-    let mut screen = Screen::default();
+    let mut screen = ScreenBuilder::default();
+    // Default xres and yres is 500
+    screen.xres = 500;
+    screen.yres = 500;
+    // Example:
+    //screen.xres = 723;
+    //screen.yres = 501;
+
+    let mut screen = screen.create();
     let mut cstack = vec![IDENTITY];
 
     //parse_graphics::file(filename)?.run(&mut screen, &mut cstack);

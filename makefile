@@ -1,5 +1,5 @@
 # path to the script file to run
-S := scripts/torus_simple.mdl
+S := scripts/teapot_colorful_moving_vars.mdl
 
 .PHONY: all build dev debug clear clean wipe
 

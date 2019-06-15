@@ -1,11 +1,11 @@
 frames 50
-basename simple_50
+basename simple_torus_var
 push
-move 250 250 0
+move (XRES / 3) (YRES / 2) 0
 scale 2 2 2 bigenator
 rotate y 360 spinny
 rotate z 360 spinny
 torus 0 0 0 75 125
-vary spinny 0 49 0 1
-vary bigenator 0 (50 / 2 - 1) 0 1
-vary bigenator (50 // 2) 49 1 0
+vary spinny 0 (FRAMES - 1) 0 1
+vary bigenator 0 (FRAMES / 2 - 1) 0 1
+vary bigenator (FRAMES / 2) (FRAMES - 1) 1 0
