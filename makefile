@@ -1,9 +1,9 @@
 # path to the script file to run
 S := scripts/torus_simple.mdl
 
-.PHONY: all build dev debug clear clean
+.PHONY: all build dev debug clear clean wipe
 
-all: build
+all:
 	cargo run --release $(S)
 	@./.animate.sh $(S)
 
@@ -17,8 +17,13 @@ dev:
 debug:
 	RUST_BACKTRACE=1 cargo run $(S)
 
+test:
+	RUST_BACKTRACE=1 cargo test
+
 clear:
 	rm -vrf *.bak out/*
 
-clean: clear
-	cargo -v clean
+clean:
+	./.clean.sh
+
+wipe: clear clean
