@@ -2,8 +2,10 @@ use super::{MDLParser, Rule};
 use pest::error::Error;
 use pest::iterators::Pair;
 use pest::Parser;
+use std::f64;
 use std::str::FromStr;
 
+// TODO: Rename this to `ParseStatement`
 #[derive(Clone, Debug)]
 pub enum ParseCommand {
     Push,
@@ -48,13 +50,15 @@ impl From<&Rule> for ParseCommand {
             light => Pcmd::Light,
             mesh => Pcmd::Mesh,
 
-            // Statements that are handled by `node_from_statement`
-            // Primitve `Rule`s aren't converted to `ParseCommand`s
-            float | whole | byte | axis | ident | string => panic!("{:?} is not a command!", r),
-            // TODO: Might add expressions to language later
-            statement => panic!("Parse error!"),
-            // These are silent or already unwrapped
-            EOI | program | WHITESPACE | COMMENT => unreachable!(),
+            // The following aren't commands
+            expr | add | subtract | multiply | divide | number
+                // Primitve `Rule`s
+                | float | integer | axis | ident | string
+                // we don't parse the end of input
+                | EOI
+                => unreachable!("`{:?}` not a command!", r),
+            // These are silent
+            program | statement | term | operation | WHITESPACE | COMMENT => unreachable!(),
         }
     }
 }
@@ -82,12 +86,34 @@ impl FromStr for Axis {
     }
 }
 
+#[derive(Clone, Debug)]
+pub enum Operation {
+    Add,
+    Subtract,
+    Multiply,
+    Divide,
+}
+
+#[derive(Clone, Debug)]
+pub enum Number {
+    Float(f64),
+    Integer(isize),
+}
+
+impl From<&Number> for f64 {
+    fn from(num: &Number) -> f64 {
+        use Number::*;
+        match *num {
+            Float(f) => f,
+            Integer(i) => i as f64,
+        }
+    }
+}
+
 // TODO: Add a AstNode::new_mdl method
 #[derive(Clone, Debug)]
 pub enum AstNode {
-    Float(f64),
-    Whole(usize),
-    Byte(u8),
+    Num(Number),
     Ident(String),
     Str(String),
     Axis(Axis),
@@ -102,35 +128,29 @@ pub fn parse(source: &str) -> Result<Vec<AstNode>, Error<Rule>> {
     let pairs = MDLParser::parse(Rule::program, source)?;
     for pair in pairs {
         match pair.as_rule() {
-            Rule::statement => {
-                ast.push(node_from_statement(pair));
-            },
             Rule::EOI => break,
-            _ => unreachable!(),
+            _ => ast.push(node_from_statement(pair)),
         }
     }
-
     Ok(ast)
 }
 
 fn node_from_statement(pair: Pair<Rule>) -> AstNode {
+    use self::Axis as PAxis;
+    use AstNode::*;
+    use Number::*;
+
     match pair.as_rule() {
-        // Recursion will be useful in future for more complex statements
-        Rule::statement => {
-            node_from_statement(
-                // extract a match from the statement; never fails
-                pair.into_inner().next().unwrap(),
-            )
-        },
         // Primitives
-        Rule::float => AstNode::Float(pair.as_str().parse::<f64>().unwrap()),
-        Rule::whole => AstNode::Whole(pair.as_str().parse::<usize>().unwrap()),
-        Rule::byte => AstNode::Byte(pair.as_str().parse::<u8>().unwrap()),
-        Rule::axis => AstNode::Axis(pair.as_str().parse::<Axis>().unwrap()),
-        Rule::ident => AstNode::Ident(pair.as_str().to_owned()),
-        Rule::string => AstNode::Str(pair.as_str().to_owned()),
+        Rule::float => Num(Float(pair.as_str().parse().unwrap())),
+        Rule::integer => Num(Integer(pair.as_str().parse().unwrap())),
+        Rule::axis => Axis(pair.as_str().parse::<PAxis>().unwrap()),
+        Rule::ident => Ident(pair.as_str().to_owned()),
+        Rule::string => Str(pair.as_str().to_owned()),
         // These are silent or already unwrapped
-        Rule::EOI | Rule::program | Rule::WHITESPACE | Rule::COMMENT => unreachable!(),
+        Rule::EOI | Rule::program | Rule::statement | Rule::WHITESPACE | Rule::COMMENT => {
+            unreachable!()
+        },
         // Commands
         rule => AstNode::MdlCommand { command: ParseCommand::from(&rule), args: get_args(pair) },
     }

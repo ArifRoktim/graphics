@@ -34,9 +34,10 @@ fn parse_float() {
     assert_eq!("", as_str(MDLParser::parse(Rule::float, "-NUMBER HERE 1.0")));
     assert_eq!("", as_str(MDLParser::parse(Rule::float, ".")));
 
-    assert_eq!("1", as_str(MDLParser::parse(Rule::float, "1")));
-    assert_eq!("-1", as_str(MDLParser::parse(Rule::float, "-1")));
-    assert_eq!("123", as_str(MDLParser::parse(Rule::float, "123")));
+    assert_eq!("", as_str(MDLParser::parse(Rule::float, "1")));
+    assert_eq!("1.", as_str(MDLParser::parse(Rule::float, "1.")));
+    assert_eq!("-1.", as_str(MDLParser::parse(Rule::float, "-1.")));
+    assert_eq!("123.", as_str(MDLParser::parse(Rule::float, "123.")));
 
     assert_eq!("1.", as_str(MDLParser::parse(Rule::float, "1.")));
     assert_eq!("-1.", as_str(MDLParser::parse(Rule::float, "-1.")));
@@ -57,6 +58,11 @@ fn parse_ident() {
     assert_eq!("", as_str(MDLParser::parse(Rule::ident, " parse")));
     assert_eq!("", as_str(MDLParser::parse(Rule::ident, "3PARSE")));
     assert_eq!("parse_st", as_str(MDLParser::parse(Rule::ident, "parse_st~uff")));
+}
+
+#[test]
+fn parse_frames() {
+    assert_eq!("frames 235", as_str(MDLParser::parse(Rule::frames, "frames 235")));
 }
 
 #[test]

@@ -9,8 +9,10 @@ Team Name: K***rust***y Krab
 - [x] Add `mesh` command
 
 ### Time to up my compiler game:
-- [ ] Add ability to reference variables (and do arithmetic on them). Useful for `vary`
+- [ ] Add ability to reference variables
+- [ ] Do arithmetic on them variables/literal numbers
 
+Useful for `vary`
 Example use cases:
 We have a script file with 100 frames. And the following vary commands:
 ```

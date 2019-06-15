@@ -1,9 +1,12 @@
 use lib_graphics::{Color, Light, Reflection, Shine, Vector};
+use std::convert::{TryFrom, TryInto};
 use std::error::Error;
 use std::fmt::{self, Debug, Display};
 use std::fs;
+use std::num::TryFromIntError;
+use std::usize;
 
-use super::ast::{self, AstIntoError, AstNode, Axis, ParseAxisError, ParseCommand};
+use super::ast::{self, AstIntoError, AstNode, Axis, Number, ParseAxisError, ParseCommand};
 use super::todo::{Symbol, ToDoList};
 
 #[derive(Clone, Debug)]
@@ -57,6 +60,11 @@ impl From<ParseAxisError> for ParseError {
         ParseError::ParseError
     }
 }
+impl From<TryFromIntError> for ParseError {
+    fn from(err: TryFromIntError) -> ParseError {
+        ParseError::SemanticError(format!("{:?}", err))
+    }
+}
 
 pub fn file(filename: &str) -> Result<ToDoList, ParseError> {
     let file = fs::read_to_string(filename).expect("Error reading file!");
@@ -76,6 +84,7 @@ fn analyze_nodes(nodes: &[AstNode]) -> Result<ToDoList, ParseError> {
 fn analyze(node: &AstNode, todo: &mut ToDoList) -> Result<(), ParseError> {
     use AstNode::*;
     use Command as Cmd;
+    use Number::*;
     use ParseCommand as PCmd;
     use ParseError as PErr;
     if let AstNode::MdlCommand { command, args } = node {
@@ -96,8 +105,8 @@ fn analyze(node: &AstNode, todo: &mut ToDoList) -> Result<(), ParseError> {
             },
 
             PCmd::Translate | PCmd::Scale => {
-                let (x, y, z) = match args[..3] {
-                    [Num(Float(x)), Num(Float(y)), Num(Float(z))] => Ok((x, y, z)),
+                let (x, y, z) = match &args[..3] {
+                    [Num(x), Num(y), Num(z)] => Ok((x.into(), y.into(), z.into())),
                     _ => Err(PErr::sem_error(&node)),
                 }?;
                 // From an Option<AstNode>:
@@ -121,8 +130,8 @@ fn analyze(node: &AstNode, todo: &mut ToDoList) -> Result<(), ParseError> {
             },
 
             PCmd::Rotate => {
-                let (axis, degrees) = match args[..2] {
-                    [Axis(axis), Num(Float(degrees))] => Ok((axis, degrees)),
+                let (axis, degrees) = match &args[..2] {
+                    [Axis(axis), Num(degrees)] => Ok((*axis, degrees.into())),
                     _ => Err(PErr::sem_error(&node)),
                 }?;
                 // From an Option<AstNode>:
@@ -149,9 +158,9 @@ fn analyze(node: &AstNode, todo: &mut ToDoList) -> Result<(), ParseError> {
                     (None, 0)
                 };
                 let end = start + 6;
-                let (x, y, z, h, w, d) = match args[start..end] {
-                    [Num(Float(x)), Num(Float(y)), Num(Float(z)), Num(Float(h)), Num(Float(w)), Num(Float(d))] => {
-                        Ok((x, y, z, h, w, d))
+                let (x, y, z, h, w, d) = match &args[start..end] {
+                    [Num(x), Num(y), Num(z), Num(h), Num(w), Num(d)] => {
+                        Ok((x.into(), y.into(), z.into(), h.into(), w.into(), d.into()))
                     },
                     _ => Err(PErr::sem_error(&node)),
                 }?;
@@ -166,8 +175,10 @@ fn analyze(node: &AstNode, todo: &mut ToDoList) -> Result<(), ParseError> {
                     (None, 0)
                 };
                 let end = start + 4;
-                let (x, y, z, r) = match args[start..end] {
-                    [Num(Float(x)), Num(Float(y)), Num(Float(z)), Num(Float(r))] => Ok((x, y, z, r)),
+                let (x, y, z, r) = match &args[start..end] {
+                    [Num(x), Num(y), Num(z), Num(r)] => {
+                        Ok((x.into(), y.into(), z.into(), r.into()))
+                    },
                     _ => Err(PErr::sem_error(&node)),
                 }?;
                 todo.push_op(Cmd::Sphere(x, y, z, r), lighting, None)
@@ -181,17 +192,19 @@ fn analyze(node: &AstNode, todo: &mut ToDoList) -> Result<(), ParseError> {
                     (None, 0)
                 };
                 let end = start + 5;
-                let (x, y, z, r0, r1) = match args[start..end] {
-                    [Num(Float(x)), Num(Float(y)), Num(Float(z)), Num(Float(r0)), Num(Float(r1))] => Ok((x, y, z, r0, r1)),
+                let (x, y, z, r0, r1) = match &args[start..end] {
+                    [Num(x), Num(y), Num(z), Num(r0), Num(r1)] => {
+                        Ok((x.into(), y.into(), z.into(), r0.into(), r1.into()))
+                    },
                     _ => Err(PErr::sem_error(&node)),
                 }?;
                 todo.push_op(Cmd::Torus(x, y, z, r0, r1), lighting, None)
             },
 
             PCmd::Line => {
-                let (x0, y0, z0, x1, y1, z1) = match args[..6] {
-                    [Num(Float(x0)), Num(Float(y0)), Num(Float(z0)), Num(Float(x1)), Num(Float(y1)), Num(Float(z1))] => {
-                        Ok((x0, y0, z0, x1, y1, z1))
+                let (x0, y0, z0, x1, y1, z1) = match &args[..6] {
+                    [Num(x0), Num(y0), Num(z0), Num(x1), Num(y1), Num(z1)] => {
+                        Ok((x0.into(), y0.into(), z0.into(), x1.into(), y1.into(), z1.into()))
                     },
                     _ => Err(PErr::sem_error(&node)),
                 }?;
@@ -205,9 +218,19 @@ fn analyze(node: &AstNode, todo: &mut ToDoList) -> Result<(), ParseError> {
                 }?;
                 // Ambient (a[rgb]), diffuse (d[rgb]) and specular (s[rgb])
                 // lighting constants
-                let (ar, dr, sr, ag, dg, sg, ab, db, sb) = match args[1..10] {
-                    [Num(Float(ar)), Num(Float(dr)), Num(Float(sr)), Num(Float(ag)), Num(Float(dg)), Num(Float(sg)), Num(Float(ab)), Num(Float(db)), Num(Float(sb))] => {
-                        Ok((ar, dr, sr, ag, dg, sg, ab, db, sb))
+                let (ar, dr, sr, ag, dg, sg, ab, db, sb) = match &args[1..10] {
+                    [Num(ar), Num(dr), Num(sr), Num(ag), Num(dg), Num(sg), Num(ab), Num(db), Num(sb)] => {
+                        Ok((
+                            ar.into(),
+                            dr.into(),
+                            sr.into(),
+                            ag.into(),
+                            dg.into(),
+                            sg.into(),
+                            ab.into(),
+                            db.into(),
+                            sb.into(),
+                        ))
                     },
                     _ => Err(PErr::sem_error(&node)),
                 }?;
@@ -225,8 +248,8 @@ fn analyze(node: &AstNode, todo: &mut ToDoList) -> Result<(), ParseError> {
             // TODO: to prevent having to traverse the op list more than once
             // Animation
             PCmd::Frames => {
-                if let Num(Whole(n)) = args[0] {
-                    todo.push_op(Cmd::Frames(n), None, None)
+                if let Num(Integer(n)) = args[0] {
+                    todo.push_op(Cmd::Frames(n.try_into()?), None, None)
                 } else {
                     Err(PErr::sem_error(&node))
                 }
@@ -242,8 +265,15 @@ fn analyze(node: &AstNode, todo: &mut ToDoList) -> Result<(), ParseError> {
 
             PCmd::Vary => {
                 let (knob, frame0, frame1, val0, val1) = match &args[..] {
-                    [Ident(knob), Num(Whole(f0)), Num(Whole(f1)), Num(Float(v0)), Num(Float(v1))] => {
-                        Ok((knob.to_owned(), *f0, *f1, *v0, *v1))
+                    [Ident(knob), Num(Integer(f0)), Num(Integer(f1)), Num(v0), Num(v1)] => {
+                        // TODO: use f0.try_into()
+                        Ok((
+                            knob.to_owned(),
+                            usize::try_from(*f0)?,
+                            usize::try_from(*f1)?,
+                            v0.into(),
+                            v1.into(),
+                        ))
                     },
                     _ => Err(PErr::sem_error(&node)),
                 }?;
@@ -251,10 +281,14 @@ fn analyze(node: &AstNode, todo: &mut ToDoList) -> Result<(), ParseError> {
             },
 
             PCmd::Light => {
-                let (r, g, b, x, y, z) = match args[..] {
-                    [Num(Byte(r)), Num(Byte(g)), Num(Byte(b)), Num(Float(x)), Num(Float(y)), Num(Float(z))] => {
-                        Ok((r, g, b, x, y, z))
+                let (r, g, b) = match args[..3] {
+                    [Num(Integer(r)), Num(Integer(g)), Num(Integer(b))] => {
+                        Ok((r.try_into()?, g.try_into()?, b.try_into()?))
                     },
+                    _ => Err(PErr::sem_error(&node)),
+                }?;
+                let (x, y, z) = match &args[3..] {
+                    [Num(x), Num(y), Num(z)] => Ok((x.into(), y.into(), z.into())),
                     _ => Err(PErr::sem_error(&node)),
                 }?;
                 let light = Light::new(Vector::new(x, y, z), Color::new(r, g, b));
@@ -301,7 +335,7 @@ save foo.bar
 move 2 5 1
 scale 1 2 3
 rotate x 20
-rotate z -12
+rotate z -12.
 box 1 2 3 4 5 6
 box foobar 1 2 3 4 5 6
 ";

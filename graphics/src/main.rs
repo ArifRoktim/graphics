@@ -1,6 +1,6 @@
 use lib_graphics::{Screen, IDENTITY};
-use std::{env, process};
 use std::error::Error;
+use std::{env, process};
 
 fn main() -> Result<(), Box<dyn Error>> {
     let args: Vec<String> = env::args().collect();

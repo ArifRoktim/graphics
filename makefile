@@ -1,11 +1,14 @@
 # path to the script file to run
 S := scripts/torus_simple.mdl
 
-.PHONY: all dev debug clear clean
+.PHONY: all build dev debug clear clean
 
-all:
+all: build
 	cargo run --release $(S)
 	@./.animate.sh $(S)
+
+build:
+	cargo build --release
 
 dev:
 	cargo run $(S)
