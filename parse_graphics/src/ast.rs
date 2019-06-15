@@ -76,6 +76,8 @@ pub enum Axis {
 
 #[derive(Debug)]
 pub struct ParseAxisError;
+#[derive(Debug)]
+pub struct TryFromNumError;
 
 impl FromStr for Axis {
     type Err = ParseAxisError;
@@ -115,6 +117,27 @@ impl<'i> TryFrom<Pair<'i, Rule>> for Number {
             Rule::negint => Ok(Int(pair.as_str().parse().unwrap())),
             _ => Err(AstIntoError)
         }
+    }
+}
+impl TryFrom<Number> for usize {
+    type Error = TryFromNumError;
+    fn try_from(num: Number) -> Result<Self, Self::Error> {
+        Self::try_from(&num)
+    }
+}
+impl TryFrom<&Number> for usize {
+    type Error = TryFromNumError;
+    fn try_from(num: &Number) -> Result<Self, Self::Error> {
+        use Number::*;
+        match *num {
+            Float(_) | Int(_) => Err(TryFromNumError),
+            PosInt(i) => Ok(i),
+        }
+    }
+}
+impl From<Number> for f64 {
+    fn from(num: Number) -> f64 {
+        Self::from(&num)
     }
 }
 impl From<&Number> for f64 {

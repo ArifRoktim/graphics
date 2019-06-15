@@ -1,11 +1,29 @@
 use super::{Axis, Command, ParseError};
+// TODO: Re-export these and instead import from super
+use crate::ast::{Expression, Number};
 use lib_graphics::PICTURE_DIR;
 use lib_graphics::{draw, Light, Matrix, MatrixMult, Reflection, Screen, SquareMatrix};
 use parse_obj::ObjParser;
 use std::collections::HashMap;
+use std::convert::TryInto;
 use std::fs;
 use std::path::PathBuf;
 use std::process::Command as SubProcess;
+
+fn evalb(expr: &Expression) -> Number {
+    use Expression::*;
+    match expr {
+        Num(n) => n.to_owned(),
+        Action(..) => unimplemented!("Expression action not yet done!"),
+    }
+}
+fn eval_f64(expr: &Expression) -> f64 {
+    evalb(expr).into()
+}
+fn eval_usize(expr: &Expression) -> usize {
+    evalb(expr).try_into().unwrap()
+}
+
 
 #[derive(Debug)]
 pub enum Symbol {
@@ -58,12 +76,14 @@ impl ToDoList {
 
     fn first_pass(&self) -> Option<(usize, String)> {
         use Command::*;
+        use Expression::*;
+
         let (mut basename, mut frames) = (None, None);
         let mut vary = false;
         for operation in &self.ops {
             match &operation.command {
                 Basename(s) => basename = Some(s.to_owned()),
-                Frames(n) => frames = Some(*n),
+                Frames(n) => frames = Some(n),
                 Vary(..) => vary = true,
                 _ => {},
             }
@@ -83,7 +103,8 @@ impl ToDoList {
                 println!("`basename` command not found. Using {} as a default", base);
                 String::from(base)
             });
-            Some((frames.unwrap(), basename))
+            let frames = eval_usize(&frames.unwrap());
+            Some((frames, basename))
         }
     }
 
@@ -93,8 +114,14 @@ impl ToDoList {
             if let Command::Vary(knob, frame_start, frame_end, val_start, val_end) =
                 &operation.command
             {
+                // TODO: Learn to write macros to reduce verbosity
+                let frame_start: usize = eval_usize(frame_start);
+                let frame_end: usize = eval_usize(frame_end);
+                let val_start: f64 = eval_f64(val_start);
+                let val_end: f64 = eval_f64(val_end);
+
                 // TODO: Move these checks to semantic analyzer
-                if frame_start > frame_end || *frame_end > frames {
+                if frame_start > frame_end || frame_end > frames {
                     panic!(
                         "Vary: start frame must be larger than end frame!
                            Start: {}, End: {}",
@@ -102,9 +129,9 @@ impl ToDoList {
                     );
                 }
                 let diff = (val_end - val_start) / (frame_end - frame_start) as f64;
-                let mut val = *val_start;
+                let mut val = val_start;
                 #[allow(clippy::needless_range_loop)]
-                for frame in *frame_start..*frame_end {
+                for frame in frame_start..frame_end {
                     knob_table[frame].insert(knob.to_owned(), val);
                     val += diff;
                 }
@@ -204,7 +231,8 @@ impl ToDoList {
                         screen.draw_polygons(&draw, light_const, lights);
                     },
 
-                    &Translate(x, y, z) => {
+                    Translate(x, y, z) => {
+                        let (x, y, z) = (eval_f64(x), eval_f64(y), eval_f64(z));
                         let (x, y, z) = match knob {
                             Some(k) => (x * k, y * k, z * k),
                             None => (x, y, z),
@@ -215,7 +243,8 @@ impl ToDoList {
                         cstack.push(tr);
                     },
 
-                    &Scale(x, y, z) => {
+                    Scale(x, y, z) => {
+                        let (x, y, z) = (eval_f64(x), eval_f64(y), eval_f64(z));
                         let (x, y, z) = match knob {
                             Some(k) => (x * k, y * k, z * k),
                             None => (x, y, z),
@@ -226,7 +255,8 @@ impl ToDoList {
                         cstack.push(tr);
                     },
 
-                    &Rotate(axis, degrees) => {
+                    Rotate(axis, degrees) => {
+                        let degrees = eval_f64(degrees);
                         let degrees = match knob {
                             Some(k) => degrees * k,
                             None => degrees,
@@ -241,25 +271,32 @@ impl ToDoList {
                         cstack.push(tr);
                     },
 
-                    &Cuboid(x, y, z, h, w, d) => {
+                    Cuboid(x, y, z, h, w, d) => {
+                        let (x, y, z) = (eval_f64(x), eval_f64(y), eval_f64(z));
+                        let (h, w, d) = (eval_f64(h), eval_f64(w), eval_f64(d));
                         draw::add_box(&mut draw, x, y, z, w, h, d);
                         draw.apply_rcs(cstack);
                         screen.draw_polygons(&draw, light_const, lights);
                     },
 
-                    &Sphere(x, y, z, r) => {
+                    Sphere(x, y, z, r) => {
+                        let (x, y, z, r) = (eval_f64(x), eval_f64(y), eval_f64(z), eval_f64(r));
                         draw::add_sphere(&mut draw, &mut points, x, y, z, r, screen.steps_3d);
                         draw.apply_rcs(cstack);
                         screen.draw_polygons(&draw, light_const, lights);
                     },
 
-                    &Torus(x, y, z, r0, r1) => {
+                    Torus(x, y, z, r0, r1) => {
+                        let (x, y, z) = (eval_f64(x), eval_f64(y), eval_f64(z));
+                        let (r0, r1) = (eval_f64(r0), eval_f64(r1));
                         draw::add_torus(&mut draw, &mut points, x, y, z, r0, r1, screen.steps_3d);
                         draw.apply_rcs(cstack);
                         screen.draw_polygons(&draw, light_const, lights);
                     },
 
-                    &Line(x0, y0, z0, x1, y1, z1) => {
+                    Line(x0, y0, z0, x1, y1, z1) => {
+                        let (x0, y0, z0) = (eval_f64(x0), eval_f64(y0), eval_f64(z0));
+                        let (x1, y1, z1) = (eval_f64(x1), eval_f64(y1), eval_f64(z1));
                         draw::add_edge(&mut draw, x0, y0, z0, x1, y1, z1);
                         draw.apply_rcs(cstack);
                         screen.draw_lines(&draw, screen.line_color);
